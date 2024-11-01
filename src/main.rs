@@ -8,7 +8,7 @@ use bevy::text::*;
 use bevy::ui::{AlignSelf, JustifySelf, Style};
 use bevy::window::*;
 use bevy::DefaultPlugins;
-use bevy::prelude::{BuildChildren, Camera, Camera3dBundle, PluginGroup, TextBundle};
+use bevy::prelude::{BuildChildren, Camera, Camera3dBundle, KeyCode, PluginGroup, TextBundle};
 
 use bevy_table_ui as table_ui;
 use table_ui::*;
@@ -49,18 +49,13 @@ fn main() {
             setup_ui,
         ))
         .add_systems(Update, (
+            update_input,
             show_fps.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(300))),
         ))
         ;
     
     app.run();
 }
-
-fn setup_camera(mut commands: Commands) {
-    // commands.spawn(( Camera2dBundle { camera: Camera { ..Default::default() }, ..Default::default() }, ));
-    commands.spawn((Camera3dBundle { camera: Camera { ..Default::default() }, ..Default::default() },));
-}
-
 
 #[derive(Component)]
 pub struct MenuUiRoot;
@@ -72,9 +67,10 @@ pub fn setup_ui(
     commands.spawn((
         MenuUiRoot,
         UiLayoutComputed::default(),
-        UiColor{back:Color::srgba(0.01,0.1,0.3,1.0),..Default::default()},
+        UiColor{back:Color::srgb(0.2,0.4,0.6),..Default::default()},
         UiSize{
-            width:UiVal::None, //UiVal::Px(500.0),
+            //width:UiVal::Px(500.0),
+            width:UiVal::None,
             height:UiVal::Px(500.0),
         },
         UiSpan{span:1},
@@ -85,7 +81,7 @@ pub fn setup_ui(
             UiInnerSize::default(),
             UiColor{
                 back:Color::BLACK,
-                cell:Color::srgba(0.3,0.3,0.3,1.0),
+                cell:Color::srgb(0.3,0.3,0.3),
                 ..Default::default()
             },
             UiImage{
@@ -98,8 +94,8 @@ pub fn setup_ui(
         parent.spawn((
             UiLayoutComputed::default(),
             UiColor{
-                back:Color::srgba(1.0,0.3,0.1,1.0),
-                cell:Color::srgba(1.0,0.5,0.1,1.0),
+                back:Color::srgb(1.0,0.3,0.1),
+                cell:Color::srgb(1.0,0.5,0.1),
                 ..Default::default()
             },
             UiInnerSize::default(),
@@ -119,11 +115,12 @@ pub fn setup_ui(
             },
             UiSize{width:UiVal::Px(200.0),height:UiVal::Px(70.0)},
         ));
+        
         parent.spawn((
             UiLayoutComputed::default(),
             UiColor{
-                back:Color::srgba(1.0,0.3,0.1,1.0),
-                cell:Color::srgba(1.0,0.5,0.1,1.0),
+                back:Color::srgb(1.0,0.3,0.1),
+                cell:Color::srgb(1.0,0.5,0.1),
                 ..Default::default()
             },
             UiInnerSize::default(),
@@ -133,7 +130,7 @@ pub fn setup_ui(
                 font_size:40.0,
                 color:Color::WHITE,
                 font:asset_server.load("FiraMono-Medium.ttf"),
-                // halign:UiTextHAlign::Left,
+                halign:UiTextHAlign::Left,
                 valign:UiTextVAlign::Top,
                 update:true,..Default::default()
             },
@@ -147,8 +144,8 @@ pub fn setup_ui(
         parent.spawn((
             UiLayoutComputed::default(),
             UiColor{
-                back:Color::srgba(1.0,0.3,0.1,1.0),
-                cell:Color::srgba(1.0,0.5,0.1,1.0),
+                back:Color::srgb(1.0,0.3,0.1),
+                cell:Color::srgb(1.0,0.5,0.1),
                 ..Default::default()
             },
             UiInnerSize::default(),
@@ -158,8 +155,31 @@ pub fn setup_ui(
                 font_size:40.0,
                 color:Color::WHITE,
                 font:asset_server.load("FiraMono-Medium.ttf"),
-                // halign:UiTextHAlign::Right,
-                halign:UiTextHAlign::Left,
+                valign:UiTextVAlign::Center,
+                update:true,..Default::default()
+            },
+            UiFill{ 
+                // hfill: UiVal::None,
+                hfill: UiVal::Scale(1.0), 
+                vfill: UiVal::None,
+            },
+            UiSize{width:UiVal::Px(200.0),height:UiVal::Px(70.0)},
+        ));
+        parent.spawn((
+            UiLayoutComputed::default(),
+            UiColor{
+                back:Color::srgb(1.0,0.3,0.1),
+                cell:Color::srgb(1.0,0.5,0.1),
+                ..Default::default()
+            },
+            UiInnerSize::default(),
+            UiTextComputed::default(),
+            UiText{
+                value:"Hello".to_string(),
+                font_size:40.0,
+                color:Color::WHITE,
+                font:asset_server.load("FiraMono-Medium.ttf"),
+                halign:UiTextHAlign::Right,
                 valign:UiTextVAlign::Bottom,
                 update:true,..Default::default()
             },
@@ -174,49 +194,22 @@ pub fn setup_ui(
 
 }
 
-// fn setup_input(
-//     // mut input_map: ResMut<input_map::InputMap<Mapping>>,
-//     // mapping_binds : Res<MappingBinds>,
-// ) {
-  
-// }
+fn setup_camera(mut commands: Commands) {
+    // commands.spawn(( Camera2dBundle { camera: Camera { ..Default::default() }, ..Default::default() }, ));
+    commands.spawn((Camera3dBundle { camera: Camera { ..Default::default() }, ..Default::default() },));
+}
 
-// fn update_input(
-//     mut exit: EventWriter<AppExit>,
-// ) {
+fn update_input(
+    mut key_events: EventReader<bevy::input::keyboard::KeyboardInput>,
+    mut exit: EventWriter<AppExit>,
+) {
    
-//     // exit.send(AppExit::Success); 
-
-// }
-
-
-// #[derive(Component)]
-// struct MenuMarker;
-
-// fn setup_menu(
-//     mut commands: Commands, 
-// ) {
-//     let text_bundle=TextBundle::from_section("", Default::default());
-//     let style=Style{align_self:AlignSelf::Center,justify_self:JustifySelf::Center,..Default::default()};
-//     commands.spawn(text_bundle.with_style(style)).insert(MenuMarker);
-// }
-
-// fn show_menu(
-//     mut marker_query: Query<&mut Text, With<MenuMarker>>,
-
-//     asset_server: Res<AssetServer>,
-// ) {
-//     let font = asset_server.load("FiraMono-Medium.ttf");
-//     let text_style = TextStyle{ font, font_size:25.0, color: Color::WHITE };
-    
-   
-// }
-
-
-
-
-
-
+    for ev in key_events.read() {
+        if ev.state==bevy::input::ButtonState::Pressed && ev.key_code==KeyCode::Escape {
+            exit.send(AppExit::Success); 
+        }
+    }
+}
 
 #[derive(Component)]
 struct FpsText;

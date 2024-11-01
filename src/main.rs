@@ -114,6 +114,7 @@ pub fn setup_ui(
                 vfill: UiVal::Scale(1.0), 
             },
             UiSize{width:UiVal::Px(200.0),height:UiVal::Px(70.0)},
+            UiAlign{halign:UiVal::Scale(0.0),..Default::default()},
         ));
         
         parent.spawn((

@@ -432,6 +432,7 @@ pub fn extract_uinodes(
                 let mut glyph_y = computed.pos.y + text_glyph.position.y - glyph_h*0.5;
                 
                 //handled by bevy now
+                //  bevy moves it within the specified size, ...
                 // if text_layout.logical_size.x<=computed.size.x {
                 //     glyph_x+=match text.halign {
                 //         UiTextHAlign::Right => computed.size.x-text_layout.logical_size.x,

@@ -8,3 +8,16 @@ bevy = { version = "0.14.2", features = ["serialize","file_watcher","dynamic_lin
 
 
 bytemuck = "1.7"
+
+
+[profile.dev]
+opt-level = 0
+
+[profile.release]
+opt-level = 0
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release.package."*"]
+opt-level = 3

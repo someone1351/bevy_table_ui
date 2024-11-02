@@ -101,42 +101,20 @@ pub fn update_text_image(
 
         //text here!
         if let Some(mut text) = text {
-            // println!("==textupdated3");
             let mut fonts_loaded=true;
-
-            // for section in text.sections.iter() {
-            //     let handle=&section.section.style.font;
-
-            //     if Some(bevy::asset::LoadState::Loaded) != asset_server.get_load_state(handle) {
-            //         fonts_loaded=false;
-            //         break;
-            //     }
-            // }
-            
-            //
             let handle=&text.font;
 
             if Some(bevy::asset::LoadState::Loaded) != asset_server.get_load_state(handle) {
                 fonts_loaded=false;
-                // break;
             }
 
             //
             if text.update && fonts_loaded {
-                // let qq:Vec<&String>=text.sections.iter().map(|x|&x.value).collect();
-                
-                // println!("{:?} {:?} {:?}",entity,(computed.w,computed.h),qq);
-                let bounds = Vec2::new(
+                let mut bounds = Vec2::new(
                     if layout_computed.size.x<0.0 {f32::INFINITY} else {layout_computed.size.x},
                     if layout_computed.size.y<0.0 {f32::INFINITY} else {layout_computed.size.y}
                 );
         
-                // let bounds = Vec2::new(f32::INFINITY,f32::INFINITY);
-
-                // if text.sections.len()>0 {
-                //     // text.sections[0].value=format!("{:?} ",entity)+&text.sections[0].value;
-                // }
-
                 let text_alignment = match text.halign {
                     UiTextHAlign::Center => JustifyText::Center,
                     UiTextHAlign::Left => JustifyText::Left,
@@ -144,10 +122,8 @@ pub fn update_text_image(
                 };
 
                 //
-                let mut bounds2: Vec2=bounds;
-                // let mut text_layout_info2= None;//TextLayoutInfo::default();
-
-                let mut new_text_max_size= text_computed.as_ref().map(|x|x.max_size.clone()).unwrap_or_default();
+                // let mut new_text_max_size= text_computed.as_ref().map(|x|x.max_size.clone()).unwrap_or_default();
+                let mut new_text_max_size= Vec2::ZERO;
 
                 //
                 if text.hlen!=0 || text.vlen!=0 {
@@ -184,11 +160,11 @@ pub fn update_text_image(
                         YAxisOrientation::TopToBottom,
                     ) {
                         if text.hlen!=0 {
-                            bounds2.x=new_text_layout_info.logical_size.x;
+                            bounds.x=new_text_layout_info.logical_size.x;
                         }
 
                         if text.vlen!=0 {
-                            bounds2.y=new_text_layout_info.logical_size.y;
+                            bounds.y=new_text_layout_info.logical_size.y;
                         }
 
                         new_text_max_size=new_text_layout_info.logical_size;
@@ -196,7 +172,6 @@ pub fn update_text_image(
                 }
 
                 //
-
                 let sections = [TextSection{
                     value: text.value.clone(),
                     style: TextStyle{
@@ -206,40 +181,26 @@ pub fn update_text_image(
                     },
                 }];
 
-                // bounds2.x=computed.size.x;
-
                 match text_pipeline.queue_text(
                     &fonts,
-                    &sections, //text.sections,
+                    &sections,
                     scale_factor,
                     text_alignment,
                     BreakLineOn::WordBoundary,
-                    bounds2,
-                    &mut font_atlas_sets, // &mut *font_atlas_set_storage,
+                    bounds,
+                    &mut font_atlas_sets,
                     &mut texture_atlases,
                     &mut *textures,
                     text_settings.as_ref(),
-
-                    // entity,
-                    // &mut font_atlas_warning,
-                    // YAxisOrientation::BottomToTop, //ydir
                     YAxisOrientation::TopToBottom, //ydir3
                 ) {
-
-                    // Err(e @ TextError::ExceedMaxTextAtlases(_)) => {
-                    //     panic!("Fatal error when processing text: {e}.");
-                    // }
                     Err(e @ TextError::NoSuchFont) => {
-                        // format!("TODOFIX (tableuix::core::systems::update_text_image): Fatal error when processing font: {}.", e);
-                        println!("Fatal error when processing font: {}.", e);
                         panic!("Fatal error when processing font: {}.", e);
                     },
                     Err(e @ TextError::FailedToAddGlyph(_)) => {
-                        println!("Fatal error when processing text: {}.", e);
                         panic!("Fatal error when processing text: {}.", e);
                     },
-                    Ok(new_text_layout_info) => {
-                        
+                    Ok(new_text_layout_info) => {                        
                         new_text_max_size.x=new_text_max_size.x.max(new_text_layout_info.logical_size.x);
                         new_text_max_size.y=new_text_max_size.y.max(new_text_layout_info.logical_size.y);
 
@@ -252,41 +213,26 @@ pub fn update_text_image(
                     }
                 };
 
-                //
-                
+                //                
                 inner_size.width = inner_size.width.max(new_text_max_size.x); 
                 inner_size.height = inner_size.height.max(new_text_max_size.y); 
 
                 //
                 if let Some(mut text_computed) = text_computed {
                     text_computed.max_size=new_text_max_size;
-                    text_computed.bounds=layout_computed.size;
+                    text_computed.bounds=layout_computed.size.max(new_text_max_size); //layout_computed.size before it's possibly recalculated?
                 } else {
-                    commands.entity(entity).insert(UiTextComputed{max_size:new_text_max_size,bounds:layout_computed.size,});
+                    commands.entity(entity).insert(UiTextComputed{max_size:new_text_max_size,bounds:layout_computed.size.max(new_text_max_size),});
                 }
 
-                // println!("==textupdated");
                 //
                 text.update=false; 
-            } else {
-                    
-                // println!("==textupdated2");
-                // if let Some(text_layout_info) = text_layout_info { //first time it is inserted this will fail
-                //     inner_size.width = inner_size.width.max(text_layout_info.logical_size.x); //size
-                //     inner_size.height = inner_size.height.max(text_layout_info.logical_size.y); //size
-                // }
-                
-                if let Some(text_max_size) = text_computed { //first time it is inserted this will fail
-                    inner_size.width = inner_size.width.max(text_max_size.max_size.x); //size
-                    inner_size.height = inner_size.height.max(text_max_size.max_size.y); //size
+            } else { //whats this for again? because inner_size is cleared at top, need to reset it when not updated? what about for image?
+                if let Some(text_computed) = text_computed { //first time it is inserted this will fail
+                    inner_size.width = inner_size.width.max(text_computed.max_size.x); //size
+                    inner_size.height = inner_size.height.max(text_computed.max_size.y); //size
                 }
             }
-            // if let Some(text_layout) = text_pipeline.get_glyphs(&entity) {
-            //     custom_size.width = custom_size.width.max(text_layout.size.x);
-            //     custom_size.height = custom_size.height.max(text_layout.size.y);
-            // }
         }
-
-        // bla_sizes.insert(entity,Vec2::new(custom_size.width,custom_size.height));
     }
 }

@@ -419,25 +419,30 @@ pub fn extract_uinodes(
         if let (Some(text), Some(text_layout),Some(text_computed) ) = (text, text_layout_info,text_computed,
             // text_pipeline.get_glyphs(&entity)
         ) {
-            let glyph_start_pos=text_layout.glyphs.first().map(|x|x.position).unwrap_or_default();
+            // let glyph_start_pos=text_layout.glyphs.first().map(|x|x.position).unwrap_or_default();
+            let glyph_offset=text_computed.bounds-text_layout.logical_size; //only needed for x, since because bevy now handles halign positioning
 
             for text_glyph in text_layout.glyphs.iter() {
                 let color = text.color;//text.sections[text_glyph.section_index].section.style.color;
                 let atlas = texture_atlases.get(&text_glyph.atlas_info.texture_atlas).unwrap();
                 let glyph_index = text_glyph.atlas_info.glyph_index as usize;
                 let atlas_glyph_rect = atlas.textures[glyph_index].as_rect();
-                let glyph_w=(atlas_glyph_rect.max.x-atlas_glyph_rect.min.x) as f32;
-                let glyph_h=(atlas_glyph_rect.max.y-atlas_glyph_rect.min.y) as f32;
+                // let glyph_w=(atlas_glyph_rect.max.x-atlas_glyph_rect.min.x) as f32;
+                // let glyph_h=(atlas_glyph_rect.max.y-atlas_glyph_rect.min.y) as f32;
+
+                let glyph_size=atlas_glyph_rect.max-atlas_glyph_rect.min;
+                let mut glyph_pos=layout_computed.pos + text_glyph.position - glyph_offset - glyph_size*0.5;
 
                 let atlas_size=atlas.size.as_vec2();
                 // println!("{} {} {}",computed.pos.x,text_glyph.position.x,glyph_w);
                 //todo margin
 
-                // let mut glyph_x = layout_computed.pos.x + text_glyph.position.x - glyph_w*0.5;
-                let mut glyph_y = layout_computed.pos.y + text_glyph.position.y - glyph_h*0.5;
+                // // let mut glyph_x = layout_computed.pos.x + text_glyph.position.x - glyph_w*0.5;
+                // let mut glyph_y = layout_computed.pos.y + text_glyph.position.y - glyph_h*0.5;
                 
-                let mut glyph_x = layout_computed.pos.x + text_glyph.position.x - glyph_start_pos.x;
-                // let mut glyph_y = layout_computed.pos.y + text_glyph.position.y - glyph_h*0.5 - glyph_start_pos.y;
+                // let mut glyph_x = layout_computed.pos.x + text_glyph.position.x - glyph_start_pos.x - glyph_w*0.5;
+                // let mut glyph_y = layout_computed.pos.y + text_glyph.position.y - glyph_start_pos.y - glyph_h*0.5;
+                // // let mut glyph_y = layout_computed.pos.y + text_glyph.position.y - glyph_h*0.5 - glyph_start_pos.y;
                 //handled by bevy now
                 //  bevy moves it within the specified size, ...
 
@@ -446,7 +451,7 @@ pub fn extract_uinodes(
                 // println!("layout_computed_size={}, logical_size={}, bound={}, max_size={}", layout_computed.size.x, text_layout.logical_size.x,text_computed.bounds.x,text_computed.max_size.x);
                 // layout_computed.pos
                 if text_layout.logical_size.x<=layout_computed.size.x {
-                    glyph_x+=match text.halign {
+                    glyph_pos.x+=match text.halign {
                         UiTextHAlign::Right => layout_computed.size.x-text_layout.logical_size.x,
                         UiTextHAlign::Center => (layout_computed.size.x-text_layout.logical_size.x)*0.5,
                         UiTextHAlign::Left => 0.0
@@ -462,7 +467,7 @@ pub fn extract_uinodes(
                 // }
 
                 if text_layout.logical_size.y<=layout_computed.size.y {
-                    glyph_y+=match text.valign {
+                    glyph_pos.y+=match text.valign {
                         UiTextVAlign::Top => 0.0,
                         UiTextVAlign::Center => (layout_computed.size.y-text_layout.logical_size.y)*0.5,
                         UiTextVAlign::Bottom => layout_computed.size.y-text_layout.logical_size.y
@@ -478,10 +483,11 @@ pub fn extract_uinodes(
                 // }
 
                 //
-                let glyph_x2 = glyph_x+glyph_w;
-                let glyph_y2 = glyph_y+glyph_h;
+                // let glyph_x2 = glyph_x+glyph_w;
+                // let glyph_y2 = glyph_y+glyph_h;
+                let glyph_pos2=glyph_pos+glyph_size;
 
-                let glyph_rect=UiRect { left: glyph_x, right: glyph_x2, top: glyph_y, bottom: glyph_y2 };
+                let glyph_rect=UiRect { left: glyph_pos.x, right: glyph_pos2.x, top: glyph_pos.y, bottom: glyph_pos2.y };
                 
                 // if intersect_rects(
                 //     clamped_inner_rect.left,clamped_inner_rect.top,

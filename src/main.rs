@@ -195,19 +195,23 @@ pub fn setup_ui(
             UiInnerSize::default(),
             UiTextComputed::default(),
             UiText{
-                value:"Hello".to_string(),
+                value:"X".to_string(),
+                hlen:3,
+                vlen:3,
                 font_size:30.0,
                 color:Color::WHITE,
                 font:asset_server.load("FiraMono-Medium.ttf"),
                 halign:UiTextHAlign::Right,
-                // valign:UiTextVAlign::Bottom,
-                valign:UiTextVAlign::Top,
+                // halign:UiTextHAlign::Left,
+                valign:UiTextVAlign::Bottom,
+                // valign:UiTextVAlign::Top,
                 update:true,..Default::default()
             },
             UiFill{ 
                 // hfill: UiVal::None,
-                hfill: UiVal::Scale(1.0), 
-                vfill: UiVal::None,
+                // hfill: UiVal::Scale(1.0), 
+                // vfill: UiVal::None,
+                ..Default::default()
             },
             UiSize{
                 // width:UiVal::Px(200.0),
@@ -215,8 +219,9 @@ pub fn setup_ui(
                 ..Default::default()
             },
             UiCongruent { 
-                row_width_scale: 0.0, 
-                col_height_scale: 1.0, 
+                // row_width_scale: 0.0, 
+                // col_height_scale: 1.0, 
+                ..Default::default()
             },
         ));
     });
@@ -239,7 +244,7 @@ fn update_input(
    
     for ev in key_events.read() {
         if ev.state==bevy::input::ButtonState::Pressed && !last_pressed.contains(&ev.key_code) { 
-            if ev.key_code==KeyCode::Escape {
+            if ev.key_code==KeyCode::Escape || ev.key_code==KeyCode::F4 {
                 exit.send(AppExit::Success); 
             } else if ev.key_code==KeyCode::F12 {
                 if let Some(path) = generate_screenshot_path("./screenshots","screenshot_","png") {

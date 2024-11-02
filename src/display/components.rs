@@ -34,7 +34,7 @@ pub struct UiImage {
 #[derive(Component, Clone, Default, Debug)]
 pub struct UiTextComputed{
     pub max_size: Vec2,
-    pub bounds: Vec2,
+    pub bounds: Vec2, //box size that text sits in including empty space, unlike text_layout.logical_size which is only for text itself
 }
 
 // #[derive(Debug,  Clone, Default)]

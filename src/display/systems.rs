@@ -14,12 +14,12 @@ use bevy::sprite::TextureAtlasLayout;
 use bevy::text::{BreakLineOn, Font, FontAtlasSets, JustifyText, TextError, TextLayoutInfo, TextPipeline, TextSection, TextSettings, TextStyle, YAxisOrientation};
 use bevy::window::Window;
 
-use super::super::super::layout::components::{UiLayoutComputed, UiInnerSize};
+use super::super::layout::components::{UiLayoutComputed, UiInnerSize};
 
-use super::super::components::*;
+use super::components::*;
 // use super::super::resources::*;
 // use super::super::utils::*;
-use super::super::values::*;
+use super::values::*;
 
 pub fn update_text_image(
     mut commands: Commands,
@@ -51,14 +51,14 @@ pub fn update_text_image(
     
 
     for (entity, 
-        &computed, 
+        &layout_computed, 
         mut inner_size, 
         text, 
         text_layout_info,
-        text_max_size,
+        text_computed,
         image) in ui_query.iter_mut()
     {
-        if !computed.enabled {
+        if !layout_computed.enabled {
             // println!("{entity:?} {computed:?}");
             continue;
         }
@@ -67,7 +67,7 @@ pub fn update_text_image(
         // and then later size wasn't 0, but counted as already updated,
         // showing no text
 
-        if computed.size.x==0.0 || computed.size.y==0.0 {
+        if layout_computed.size.x==0.0 || layout_computed.size.y==0.0 {
             continue;
         }
 
@@ -122,14 +122,13 @@ pub fn update_text_image(
             }
 
             //
-            if text.update && 
-            fonts_loaded {
+            if text.update && fonts_loaded {
                 // let qq:Vec<&String>=text.sections.iter().map(|x|&x.value).collect();
                 
                 // println!("{:?} {:?} {:?}",entity,(computed.w,computed.h),qq);
                 let bounds = Vec2::new(
-                    if computed.size.x<0.0 {f32::INFINITY} else {computed.size.x},
-                    if computed.size.y<0.0 {f32::INFINITY} else {computed.size.y}
+                    if layout_computed.size.x<0.0 {f32::INFINITY} else {layout_computed.size.x},
+                    if layout_computed.size.y<0.0 {f32::INFINITY} else {layout_computed.size.y}
                 );
         
                 // let bounds = Vec2::new(f32::INFINITY,f32::INFINITY);
@@ -148,7 +147,7 @@ pub fn update_text_image(
                 let mut bounds2: Vec2=bounds;
                 // let mut text_layout_info2= None;//TextLayoutInfo::default();
 
-                let mut new_text_max_size= text_max_size.as_ref().map(|x|x.max_size.clone()).unwrap_or_default();
+                let mut new_text_max_size= text_computed.as_ref().map(|x|x.max_size.clone()).unwrap_or_default();
 
                 //
                 if text.hlen!=0 || text.vlen!=0 {
@@ -259,10 +258,11 @@ pub fn update_text_image(
                 inner_size.height = inner_size.height.max(new_text_max_size.y); 
 
                 //
-                if let Some(mut text_max_size) = text_max_size {
-                    text_max_size.max_size=new_text_max_size;
+                if let Some(mut text_computed) = text_computed {
+                    text_computed.max_size=new_text_max_size;
+                    text_computed.bounds=layout_computed.size;
                 } else {
-                    commands.entity(entity).insert(UiTextComputed{max_size:new_text_max_size});
+                    commands.entity(entity).insert(UiTextComputed{max_size:new_text_max_size,bounds:layout_computed.size,});
                 }
 
                 // println!("==textupdated");
@@ -276,7 +276,7 @@ pub fn update_text_image(
                 //     inner_size.height = inner_size.height.max(text_layout_info.logical_size.y); //size
                 // }
                 
-                if let Some(text_max_size) = text_max_size { //first time it is inserted this will fail
+                if let Some(text_max_size) = text_computed { //first time it is inserted this will fail
                     inner_size.width = inner_size.width.max(text_max_size.max_size.x); //size
                     inner_size.height = inner_size.height.max(text_max_size.max_size.y); //size
                 }

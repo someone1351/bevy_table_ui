@@ -1,4 +1,6 @@
 
+use std::collections::HashSet;
+
 use bevy::app::*;
 use bevy::asset::prelude::*;
 use bevy::color::Color;
@@ -69,13 +71,16 @@ pub fn setup_ui(
         UiLayoutComputed::default(),
         UiColor{back:Color::srgb(0.2,0.4,0.6),..Default::default()},
         UiSize{
-            //width:UiVal::Px(500.0),
+            // width:UiVal::Px(200.0),
             width:UiVal::None,
-            height:UiVal::Px(500.0),
+            // height:UiVal::Px(500.0),
+            height:UiVal::None,
         },
         UiSpan{span:1},
         UiGap{hgap:UiVal::Px(30.0),vgap:UiVal::Px(30.0)},
     )).with_children(|parent|{
+
+        //0
         parent.spawn((
             UiLayoutComputed::default(),
             UiInnerSize::default(),
@@ -90,7 +95,13 @@ pub fn setup_ui(
                 height_scale:0.5,
                 ..Default::default()
             },
+            UiCongruent { 
+                row_width_scale: 0.0, 
+                col_height_scale: 1.0, 
+            },
         ));
+
+        //1
         parent.spawn((
             UiLayoutComputed::default(),
             UiColor{
@@ -102,9 +113,10 @@ pub fn setup_ui(
             UiTextComputed::default(),
             UiText{
                 value:"Hello".to_string(),
-                font_size:40.0,
+                font_size:30.0,
                 color:Color::WHITE,
                 font:asset_server.load("FiraMono-Medium.ttf"),
+                halign:UiTextHAlign::Right,
                 update:true,..Default::default()
             },
             UiFill{ 
@@ -113,10 +125,12 @@ pub fn setup_ui(
                 // vfill: UiVal::None,
                 vfill: UiVal::Scale(1.0), 
             },
-            UiSize{width:UiVal::Px(200.0),height:UiVal::Px(70.0)},
-            UiAlign{halign:UiVal::Scale(0.0),..Default::default()},
+            // UiSize{width:UiVal::Px(200.0),height:UiVal::Px(70.0)},
+            UiSize{width:UiVal::Px(200.0),height:UiVal::None},
+            // UiAlign{halign:UiVal::Scale(0.0),..Default::default()},
         ));
         
+        //2
         parent.spawn((
             UiLayoutComputed::default(),
             UiColor{
@@ -128,7 +142,7 @@ pub fn setup_ui(
             UiTextComputed::default(),
             UiText{
                 value:"Hello".to_string(),
-                font_size:40.0,
+                font_size:30.0,
                 color:Color::WHITE,
                 font:asset_server.load("FiraMono-Medium.ttf"),
                 halign:UiTextHAlign::Left,
@@ -140,8 +154,10 @@ pub fn setup_ui(
                 hfill: UiVal::Scale(1.0), 
                 vfill: UiVal::None,
             },
-            UiSize{width:UiVal::Px(200.0),height:UiVal::Px(70.0)},
+            // UiSize{width:UiVal::Px(200.0),height:UiVal::Px(70.0)},
         ));
+
+        //3
         parent.spawn((
             UiLayoutComputed::default(),
             UiColor{
@@ -153,9 +169,10 @@ pub fn setup_ui(
             UiTextComputed::default(),
             UiText{
                 value:"Hello".to_string(),
-                font_size:40.0,
+                font_size:30.0,
                 color:Color::WHITE,
                 font:asset_server.load("FiraMono-Medium.ttf"),
+                halign:UiTextHAlign::Center,
                 valign:UiTextVAlign::Center,
                 update:true,..Default::default()
             },
@@ -164,8 +181,10 @@ pub fn setup_ui(
                 hfill: UiVal::Scale(1.0), 
                 vfill: UiVal::None,
             },
-            UiSize{width:UiVal::Px(200.0),height:UiVal::Px(70.0)},
+            // UiSize{width:UiVal::Px(200.0),height:UiVal::None},
         ));
+
+        //4
         parent.spawn((
             UiLayoutComputed::default(),
             UiColor{
@@ -177,11 +196,12 @@ pub fn setup_ui(
             UiTextComputed::default(),
             UiText{
                 value:"Hello".to_string(),
-                font_size:40.0,
+                font_size:30.0,
                 color:Color::WHITE,
                 font:asset_server.load("FiraMono-Medium.ttf"),
                 halign:UiTextHAlign::Right,
-                valign:UiTextVAlign::Bottom,
+                // valign:UiTextVAlign::Bottom,
+                valign:UiTextVAlign::Top,
                 update:true,..Default::default()
             },
             UiFill{ 
@@ -189,7 +209,15 @@ pub fn setup_ui(
                 hfill: UiVal::Scale(1.0), 
                 vfill: UiVal::None,
             },
-            UiSize{width:UiVal::Px(200.0),height:UiVal::Px(70.0)},
+            UiSize{
+                // width:UiVal::Px(200.0),
+                // height:UiVal::Px(70.0), 
+                ..Default::default()
+            },
+            UiCongruent { 
+                row_width_scale: 0.0, 
+                col_height_scale: 1.0, 
+            },
         ));
     });
 
@@ -203,11 +231,29 @@ fn setup_camera(mut commands: Commands) {
 fn update_input(
     mut key_events: EventReader<bevy::input::keyboard::KeyboardInput>,
     mut exit: EventWriter<AppExit>,
+    mut screenshot_manager: ResMut<bevy::render::view::screenshot::ScreenshotManager>,
+    main_window: Query<Entity, With<bevy::window::PrimaryWindow>>,
+    mut last_pressed:Local<HashSet<KeyCode>>,
 ) {
+    let Ok(window_entity) = main_window.get_single() else {return;};
    
     for ev in key_events.read() {
-        if ev.state==bevy::input::ButtonState::Pressed && ev.key_code==KeyCode::Escape {
-            exit.send(AppExit::Success); 
+        if ev.state==bevy::input::ButtonState::Pressed && !last_pressed.contains(&ev.key_code) { 
+            if ev.key_code==KeyCode::Escape {
+                exit.send(AppExit::Success); 
+            } else if ev.key_code==KeyCode::F12 {
+                if let Some(path) = generate_screenshot_path("./screenshots","screenshot_","png") {
+                    if screenshot_manager.save_screenshot_to_disk(window_entity, &path).is_err() {                            
+                        eprintln!("Failed to take screenshot at {path:?}.");
+                    }
+                }
+            }
+        }
+
+        if ev.state==bevy::input::ButtonState::Pressed {
+            last_pressed.insert(ev.key_code);
+        } else if ev.state==bevy::input::ButtonState::Released {
+            last_pressed.remove(&ev.key_code);
         }
     }
 }
@@ -236,4 +282,51 @@ fn show_fps(
         let avg = v.and_then(|x|x.average()).unwrap_or_default();
         text.sections[0].value =format!("{fps:.0} {avg:.0}");
     }
+}
+
+
+fn generate_screenshot_path<P>(dir : P, prefix : &str, ext : &str) -> Option<std::path::PathBuf>
+where
+    P: AsRef<std::path::Path>,
+{
+    let dir=dir.as_ref();
+    let name_start=prefix.to_string();
+    let name_end=".".to_string()+ext;
+
+    //
+    let mut last_num=0;
+
+    //
+    if !std::fs::create_dir_all(dir).is_ok() {
+        eprintln!("Failed to create screenshot directory {dir:?}.");
+        return None;
+    }
+
+    let Ok(existing) = std::fs::read_dir(dir) else {
+        eprintln!("Failed to read screenshot directory {dir:?}.");
+        return None;
+    };
+
+    for x in existing.into_iter() {
+        let Ok(x)=x else {
+            continue;
+        };
+
+        let Some(x)=x.file_name().to_str().map(|x|x.to_string()) else {
+            continue;
+        };
+
+        if !x.starts_with(name_start.as_str()) || !x.ends_with(name_end.as_str()) {
+            continue;
+        }
+
+        let Ok(x)=x[name_start.len() .. x.len()-name_end.len()].to_string().parse::<u32>() else {
+            continue;
+        };
+
+        last_num=last_num.max(x);
+    }
+    
+    //    
+    Some(dir.join(format!("{name_start}{:04}{name_end}", last_num+1)))
 }

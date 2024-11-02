@@ -34,6 +34,7 @@ pub struct UiImage {
 #[derive(Component, Clone, Default, Debug)]
 pub struct UiTextComputed{
     pub max_size: Vec2,
+    pub bounds: Vec2,
 }
 
 // #[derive(Debug,  Clone, Default)]

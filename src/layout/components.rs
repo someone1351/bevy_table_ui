@@ -31,6 +31,7 @@ use super::values::*;
 // }
 
 
+//should it just resize the cell size instead ? 
 #[derive(Reflect,Component, Default, Debug, Copy, Clone)]
 pub struct UiCongruent { //congruence, congruent, congruous, consonant, coincide,  adjacent_size
     pub row_width_scale : f32,

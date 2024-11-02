@@ -27,6 +27,7 @@ use bevy::render::view::*;
 
 // use crate::table_ui::UiRect;
 
+
 // use super::super::core::*;
 // use super::super::*;
 use super::draw::*;
@@ -37,7 +38,7 @@ use super::components::*;
 use super::utils::*;
 use super::camera::*;
 
-use super::super::{components::{UiColor,UiText,UiImage},values::{UiTextHAlign,UiTextVAlign}};
+use super::super::{components::{UiColor,UiText,UiTextComputed,UiImage},values::{UiTextHAlign,UiTextVAlign}};
 use super::super::super::layout::{components::*,values::UiRect};
 
 
@@ -159,6 +160,7 @@ pub fn extract_uinodes(
         &UiLayoutComputed,
         Option<&UiImage>,
         Option<&UiText>,
+        Option<&UiTextComputed>,
         Option<&TextLayoutInfo>,
         Option<&Parent>,
         Option<&UiFloat>,
@@ -197,9 +199,10 @@ pub fn extract_uinodes(
 
     let mut c = 0;
     for (entity, 
-        computed, 
+        layout_computed, 
         image, 
         text,
+        text_computed,
         text_layout_info,
         parent,
         float,
@@ -222,7 +225,7 @@ pub fn extract_uinodes(
         // }
 
         
-        if !computed.visible {
+        if !layout_computed.visible {
             continue;
         }
         
@@ -232,7 +235,7 @@ pub fn extract_uinodes(
         // let text_depth=0;
 
         // let depth = computed.depth*10;
-        let depth = computed.order*3;
+        let depth = layout_computed.order*3;
         // let depth = computed.depth*3;
         // println!("")
         let image_depth=depth+1;
@@ -243,14 +246,14 @@ pub fn extract_uinodes(
         // let image_z=z+1.0;
         // let text_z =z+2.0;
 
-        let clamped_inner_rect = computed.clamped_rect;
-        let clamped_padding_rect = computed.clamped_padding_rect();
-        let clamped_border_rect = computed.clamped_border_rect();
-        let clamped_margin_rect = computed.clamped_margin_rect();
-        let clamped_cell_rect = computed.clamped_cell_rect;
+        let clamped_inner_rect = layout_computed.clamped_rect;
+        let clamped_padding_rect = layout_computed.clamped_padding_rect();
+        let clamped_border_rect = layout_computed.clamped_border_rect();
+        let clamped_margin_rect = layout_computed.clamped_margin_rect();
+        let clamped_cell_rect = layout_computed.clamped_cell_rect;
 
-        let clamped_inner_width = computed.clamped_rect.width();
-        let clamped_inner_height = computed.clamped_rect.height();
+        let clamped_inner_width = layout_computed.clamped_rect.width();
+        let clamped_inner_height = layout_computed.clamped_rect.height();
 
         //
         let padding_color = color.map(|c|c.padding).unwrap_or(Color::NONE);
@@ -293,7 +296,7 @@ pub fn extract_uinodes(
         //edges
         {
             let cols = [padding_color,border_color,margin_color,cell_color];
-            let sizes=[computed.padding_size,computed.border_size,computed.margin_size,computed.cell_size];
+            let sizes=[layout_computed.padding_size,layout_computed.border_size,layout_computed.margin_size,layout_computed.cell_size];
             let rects1 = [clamped_inner_rect,clamped_padding_rect,clamped_border_rect,clamped_margin_rect];
             let rects2 = [clamped_padding_rect,clamped_border_rect,clamped_margin_rect,clamped_cell_rect];
 
@@ -373,13 +376,13 @@ pub fn extract_uinodes(
                 let w = if image.width_scale > 0.0 {
                     image.width_scale*size.x
                 } else {
-                    computed.size.x
+                    layout_computed.size.x
                 };
 
                 let h = if image.height_scale > 0.0 {
                     image.height_scale*size.y
                 } else {
-                    computed.size.y
+                    layout_computed.size.y
                 };
     
                 let dx=clamped_inner_width/w;
@@ -413,10 +416,12 @@ pub fn extract_uinodes(
         }
 
         //text
-        if let (Some(text), Some(text_layout) ) = (text, text_layout_info
+        if let (Some(text), Some(text_layout),Some(text_computed) ) = (text, text_layout_info,text_computed,
             // text_pipeline.get_glyphs(&entity)
         ) {
-            for text_glyph in &text_layout.glyphs {
+            let glyph_start_pos=text_layout.glyphs.first().map(|x|x.position).unwrap_or_default();
+
+            for text_glyph in text_layout.glyphs.iter() {
                 let color = text.color;//text.sections[text_glyph.section_index].section.style.color;
                 let atlas = texture_atlases.get(&text_glyph.atlas_info.texture_atlas).unwrap();
                 let glyph_index = text_glyph.atlas_info.glyph_index as usize;
@@ -427,28 +432,52 @@ pub fn extract_uinodes(
                 let atlas_size=atlas.size.as_vec2();
                 // println!("{} {} {}",computed.pos.x,text_glyph.position.x,glyph_w);
                 //todo margin
-                let mut glyph_x = computed.pos.x + text_glyph.position.x - glyph_w*0.5;
-                let mut glyph_x = computed.pos.x + text_glyph.position.x - glyph_w*0.5;
-                let mut glyph_y = computed.pos.y + text_glyph.position.y - glyph_h*0.5;
+
+                // let mut glyph_x = layout_computed.pos.x + text_glyph.position.x - glyph_w*0.5;
+                let mut glyph_y = layout_computed.pos.y + text_glyph.position.y - glyph_h*0.5;
                 
+                let mut glyph_x = layout_computed.pos.x + text_glyph.position.x - glyph_start_pos.x;
+                // let mut glyph_y = layout_computed.pos.y + text_glyph.position.y - glyph_h*0.5 - glyph_start_pos.y;
                 //handled by bevy now
                 //  bevy moves it within the specified size, ...
-                // if text_layout.logical_size.x<=computed.size.x {
+
+
+
+                // println!("layout_computed_size={}, logical_size={}, bound={}, max_size={}", layout_computed.size.x, text_layout.logical_size.x,text_computed.bounds.x,text_computed.max_size.x);
+                // layout_computed.pos
+                if text_layout.logical_size.x<=layout_computed.size.x {
+                    glyph_x+=match text.halign {
+                        UiTextHAlign::Right => layout_computed.size.x-text_layout.logical_size.x,
+                        UiTextHAlign::Center => (layout_computed.size.x-text_layout.logical_size.x)*0.5,
+                        UiTextHAlign::Left => 0.0
+                    };
+                }
+
+                // if text_computed.bounds.x<=layout_computed.size.x {
                 //     glyph_x+=match text.halign {
-                //         UiTextHAlign::Right => computed.size.x-text_layout.logical_size.x,
-                //         UiTextHAlign::Center => (computed.size.x-text_layout.logical_size.x)*0.5,
+                //         UiTextHAlign::Right => layout_computed.size.x-text_computed.bounds.x,
+                //         UiTextHAlign::Center => (layout_computed.size.x-text_computed.bounds.x)*0.5,
                 //         UiTextHAlign::Left => 0.0
                 //     };
                 // }
 
-                if text_layout.logical_size.y<=computed.size.y {
+                if text_layout.logical_size.y<=layout_computed.size.y {
                     glyph_y+=match text.valign {
                         UiTextVAlign::Top => 0.0,
-                        UiTextVAlign::Center => (computed.size.y-text_layout.logical_size.y)*0.5,
-                        UiTextVAlign::Bottom => computed.size.y-text_layout.logical_size.y
+                        UiTextVAlign::Center => (layout_computed.size.y-text_layout.logical_size.y)*0.5,
+                        UiTextVAlign::Bottom => layout_computed.size.y-text_layout.logical_size.y
                     }; //ydir
                 }
 
+                // if text_computed.bounds.y<=layout_computed.size.y {
+                //     glyph_y+=match text.valign {
+                //         UiTextVAlign::Top => 0.0,
+                //         UiTextVAlign::Center => (layout_computed.size.y-text_computed.bounds.y)*0.5,
+                //         UiTextVAlign::Bottom => layout_computed.size.y-text_computed.bounds.y
+                //     }; //ydir
+                // }
+
+                //
                 let glyph_x2 = glyph_x+glyph_w;
                 let glyph_y2 = glyph_y+glyph_h;
 

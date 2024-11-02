@@ -1,6 +1,7 @@
 /.cargo
 /.vscode
 /target
+/screenshots
 .gitignore
 Cargo.lock
 git_run.bat

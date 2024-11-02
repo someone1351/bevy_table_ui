@@ -136,10 +136,10 @@ pub struct UiAlign {
 }
 
 
-#[derive(Reflect,Component, Default, Debug, Copy, Clone)]
-pub struct UiAspect {
-    pub aspect : UiAspectType,
-}
+// #[derive(Reflect,Component, Default, Debug, Copy, Clone)]
+// pub struct UiAspect {
+//     pub aspect : UiAspectType,
+// }
 
 #[derive(Reflect,Component, Default, Debug, Copy, Clone)]
 pub struct UiSize {

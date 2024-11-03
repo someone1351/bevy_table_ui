@@ -1,10 +1,10 @@
 use bevy::reflect::Reflect;
 
 
-#[derive(Debug)]
-pub struct UiTextAlignParseError;
-impl std::fmt::Display for UiTextAlignParseError { fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result { write!(f,"{self:?}") } }
-impl std::error::Error for UiTextAlignParseError { fn description(&self) -> &str { "" } }
+// #[derive(Debug)]
+// pub struct UiTextAlignParseError;
+// impl std::fmt::Display for UiTextAlignParseError { fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result { write!(f,"{self:?}") } }
+// impl std::error::Error for UiTextAlignParseError { fn description(&self) -> &str { "" } }
 
 #[derive(Reflect,Debug, Default, Clone,Copy,PartialEq,Eq)]
 pub enum UiTextHAlign {
@@ -40,27 +40,27 @@ impl ToString for UiTextVAlign {
     }
 }
 impl std::str::FromStr for UiTextHAlign {
-    type Err = UiTextAlignParseError;
+    type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "left" => Ok(UiTextHAlign::Left),
             "right" => Ok(UiTextHAlign::Right),
             "center"|"" => Ok(UiTextHAlign::Center),
-            _ => Err(UiTextAlignParseError)
+            _ => Err(())
         }
     }
 }
 
 impl std::str::FromStr for UiTextVAlign {
-    type Err = UiTextAlignParseError;
+    type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "top" => Ok(UiTextVAlign::Top),
             "bottom" => Ok(UiTextVAlign::Bottom),
             "center"|"" => Ok(UiTextVAlign::Center),
-            _ => Err(UiTextAlignParseError)
+            _ => Err(())
         }
     }
 }

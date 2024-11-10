@@ -715,12 +715,13 @@ pub fn ui_calc_computeds(
                     _ => 0.0
                 };
 
-                let hgap_spaces = hgap_space*((cols_num-1) as f32);
-                let vgap_spaces = vgap_space*((rows_num-1) as f32);
-
-                //
-                max_space_w=max_space_w.max(total_col_width + hgap_spaces);
-                max_space_h=max_space_h.max(total_row_height + vgap_spaces);
+                if cols_num!=0 && rows_num!=0 {
+                    let hgap_spaces = hgap_space*((cols_num-1) as f32);
+                    let vgap_spaces = vgap_space*((rows_num-1) as f32);
+    
+                    max_space_w=max_space_w.max(total_col_width + hgap_spaces);
+                    max_space_h=max_space_h.max(total_row_height + vgap_spaces);
+                }
             } else {
                 max_space_w=max_space_w.max(total_col_width);
                 max_space_h=max_space_h.max(total_row_height);

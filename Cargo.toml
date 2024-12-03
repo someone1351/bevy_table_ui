@@ -9,7 +9,7 @@ bevy = { version = "0.15.0", features = ["serialize","file_watcher","dynamic_lin
 
 bytemuck = "1.7"
 
-cosmic-text = "0.12.1"
+#cosmic-text = "0.12.1"
 
 [profile.dev]
 opt-level = 0

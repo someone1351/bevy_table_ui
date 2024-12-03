@@ -4,12 +4,13 @@ use std::collections::HashSet;
 use bevy::app::*;
 use bevy::asset::prelude::*;
 use bevy::color::Color;
-// use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
+use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::ecs::prelude::*;
 use bevy::text::*;
+use bevy::ui::{AlignSelf, JustifySelf, Node};
 use bevy::window::*;
 use bevy::DefaultPlugins;
-use bevy::prelude::{BuildChildren, Camera3d, ChildBuild, KeyCode, PluginGroup};
+use bevy::prelude::{BuildChildren, Camera3d, ChildBuild, KeyCode, PluginGroup, Text};
 
 use bevy_table_ui as table_ui;
 use table_ui::*;
@@ -30,7 +31,7 @@ fn main() {
                     }),
                     ..Default::default()
             }),
-            // FrameTimeDiagnosticsPlugin::default(),
+            FrameTimeDiagnosticsPlugin::default(),
             table_ui::UiLayoutPlugin,
             table_ui::UiInteractPlugin,
             table_ui::UiDisplayPlugin,
@@ -45,13 +46,13 @@ fn main() {
 
 
         .add_systems(Startup, (
-            // setup_fps,
+            setup_fps,
             setup_camera,
             setup_ui,
         ))
         .add_systems(Update, (
             update_input,
-            // show_fps.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(300))),
+            show_fps.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(300))),
         ))
         ;
     
@@ -124,7 +125,7 @@ pub fn setup_ui(
                 value:"Hello".to_string(),
                 font_size:30.0,
                 color:Color::WHITE,
-                font:asset_server.load("FiraMono-Medium.ttf"),
+                font:asset_server.load("fonts/FiraMono-Medium.ttf"),
                 halign:UiTextHAlign::Right,
                 update:true,..Default::default()
             },
@@ -155,7 +156,7 @@ pub fn setup_ui(
                 value:"Hello".to_string(),
                 font_size:30.0,
                 color:Color::WHITE,
-                font:asset_server.load("FiraMono-Medium.ttf"),
+                font:asset_server.load("fonts/FiraMono-Medium.ttf"),
                 halign:UiTextHAlign::Left,
                 valign:UiTextVAlign::Top,
                 update:true,..Default::default()
@@ -184,7 +185,7 @@ pub fn setup_ui(
                 value:"Hello".to_string(),
                 font_size:30.0,
                 color:Color::WHITE,
-                font:asset_server.load("FiraMono-Medium.ttf"),
+                font:asset_server.load("fonts/FiraMono-Medium.ttf"),
                 halign:UiTextHAlign::Center,
                 valign:UiTextVAlign::Center,
                 update:true,..Default::default()
@@ -215,7 +216,7 @@ pub fn setup_ui(
                 vlen:3,
                 font_size:30.0,
                 color:Color::WHITE,
-                font:asset_server.load("FiraMono-Medium.ttf"),
+                font:asset_server.load("fonts/FiraMono-Medium.ttf"),
                 halign:UiTextHAlign::Right,
                 // halign:UiTextHAlign::Left,
                 valign:UiTextVAlign::Bottom,
@@ -287,31 +288,40 @@ fn update_input(
     }
 }
 
-// #[derive(Component)]
-// struct FpsText;
+#[derive(Component)]
+struct FpsText;
 
-// fn setup_fps(
-//     mut commands: Commands, 
-//     asset_server: Res<AssetServer>,
-// ) {
-//     // let font = asset_server.load("FiraMono-Medium.ttf");
-//     // let text_style=TextStyle {font:font.clone(), font_size: 25.0, color: Color::WHITE};
-//     // let text_bundle=TextBundle::from_section("", text_style);
-//     // let fps_style=Style{align_self:AlignSelf::Start,justify_self:JustifySelf::End,..Default::default()};
-//     // commands.spawn(text_bundle.with_text_justify(JustifyText::Left).with_style(fps_style)).insert(FpsText);
-// }
+fn setup_fps(
+    mut commands: Commands, 
+    asset_server: Res<AssetServer>,
+) {
+    let font = asset_server.load("fonts/FiraMono-Medium.ttf");
 
-// fn show_fps(
-//     diagnostics: Res<DiagnosticsStore>,
-//     // mut marker_query: Query<&mut Text, With<FpsText>>
-// ) {
-//     // if let Ok(mut text)=marker_query.get_single_mut() {
-//     //     let v=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS);
-//     //     let fps = v.and_then(|x|x.value()).map(|x|x.round()).unwrap_or_default();
-//     //     let avg = v.and_then(|x|x.average()).unwrap_or_default();
-//     //     text.sections[0].value =format!("{fps:.0} {avg:.0}");
-//     // }
-// }
+    commands.spawn((
+        Text::default(),
+        TextLayout::new_with_justify(JustifyText::Center),
+        Node {align_self:AlignSelf::Start,justify_self:JustifySelf::End,..Default::default()},
+    )).with_child((
+        TextSpan::new(""),
+        TextColor::from(bevy::color::palettes::css::WHITE),
+        TextFont {font:font.clone(),font_size: 15.0,..Default::default()},
+        FpsText
+    ));
+}
+
+fn show_fps(
+    diagnostics: Res<DiagnosticsStore>,
+    mut marker_query: Query< &mut TextSpan,With<FpsText>>,
+) {
+    if let Ok(mut text)=marker_query.get_single_mut() {
+        let v=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS);
+        let fps = v.and_then(|x|x.value()).map(|x|x.round()).unwrap_or_default();
+        let avg = v.and_then(|x|x.average()).unwrap_or_default();
+        text.0 =format!("{fps:.0} {avg:.0}");
+    }
+}
+
+
 
 
 fn generate_screenshot_path<P>(dir : P, prefix : &str, ext : &str) -> Option<std::path::PathBuf>

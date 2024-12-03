@@ -321,7 +321,7 @@ pub fn update_focus_events(
 
         let root_entity = parent_query.iter_ancestors(entity).last().unwrap_or(entity);
 
-        let (cur_focus_entity,focus_entity_stk,hist)=focus_states.cur_focuses
+        let (_cur_focus_entity,_focus_entity_stk,hist)=focus_states.cur_focuses
             .entry(root_entity).or_default()
             .entry(focusable.group).or_default()
             ;
@@ -342,8 +342,8 @@ pub fn update_focus_events(
         }
     }
 
-    for (&(root_entity,focus_group),&(entity,order)) in root_focus_group_focuses.iter() {
-        let (cur_focus_entity,focus_entity_stk,hist)=focus_states.cur_focuses
+    for (&(root_entity,focus_group),&(entity,_order)) in root_focus_group_focuses.iter() {
+        let (cur_focus_entity,focus_entity_stk,_hist)=focus_states.cur_focuses
             .entry(root_entity).or_default()
             .entry(focus_group).or_default()
             ;
@@ -400,7 +400,7 @@ pub fn update_focus_events(
         match ev.clone() {
             UiInteractInputEvent::FocusEnter{root_entity,group} => {
                 if let Some(groups)=focus_states.cur_focuses.get_mut(&root_entity) {
-                    if let Some((cur_focus_entity,focus_entity_stk, hist))=groups.get_mut(&group) {
+                    if let Some((cur_focus_entity,focus_entity_stk, _hist))=groups.get_mut(&group) {
                         if let Some(entity)=*cur_focus_entity {
                             focus_entity_stk.push(entity);
                             // prev_focused_stk.push(Default::default());
@@ -411,7 +411,7 @@ pub fn update_focus_events(
             }
             UiInteractInputEvent::FocusExit{root_entity,group} => {
                 if let Some(groups)=focus_states.cur_focuses.get_mut(&root_entity) {
-                    if let Some((cur_focus_entity,focus_entity_stk, hist))=groups.get_mut(&group) {
+                    if let Some((cur_focus_entity,focus_entity_stk, _hist))=groups.get_mut(&group) {
                         //already checked above for enabled/unlocked
                         if let Some(entity)=*cur_focus_entity {
                             ui_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::FocusEnd{group}});
@@ -488,7 +488,7 @@ pub fn update_focus_events(
             //  that are in same row/col (for hori/vert) or all if using order (for prev/enxt)
 
             if let Some(cur_focus_entity)=*cur_focus_entity {
-                let mut prev_entity = cur_focus_entity;
+                // let mut prev_entity = cur_focus_entity;
 
                 //calculated from curfocus+focus_stk, used on "to" nodes, 
                 let mut from_bounds = Vec::new(); //[depth_len-depth-1]=(focus_nodes[depth].col,.focus_nodes[depth].parent.cols)
@@ -787,7 +787,7 @@ pub fn update_focus_events(
             let mut _found=false;
 
             //eval stk
-            while let Some((entity, from_bounds, to_bound, focus_depth,valid))=stk.pop() {
+            while let Some((entity, from_bounds, to_bound, focus_depth,_valid))=stk.pop() {
                 // println!("while stk: entity={entity:?}, from_bounds={from_bounds:?}, to_bound={to_bound:?}, focus_depth={focus_depth}, stk_len={}",stk.len());
 
                 let Ok(computed) = computed_query.get(entity) else {continue;};
@@ -808,7 +808,7 @@ pub fn update_focus_events(
                         }
 
                         if focus_depth>0 {
-                            for i in 0 .. focus_depth {
+                            for _ in 0 .. focus_depth {
                                 let entity=focus_entity_stk.pop().unwrap();
                                 // prev_focused_stk.pop().unwrap();
 
@@ -916,7 +916,7 @@ pub fn update_focus_events(
                             // println!("\t\tfrom_len == 1");
 
                             for to in to_start .. to_end {
-                                let mut from_range=&mut to_from_map[to as usize];
+                                let from_range=&mut to_from_map[to as usize];
 
                                 // // println!("\t\t\tfromrange1 {from_range:?} => {to}");
 
@@ -928,7 +928,7 @@ pub fn update_focus_events(
                         } else if to_len == 1 {
                             // println!("\t\tto_len == 1");
 
-                            let mut from_range=&mut to_from_map[to_start as usize];
+                            let from_range=&mut to_from_map[to_start as usize];
                             
                             // println!("\t\t\tfromrange1 {from_range:?} => {to_start}");
 
@@ -946,7 +946,7 @@ pub fn update_focus_events(
 
                             for to in to_start .. to_end {
                                 let i = to-to_start;
-                                let mut from_range=&mut to_from_map[to as usize];
+                                let from_range=&mut to_from_map[to as usize];
 
                                 // // println!("\t\t\tfromrange1 {from_range:?} => {to}");
 
@@ -965,7 +965,7 @@ pub fn update_focus_events(
                             for to in to_start .. to_end {
                                 let i = to-to_start;
 
-                                let mut from_range=&mut to_from_map[to as usize];
+                                let from_range=&mut to_from_map[to as usize];
 
                                 
                                 // // println!("\t\t\tfromrange1 {from_range:?} => {to}");
@@ -982,7 +982,7 @@ pub fn update_focus_events(
                             for to in to_start .. to_end {
                                 let i = to-to_start;
                                 let from=i+from_start;
-                                let mut from_range=&mut to_from_map[to as usize];
+                                let from_range=&mut to_from_map[to as usize];
 
                                 
                                 // // println!("\t\t\tfromrange1 {from_range:?} => {to}");
@@ -1038,7 +1038,7 @@ pub fn update_focus_events(
 
                         for (to,&(from_start,from_end)) in to_from_map.iter().enumerate() {
                             let to = to as u32;
-                            let from_len = from_end-from_start;
+                            // let from_len = from_end-from_start;
 
                             for from in from_start .. from_end {
                                 // let from=from_start+i;
@@ -1055,8 +1055,8 @@ pub fn update_focus_events(
 
                         if to_len > 1 && from_bounds.len()>0 {
                             let new_to_bound=(to_start,to_start+to_len);
-                            let mut from_bounds =from_bounds.clone();
-                            // from_bounds.push((from_bound_ind,from_bound_len));
+                            // let mut from_bounds =from_bounds.clone();
+                            // // from_bounds.push((from_bound_ind,from_bound_len));
 
                             // println!("\t\tto_len > 1");
                             // println!("\t\t\tstk={stk:?}");

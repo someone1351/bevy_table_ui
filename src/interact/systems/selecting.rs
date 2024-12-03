@@ -8,7 +8,7 @@ use bevy::hierarchy::prelude::*;
 use super::super::super::layout::components::UiLayoutComputed;
 
 use super::super::components::*;
-use super::super::resources::*;
+// use super::super::resources::*;
 use super::super::events::*;
 // use super::super::utils::*;
 // use super::super::values::*;

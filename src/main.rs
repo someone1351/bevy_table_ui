@@ -4,13 +4,12 @@ use std::collections::HashSet;
 use bevy::app::*;
 use bevy::asset::prelude::*;
 use bevy::color::Color;
-use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
+// use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::ecs::prelude::*;
 use bevy::text::*;
-use bevy::ui::{AlignSelf, JustifySelf, Style};
 use bevy::window::*;
 use bevy::DefaultPlugins;
-use bevy::prelude::{BuildChildren, Camera, Camera3dBundle, KeyCode, PluginGroup, TextBundle};
+use bevy::prelude::{BuildChildren, Camera3d, ChildBuild, KeyCode, PluginGroup};
 
 use bevy_table_ui as table_ui;
 use table_ui::*;
@@ -31,7 +30,7 @@ fn main() {
                     }),
                     ..Default::default()
             }),
-            FrameTimeDiagnosticsPlugin::default(),
+            // FrameTimeDiagnosticsPlugin::default(),
             table_ui::UiLayoutPlugin,
             table_ui::UiInteractPlugin,
             table_ui::UiDisplayPlugin,
@@ -46,13 +45,13 @@ fn main() {
 
 
         .add_systems(Startup, (
-            setup_fps,
+            // setup_fps,
             setup_camera,
             setup_ui,
         ))
         .add_systems(Update, (
             update_input,
-            show_fps.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(300))),
+            // show_fps.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(300))),
         ))
         ;
     
@@ -66,6 +65,16 @@ pub fn setup_ui(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
+    // commands.spawn((
+    //     MenuUiRoot,
+    //     UiLayoutComputed::default(),
+    //     UiColor{back:Color::srgb(0.2,0.4,0.9),..Default::default()},
+    //     UiSize{
+    //          width:UiVal::Px(200.0),
+    //          height:UiVal::Px(500.0),
+    //     },
+    // ));
+    
     commands.spawn((
         MenuUiRoot,
         UiLayoutComputed::default(),
@@ -119,6 +128,8 @@ pub fn setup_ui(
                 halign:UiTextHAlign::Right,
                 update:true,..Default::default()
             },
+            ComputedTextBlock::default(),
+            TextLayoutInfo::default(),
             UiFill{ 
                 hfill: UiVal::None,
                 // hfill: UiVal::Scale(1.0), 
@@ -149,6 +160,8 @@ pub fn setup_ui(
                 valign:UiTextVAlign::Top,
                 update:true,..Default::default()
             },
+            ComputedTextBlock::default(),
+            TextLayoutInfo::default(),
             UiFill{ 
                 // hfill: UiVal::None,
                 hfill: UiVal::Scale(1.0), 
@@ -176,6 +189,8 @@ pub fn setup_ui(
                 valign:UiTextVAlign::Center,
                 update:true,..Default::default()
             },
+            ComputedTextBlock::default(),
+            TextLayoutInfo::default(),
             UiFill{ 
                 // hfill: UiVal::None,
                 hfill: UiVal::Scale(1.0), 
@@ -207,6 +222,8 @@ pub fn setup_ui(
                 // valign:UiTextVAlign::Top,
                 update:true,..Default::default()
             },
+            ComputedTextBlock::default(),
+            TextLayoutInfo::default(),
             UiFill{ 
                 // hfill: UiVal::None,
                 // hfill: UiVal::Scale(1.0), 
@@ -230,17 +247,21 @@ pub fn setup_ui(
 
 fn setup_camera(mut commands: Commands) {
     // commands.spawn(( Camera2dBundle { camera: Camera { ..Default::default() }, ..Default::default() }, ));
-    commands.spawn((Camera3dBundle { camera: Camera { ..Default::default() }, ..Default::default() },));
+    // commands.spawn((Camera3dBundle { camera: Camera { ..Default::default() }, ..Default::default() },));
+    commands.spawn((Camera3d::default(),));
 }
 
 fn update_input(
     mut key_events: EventReader<bevy::input::keyboard::KeyboardInput>,
     mut exit: EventWriter<AppExit>,
-    mut screenshot_manager: ResMut<bevy::render::view::screenshot::ScreenshotManager>,
-    main_window: Query<Entity, With<bevy::window::PrimaryWindow>>,
+    // mut screenshot_manager: ResMut<bevy::render::view::screenshot::ScreenshotManager>,
+    // main_window: Query<Entity, With<bevy::window::PrimaryWindow>>,
     mut last_pressed:Local<HashSet<KeyCode>>,
+    mut commands: Commands, 
+
+    
 ) {
-    let Ok(window_entity) = main_window.get_single() else {return;};
+    // let Ok(window_entity) = main_window.get_single() else {return;};
    
     for ev in key_events.read() {
         if ev.state==bevy::input::ButtonState::Pressed && !last_pressed.contains(&ev.key_code) { 
@@ -248,9 +269,12 @@ fn update_input(
                 exit.send(AppExit::Success); 
             } else if ev.key_code==KeyCode::F12 {
                 if let Some(path) = generate_screenshot_path("./screenshots","screenshot_","png") {
-                    if screenshot_manager.save_screenshot_to_disk(window_entity, &path).is_err() {                            
-                        eprintln!("Failed to take screenshot at {path:?}.");
-                    }
+                    // if screenshot_manager.save_screenshot_to_disk(window_entity, &path).is_err() {                            
+                    //     eprintln!("Failed to take screenshot at {path:?}.");
+                    // }
+                    commands
+                        .spawn(bevy::render::view::screenshot::Screenshot::primary_window())
+                        .observe(bevy::render::view::screenshot::save_to_disk(path));
                 }
             }
         }
@@ -263,31 +287,31 @@ fn update_input(
     }
 }
 
-#[derive(Component)]
-struct FpsText;
+// #[derive(Component)]
+// struct FpsText;
 
-fn setup_fps(
-    mut commands: Commands, 
-    asset_server: Res<AssetServer>,
-) {
-    let font = asset_server.load("FiraMono-Medium.ttf");
-    let text_style=TextStyle {font:font.clone(), font_size: 25.0, color: Color::WHITE};
-    let text_bundle=TextBundle::from_section("", text_style);
-    let fps_style=Style{align_self:AlignSelf::Start,justify_self:JustifySelf::End,..Default::default()};
-    commands.spawn(text_bundle.with_text_justify(JustifyText::Left).with_style(fps_style)).insert(FpsText);
-}
+// fn setup_fps(
+//     mut commands: Commands, 
+//     asset_server: Res<AssetServer>,
+// ) {
+//     // let font = asset_server.load("FiraMono-Medium.ttf");
+//     // let text_style=TextStyle {font:font.clone(), font_size: 25.0, color: Color::WHITE};
+//     // let text_bundle=TextBundle::from_section("", text_style);
+//     // let fps_style=Style{align_self:AlignSelf::Start,justify_self:JustifySelf::End,..Default::default()};
+//     // commands.spawn(text_bundle.with_text_justify(JustifyText::Left).with_style(fps_style)).insert(FpsText);
+// }
 
-fn show_fps(
-    diagnostics: Res<DiagnosticsStore>,
-    mut marker_query: Query<&mut Text, With<FpsText>>
-) {
-    if let Ok(mut text)=marker_query.get_single_mut() {
-        let v=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS);
-        let fps = v.and_then(|x|x.value()).map(|x|x.round()).unwrap_or_default();
-        let avg = v.and_then(|x|x.average()).unwrap_or_default();
-        text.sections[0].value =format!("{fps:.0} {avg:.0}");
-    }
-}
+// fn show_fps(
+//     diagnostics: Res<DiagnosticsStore>,
+//     // mut marker_query: Query<&mut Text, With<FpsText>>
+// ) {
+//     // if let Ok(mut text)=marker_query.get_single_mut() {
+//     //     let v=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS);
+//     //     let fps = v.and_then(|x|x.value()).map(|x|x.round()).unwrap_or_default();
+//     //     let avg = v.and_then(|x|x.average()).unwrap_or_default();
+//     //     text.sections[0].value =format!("{fps:.0} {avg:.0}");
+//     // }
+// }
 
 
 fn generate_screenshot_path<P>(dir : P, prefix : &str, ext : &str) -> Option<std::path::PathBuf>

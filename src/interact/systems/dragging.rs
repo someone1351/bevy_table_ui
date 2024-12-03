@@ -5,13 +5,11 @@
 
 use std::collections::BTreeMap;
 use std::collections::HashMap;
-use std::collections::HashSet;
 
 use bevy::ecs::prelude::*;
 use bevy::hierarchy::prelude::*;
 
 use bevy::math::Vec2;
-use bevy::window::Window;
 
 
 
@@ -22,7 +20,7 @@ use super::super::super::layout::values::UiRect;
 
 
 use super::super::components::*;
-use super::super::resources::*;
+// use super::super::resources::*;
 use super::super::events::*;
 // use super::super::utils::*;
 // use super::super::values::*;
@@ -37,7 +35,7 @@ pub fn update_drag_events(
     
 
     // press_states:Res<UiPressStates>,
-    mut draggable_query: Query<(Entity,&UiLayoutComputed,&UiDraggable)>,
+    draggable_query: Query<(Entity,&UiLayoutComputed,&UiDraggable)>,
     parent_query : Query<&Parent,With<UiLayoutComputed>>,
 
 
@@ -48,8 +46,8 @@ pub fn update_drag_events(
     
 ) {
     //remove disabled or without drag component
-    device_drags.retain(|(root_entity,_device,),(mut dragged_entity,_size,_offset,_cursor,)|{
-        draggable_query.get(dragged_entity).map(|(_e,c,d)|c.unlocked&&d.enable).unwrap_or_default()
+    device_drags.retain(|(_root_entity,_device,),( dragged_entity,_size,_offset,_cursor,)|{
+        draggable_query.get(*dragged_entity).map(|(_e,c,d)|c.unlocked&&d.enable).unwrap_or_default()
     });
 
     //
@@ -91,9 +89,11 @@ pub fn update_drag_events(
                     continue;
                 };
 
-                let Some((mut entity,size,offset,start_cursor)) = device_drags.get_mut(&(root_entity,device)) else {
+                let Some((entity,size,offset,start_cursor)) = device_drags.get_mut(&(root_entity,device)) else {
                     continue;
                 };
+
+                let entity=*entity;
 
                 // let entity_presseds=entities_presseds.entry((root_entity,entity)).or_default();
                 // let (_,layout_computed,pressable)=draggable_query.get(entity).unwrap();
@@ -128,7 +128,7 @@ pub fn update_drag_events(
                 };
 
                 //
-                let Some((_,&(found_entity,cell_size,border_rect)))=draggable_entities.iter().rev().find(|&(_,&(entity,_,rect))|{
+                let Some((_,&(found_entity,cell_size,border_rect)))=draggable_entities.iter().rev().find(|&(_,&(_entity,_,rect))|{
                     rect.contains_point(cursor)
                 }) else {
                     continue;

@@ -1,9 +1,7 @@
 // use std::collections::HashSet;
 
 use std::collections::{BTreeSet, HashMap};
-use std::hash::Hash;
 
-use bevy::color::{Color, ColorToComponents};
 use bevy::ecs::prelude::*;
 
 use super::components::*;
@@ -88,11 +86,11 @@ pub fn run_affect_states(
                     affect_computed.states.remove(&UiAffectState::Select);
                 }
             }
-            UiInteractEventType::HoverBegin{device} => {
+            UiInteractEventType::HoverBegin{..} => {
                 affect_computed.states.insert(UiAffectState::Hover);
                 new_states.insert(UiAffectState::Hover);
             }
-            UiInteractEventType::HoverEnd{device} => {
+            UiInteractEventType::HoverEnd{..} => {
                 if new_states.contains(&UiAffectState::Hover) {
                     affect_computed.remove_states.insert(UiAffectState::Hover);
                 } else {
@@ -145,7 +143,7 @@ pub fn run_affect_vals(
 
         //back color
         if let Some(x)=get_state_val(&affect.states,&affect.back_color) {
-            commands.add(move|world: &mut World| {
+            commands.queue(move|world: &mut World| {
                 let mut e=world.entity_mut(entity);
                 let mut c=e.entry::<UiColor>().or_default();
                 c.back=x;
@@ -154,7 +152,7 @@ pub fn run_affect_vals(
         
         //border color
         if let Some(x)=get_state_val(&affect.states,&affect.border_color) {
-            commands.add(move|world: &mut World| {
+            commands.queue(move|world: &mut World| {
                 let mut e=world.entity_mut(entity);
                 let mut c=e.entry::<UiColor>().or_default();
                 c.border=x;
@@ -174,7 +172,7 @@ pub fn run_affect_vals(
             //     }
             // });
 
-            commands.add(move|world: &mut World| {
+            commands.queue(move|world: &mut World| {
                 let mut e=world.entity_mut(entity);
                 let mut c=e.entry::<UiText>().or_default();
                 c.color=x;
@@ -183,7 +181,7 @@ pub fn run_affect_vals(
 
         //padding color
         if let Some(x)=get_state_val(&affect.states,&affect.padding_color) {
-            commands.add(move|world: &mut World| {
+            commands.queue(move|world: &mut World| {
                 let mut e=world.entity_mut(entity);
                 let mut c=e.entry::<UiColor>().or_default();
                 c.padding=x;
@@ -192,7 +190,7 @@ pub fn run_affect_vals(
 
         //margin color
         if let Some(x)=get_state_val(&affect.states,&affect.margin_color) {
-            commands.add(move|world: &mut World| {
+            commands.queue(move|world: &mut World| {
                 let mut e=world.entity_mut(entity);
                 let mut c=e.entry::<UiColor>().or_default();
                 c.margin=x;
@@ -201,7 +199,7 @@ pub fn run_affect_vals(
 
         //cell color
         if let Some(x)=get_state_val(&affect.states,&affect.cell_color) {
-            commands.add(move|world: &mut World| {
+            commands.queue(move|world: &mut World| {
                 let mut e=world.entity_mut(entity);
                 let mut c=e.entry::<UiColor>().or_default();
                 c.cell=x;

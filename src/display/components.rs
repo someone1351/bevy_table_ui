@@ -1,4 +1,6 @@
-use bevy::{asset::Handle, color::Color, ecs::prelude::*, math::Vec2, prelude::Image, reflect::Reflect, text::Font};
+use bevy::{asset::Handle, color::Color, ecs::prelude::*, math::Vec2, prelude::Image, reflect::Reflect, text::{ComputedTextBlock, Font, TextLayoutInfo}};
+use crate::UiInnerSize;
+
 // use bevy::prelude::*;
 use super::values::*;
 
@@ -21,7 +23,7 @@ impl Default for UiColor {
 
 
 #[derive(Reflect,Component, Default, Debug, Clone)]
-// #[require(UiInnerSize)]
+#[require(UiInnerSize)]
 
 pub struct UiImage {
     pub handle : Handle<Image>,
@@ -46,7 +48,7 @@ pub struct UiTextComputed{
 // }
 
 #[derive(Component, Debug,  Clone,  )]
-// #[require(UiInnerSize,UiTextComputed)]
+#[require(UiInnerSize,UiTextComputed,TextLayoutInfo,ComputedTextBlock)]
 pub struct UiText {
     // pub sections: Vec<UiTextSection>,
     // pub section : TextSection,

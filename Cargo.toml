@@ -4,11 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = { version = "0.14.2", features = ["serialize","file_watcher","dynamic_linking"] }
+bevy = { version = "0.15.0", features = ["serialize","file_watcher","dynamic_linking"] }
 
 
 bytemuck = "1.7"
 
+cosmic-text = "0.12.1"
 
 [profile.dev]
 opt-level = 0

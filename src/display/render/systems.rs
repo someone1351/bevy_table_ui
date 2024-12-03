@@ -1,15 +1,17 @@
-use std::cmp::Ordering;
+
 use std::collections::HashMap;
 
 use bevy::asset::*;
 use bevy::color::Color;
+use bevy::ecs::entity::EntityHashSet;
 use bevy::ecs::prelude::*;
 use bevy::hierarchy::Parent;
-use bevy::math::{FloatOrd, Vec2};
-use bevy::prelude::Camera;
-use bevy::sprite::{TextureAtlas, TextureAtlasLayout};
+use bevy::image::{BevyDefault, Image, TextureFormatPixelInfo};
+use bevy::math::{FloatOrd, Mat4, URect, UVec4, Vec2};
+use bevy::prelude::{Camera, Camera2d, Camera3d, GlobalTransform};
+use bevy::render::sync_world::{RenderEntity, TemporaryRenderEntity};
+use bevy::sprite::TextureAtlasLayout;
 use bevy::text::*;
-// use bevy::utils::FloatOrd;
 use bevy::window::{Window,PrimaryWindow};
 
 use bevy::render::Extract;
@@ -21,21 +23,11 @@ use bevy::render::texture::*;
 use bevy::render::view::*;
 
 
-// use bevy::render::color::Color;
-
-// use crate::table_ui::*;
-
-// use crate::table_ui::UiRect;
-
-
-// use super::super::core::*;
-// use super::super::*;
 use super::draw::*;
 use super::phase::*;
 use super::pipeline::*;
 use super::resources::*;
 use super::components::*;
-use super::utils::*;
 use super::camera::*;
 
 use super::super::{components::{UiColor,UiText,UiTextComputed,UiImage},values::{UiTextHAlign,UiTextVAlign}};
@@ -69,13 +61,12 @@ pub fn dummy_image_setup(
 pub fn extract_dummy_image_setup(
     mut has_ran: Local<bool>,
     images: Extract<Res<Assets<Image>>>,
-    // mut gpu_images : ResMut<RenderAssets<Image>>,
-    mut gpu_images : ResMut<RenderAssets<GpuImage>>,
+    // mut gpu_images : ResMut<RenderAssets<GpuImage>>,
 
     dummy_image: Extract<Res<DummyImage>>,
     render_device : Res<RenderDevice>,
-    mut render_queue : ResMut<RenderQueue>,
-    default_sampler : ResMut<DefaultImageSampler>,
+    render_queue : Res<RenderQueue>,
+    // default_sampler : ResMut<DefaultImageSampler>,
     mut dummy_gpu_image : ResMut<DummyGpuImage>,
 
 ) {
@@ -93,10 +84,7 @@ pub fn extract_dummy_image_setup(
 
     //
     let texture = render_device.create_texture(&image.texture_descriptor);
-    // let sampler = match &image.sampler_descriptor {
-    //     ImageSampler::Default => (**default_sampler).clone(),
-    //     ImageSampler::Descriptor(descriptor) => render_device.create_sampler(&descriptor),
-    // };
+
     let sampler = render_device.create_sampler(&SamplerDescriptor {
         min_filter: FilterMode::Nearest,
         mag_filter: FilterMode::Nearest,
@@ -137,14 +125,67 @@ pub fn extract_dummy_image_setup(
         mip_level_count:1, //todo what
     };
 
-    // // let handle = images.add(image);
     dummy_gpu_image.gpu_image = Some(gpu_image);
-    // gpu_images.insert(dummy_image.handle.clone_weak(), gpu_image);
-
 
     println!("extract dummy image inited!");
-
 }
+
+
+
+pub fn extract_default_ui_camera_view(
+    mut commands: Commands,
+    mut transparent_render_phases: ResMut<ViewSortedRenderPhases<MyTransparentUi>>,
+    query: Extract<Query<(RenderEntity, &Camera), Or<(With<Camera2d>, With<Camera3d>)>>>,
+    mut live_entities: Local<EntityHashSet>,
+) {
+    /// Extracts all UI elements associated with a camera into the render world.
+    
+    const UI_CAMERA_TRANSFORM_OFFSET: f32 = -0.1;
+    const UI_CAMERA_FAR: f32 = 1000.0;
+
+    live_entities.clear();
+
+    let scale = 1.0;//ui_scale.0.recip();
+    for (entity, camera) in &query {
+        // ignore inactive cameras
+        if !camera.is_active {
+            let mut entity_commands = commands.get_entity(entity).expect("Camera entity wasn't synced.");
+            entity_commands.remove::<MyDefaultCameraView>();
+            continue;
+        }
+
+        if let (Some(logical_size),Some(URect {min: physical_origin,..}), Some(physical_size),) = (
+            camera.logical_viewport_size(),
+            camera.physical_viewport_rect(),
+            camera.physical_viewport_size(),
+        ) {
+            // use a projection matrix with the origin in the top left instead of the bottom left that comes with OrthographicProjection
+            let projection_matrix = Mat4::orthographic_rh(0.0, logical_size.x * scale, logical_size.y * scale, 0.0, 0.0, UI_CAMERA_FAR,);
+            let default_camera_view = commands
+                .spawn((ExtractedView {
+                    clip_from_view: projection_matrix,
+                    world_from_view: GlobalTransform::from_xyz(0.0, 0.0, UI_CAMERA_FAR + UI_CAMERA_TRANSFORM_OFFSET,),
+                    clip_from_world: None,
+                    hdr: camera.hdr,
+                    viewport: UVec4::new( physical_origin.x, physical_origin.y, physical_size.x, physical_size.y, ),
+                    color_grading: Default::default(),
+                },TemporaryRenderEntity)).id();
+                
+            let mut entity_commands = commands.get_entity(entity).expect("Camera entity wasn't synced.");
+            entity_commands.insert(MyDefaultCameraView(default_camera_view));
+            transparent_render_phases.insert_or_clear(entity);
+
+            live_entities.insert(entity);
+        }
+    }
+
+    transparent_render_phases.retain(|entity, _| live_entities.contains(entity));
+}
+
+
+
+
+
 
 
 pub fn extract_uinodes(
@@ -153,7 +194,6 @@ pub fn extract_uinodes(
 
     textures: Extract<Res<Assets<Image>>>,    
     texture_atlases: Extract<Res<Assets<TextureAtlasLayout>>>,
-    dummy_image: Extract<Res<DummyImage>>,
 
     uinode_query: Extract<Query<(
         Entity,
@@ -171,80 +211,56 @@ pub fn extract_uinodes(
 
     mut extracted_elements : ResMut<MyUiExtractedElements>, 
 
-
-    camera_query: Extract<Query<(Entity, &Camera)>>,
+    // camera_query: Extract<Query<(Entity, &Camera)>>,
     default_ui_camera: Extract<MyDefaultUiCamera>,
+    mapping: Extract<Query<RenderEntity>>,
 ) {
 
     extracted_elements.elements.clear();
 
-    let mut text_entities = Vec::<Entity>::new();
-
-    let window=windows.get_single();
 
     let scale_factor = windows
         .get_single()
         .map(|window| window.resolution.scale_factor() as f32)
         .unwrap_or(1.0);
 
-    let window_size=window.and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
+    // let window=windows.get_single();
+    // // let window_size=window.and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
     
-    let inv_scale_factor = 1. / scale_factor;
+    let _inv_scale_factor = 1. / scale_factor;
 
-    let Some(camera_entity) = default_ui_camera.get() //camera.map(MyTargetCamera::entity).or(default_ui_camera.get())
-    else {
+    //camera.map(MyTargetCamera::entity).or(default_ui_camera.get())
+    // let Some(camera_entity) = default_ui_camera.get()  else { return; };
+    let Some(camera_entity) = 
+        // camera.map(TargetCamera::entity).or(
+            default_ui_camera.get()
+        // )
+         else {return;};
+
+    let Ok(render_camera_entity) = mapping.get(camera_entity) else {
         return;
     };
 
+    let camera_entity=render_camera_entity;
 
-    let mut c = 0;
-    for (entity, 
+    for (_entity, 
         layout_computed, 
         image, 
         text,
         text_computed,
         text_layout_info,
-        parent,
-        float,
-        edge,
+        _parent,
+        _float,
+        _edge,
         color,
     ) in uinode_query.iter() {
-
-        let mut b=false;
-        if c==99 {
-            // println!("{c} {entity:?}, vis {}",computed.visible);
-            b=true;
-        }
-        c+=1;
-        
-        if !b {
-            // continue;
-        }
-        // if c<50 {
-        //     continue;
-        // }
-
-        
         if !layout_computed.visible {
             continue;
         }
         
-
-        // let depth = 0;
-        // let image_depth=0;
-        // let text_depth=0;
-
-        // let depth = computed.depth*10;
         let depth = layout_computed.order*3;
-        // let depth = computed.depth*3;
-        // println!("")
         let image_depth=depth+1;
         let text_depth=depth+2;
-
-        // let z = (computed.order as f32)*10.0;
-        // let z = depth as f32;
-        // let image_z=z+1.0;
-        // let text_z =z+2.0;
 
         let clamped_inner_rect = layout_computed.clamped_rect;
         let clamped_padding_rect = layout_computed.clamped_padding_rect();
@@ -271,10 +287,6 @@ pub fn extract_uinodes(
             let br=Vec2::new(clamped_inner_rect2.right,  clamped_inner_rect2.bottom);
             let tl=Vec2::new(clamped_inner_rect2.left, clamped_inner_rect2.top); 
             let tr=Vec2::new(clamped_inner_rect2.right, clamped_inner_rect2.top);
-
-            // extracted_elements.elements.entry((depth,dummy_image.handle.clone())).or_insert_with(||{
-            //     (commands.spawn_empty().id(),Vec::new())
-            // }).1
             
             extracted_elements.elements.push(MyUiExtractedElement{ 
                 bl,br,tl,tr,
@@ -290,7 +302,7 @@ pub fn extract_uinodes(
                 camera_entity,
             });
 
-            // println!("entity {entity:?} {back_color:?} {clamped_inner_rect2:?} ");
+            // println!("entity {_entity:?} {back_color:?} {clamped_inner_rect2:?} ");
         }
 
         //edges
@@ -302,9 +314,6 @@ pub fn extract_uinodes(
 
             for i in 0..4 {
                 if cols[i].to_srgba().alpha!=0.0 && !sizes[i].is_zero() {
-                    // let elements=&mut extracted_elements.elements.entry((depth,dummy_image.handle.clone())).or_insert_with(||{
-                    //     (commands.spawn_empty().id(),Vec::new())
-                    // }).1;
         
                     let inner_rect=rects1[i];
                     let outer_rect=rects2[i];
@@ -350,8 +359,6 @@ pub fn extract_uinodes(
                 }
             }
         }
-
-
         
         //image
         if let Some(image) = image {
@@ -398,9 +405,6 @@ pub fn extract_uinodes(
                 let tl_uv=Vec2::new(0.0, 0.0);
                 let tr_uv=Vec2::new(dx, 0.0);
 
-                // extracted_elements.elements.entry((image_depth,image.handle.clone())).or_insert_with(||{
-                //     (commands.spawn_empty().id(),Vec::new())
-                // }).1
                 extracted_elements.elements.push(MyUiExtractedElement{
                     bl,br,tl,tr,
                     // z:image_z,
@@ -419,96 +423,48 @@ pub fn extract_uinodes(
         if let (Some(text), Some(text_layout),Some(text_computed) ) = (text, text_layout_info,text_computed,
             // text_pipeline.get_glyphs(&entity)
         ) {
-            // let glyph_start_pos=text_layout.glyphs.first().map(|x|x.position).unwrap_or_default();
-            let glyph_offset=text_computed.bounds-text_layout.logical_size; //only needed for x, since because bevy now handles halign positioning
+            let glyph_offset=text_computed.bounds-text_layout.size; //only needed for x, since because bevy now handles halign positioning
 
             for text_glyph in text_layout.glyphs.iter() {
-                let color = text.color;//text.sections[text_glyph.section_index].section.style.color;
+                let color = text.color;
                 let atlas = texture_atlases.get(&text_glyph.atlas_info.texture_atlas).unwrap();
-                let glyph_index = text_glyph.atlas_info.glyph_index as usize;
+                let glyph_index = text_glyph.atlas_info.location.glyph_index as usize;
                 let atlas_glyph_rect = atlas.textures[glyph_index].as_rect();
-                // let glyph_w=(atlas_glyph_rect.max.x-atlas_glyph_rect.min.x) as f32;
-                // let glyph_h=(atlas_glyph_rect.max.y-atlas_glyph_rect.min.y) as f32;
 
                 let glyph_size=atlas_glyph_rect.max-atlas_glyph_rect.min;
                 let mut glyph_pos=layout_computed.pos + text_glyph.position - glyph_offset - glyph_size*0.5;
 
                 let atlas_size=atlas.size.as_vec2();
-                // println!("{} {} {}",computed.pos.x,text_glyph.position.x,glyph_w);
-                //todo margin
 
-                // // let mut glyph_x = layout_computed.pos.x + text_glyph.position.x - glyph_w*0.5;
-                // let mut glyph_y = layout_computed.pos.y + text_glyph.position.y - glyph_h*0.5;
-                
-                // let mut glyph_x = layout_computed.pos.x + text_glyph.position.x - glyph_start_pos.x - glyph_w*0.5;
-                // let mut glyph_y = layout_computed.pos.y + text_glyph.position.y - glyph_start_pos.y - glyph_h*0.5;
-                // // let mut glyph_y = layout_computed.pos.y + text_glyph.position.y - glyph_h*0.5 - glyph_start_pos.y;
-                //handled by bevy now
-                //  bevy moves it within the specified size, ...
-
-
-
-                // println!("layout_computed_size={}, logical_size={}, bound={}, max_size={}", layout_computed.size.x, text_layout.logical_size.x,text_computed.bounds.x,text_computed.max_size.x);
-                // layout_computed.pos
-                if text_layout.logical_size.x<=layout_computed.size.x {
+                if text_layout.size.x<=layout_computed.size.x {
                     glyph_pos.x+=match text.halign {
-                        UiTextHAlign::Right => layout_computed.size.x-text_layout.logical_size.x,
-                        UiTextHAlign::Center => (layout_computed.size.x-text_layout.logical_size.x)*0.5,
+                        UiTextHAlign::Right => layout_computed.size.x-text_layout.size.x,
+                        UiTextHAlign::Center => (layout_computed.size.x-text_layout.size.x)*0.5,
                         UiTextHAlign::Left => 0.0
                     };
                 }
 
-                // if text_computed.bounds.x<=layout_computed.size.x {
-                //     glyph_x+=match text.halign {
-                //         UiTextHAlign::Right => layout_computed.size.x-text_computed.bounds.x,
-                //         UiTextHAlign::Center => (layout_computed.size.x-text_computed.bounds.x)*0.5,
-                //         UiTextHAlign::Left => 0.0
-                //     };
-                // }
 
-                if text_layout.logical_size.y<=layout_computed.size.y {
+                if text_layout.size.y<=layout_computed.size.y {
                     glyph_pos.y+=match text.valign {
                         UiTextVAlign::Top => 0.0,
-                        UiTextVAlign::Center => (layout_computed.size.y-text_layout.logical_size.y)*0.5,
-                        UiTextVAlign::Bottom => layout_computed.size.y-text_layout.logical_size.y
+                        UiTextVAlign::Center => (layout_computed.size.y-text_layout.size.y)*0.5,
+                        UiTextVAlign::Bottom => layout_computed.size.y-text_layout.size.y
                     }; //ydir
                 }
 
-                // if text_computed.bounds.y<=layout_computed.size.y {
-                //     glyph_y+=match text.valign {
-                //         UiTextVAlign::Top => 0.0,
-                //         UiTextVAlign::Center => (layout_computed.size.y-text_computed.bounds.y)*0.5,
-                //         UiTextVAlign::Bottom => layout_computed.size.y-text_computed.bounds.y
-                //     }; //ydir
-                // }
-
                 //
-                // let glyph_x2 = glyph_x+glyph_w;
-                // let glyph_y2 = glyph_y+glyph_h;
                 let glyph_pos2=glyph_pos+glyph_size;
 
                 let glyph_rect=UiRect { left: glyph_pos.x, right: glyph_pos2.x, top: glyph_pos.y, bottom: glyph_pos2.y };
                 
-                // if intersect_rects(
-                //     clamped_inner_rect.left,clamped_inner_rect.top,
-                //     clamped_inner_rect.right,clamped_inner_rect.bottom,
-                //     x,y,x2,y2,) 
-                
                 //something wrong with vertical tex coords
                 if clamped_inner_rect.intersects(&glyph_rect) {
-                    // let clamped_glyph_rect=glyph_rect.clamp(clamped_inner_rect);
-
                     let dx = (clamped_inner_rect.left-glyph_rect.left).max(0.0);
                     let dx2 = (glyph_rect.right-clamped_inner_rect.right).max(0.0);
 
                     let dy =  (clamped_inner_rect.top-glyph_rect.top).max(0.0);
                     let dy2 = (glyph_rect.bottom-clamped_inner_rect.bottom).max(0.0);
-
-                    // println!("dy={dy:?},dy2={dy2:?} {:?}",1);
-                    
-                    // let dy =  (glyph_rect.top-clamped_inner_rect.top).max(0.0);
-                    // let dy2 = (clamped_inner_rect.bottom-glyph_rect.bottom).max(0.0);
-                    
 
                     let x=glyph_rect.left.max(clamped_inner_rect.left);
                     let y=glyph_rect.top.max(clamped_inner_rect.top);
@@ -518,42 +474,21 @@ pub fn extract_uinodes(
                     let tx = (atlas_glyph_rect.min.x+dx)/atlas_size.x;
                     let tx2 = (atlas_glyph_rect.max.x-dx2)/atlas_size.x;
 
-                    // let ty = (rect.max.y-dy)/atlas.size.y;
-                    // let ty2 = (rect.min.y+dy2)/atlas.size.y;
-
-                    // let ty = (rect.max.y-dy2)/atlas.size.y;
-                    // let ty2 = (rect.min.y+dy)/atlas.size.y;
-                    
                     let ty = (atlas_glyph_rect.min.y+dy)/atlas_size.y;
                     let ty2 = (atlas_glyph_rect.max.y-dy2)/atlas_size.y;
-                    
-                    // let ty = (atlas_glyph_rect.max.y-dy)/atlas.size.y;
-                    // let ty2 = (dy2+atlas_glyph_rect.min.y)/atlas.size.y;
-
-                    // let ty = (atlas_glyph_rect.max.y-dy)/atlas.size.y;
-                    // let ty2 = (dy2+atlas_glyph_rect.min.y)/atlas.size.y;
-                    // println!("atlas_glyph_rect {atlas_glyph_rect:?}");
                     
                     let tl=Vec2::new(x,y);
                     let tr=Vec2::new(x2,y);
                     let bl=Vec2::new(x,y2);
                     let br=Vec2::new(x2,y2);
                     
-                    // let tl_uv=Vec2::new(tx, ty2);
-                    // let tr_uv=Vec2::new(tx2,ty2);
-                    // let bl_uv=Vec2::new(tx,  ty);
-                    // let br_uv=Vec2::new(tx2,  ty);
-   
                     let tl_uv=Vec2::new(tx, ty);
                     let tr_uv=Vec2::new(tx2,ty);
                     let bl_uv=Vec2::new(tx,  ty2);
                     let br_uv=Vec2::new(tx2,  ty2);
 
-                    // let color = if dy!=0.0|| dy2!=0.0 {Color::RED}else{color.clone()};
                     let texture=text_glyph.atlas_info.texture.clone();
-                    // extracted_elements.elements.entry((text_depth,texture.clone())).or_insert_with(||{
-                    //     (commands.spawn_empty().id(),Vec::new())
-                    // }).1
+
                     extracted_elements.elements.push(MyUiExtractedElement{
                         bl,br,tl,tr,
                         // z:text_z,
@@ -569,77 +504,62 @@ pub fn extract_uinodes(
         }
     }
 
-    //mainly for borders, which creates an entry before actually checking if it adds anything,
-    // should probably do it before but ..
-    // extracted_elements.elements.retain(|(depth,image),(entity,extracted)|{
-    //     extracted.len()>0
-    // });
-
-    // for ((depth,image),(entity,extracteds)) in extracted_elements.elements.iter() {
-
-    // }
-    // println!("{:?}",extracted_elements.elements.iter().map(|x|x.1.clone().1).collect::<Vec<_>>());
 
 }
 
-/// Queue the 2d meshes marked with [`ColoredMesh2d`] using our custom pipeline and draw function
-#[allow(clippy::too_many_arguments)]
 pub fn queue_uinodes(
     transparent_draw_functions: Res<DrawFunctions<MyTransparentUi>>,
 
     colored_mesh2d_pipeline: Res<MyUiPipeline>,
     mut pipelines: ResMut<SpecializedRenderPipelines<MyUiPipeline>>,
-    mut pipeline_cache: ResMut<PipelineCache>,
-
-    // mut extracted_views: Query<(&VisibleEntities, &mut RenderPhase<MyTransparentUi> )>,
-    // mut extracted_views: Query<(&ExtractedView, &mut RenderPhase<MyTransparentUi>)>,
+    pipeline_cache: Res<PipelineCache>,
 
     extracted_elements : Res<MyUiExtractedElements>,
     mut views: Query<(Entity, &ExtractedView)>,
     mut transparent_render_phases: ResMut<ViewSortedRenderPhases<MyTransparentUi>>,
 ) {
     
-    let draw_colored_mesh2d = transparent_draw_functions
-        .read()
-        .get_id::<DrawMesh>()
-        .unwrap();
-
-
-    let pipeline = pipelines.specialize(
-        &pipeline_cache, 
-        &colored_mesh2d_pipeline,
-        MyUiPipelineKey{});
+    let draw_colored_mesh2d = transparent_draw_functions.read().get_id::<DrawMesh>().unwrap();
+    let pipeline = pipelines.specialize(&pipeline_cache, &colored_mesh2d_pipeline,MyUiPipelineKey{});
     
     // Iterate each view (a camera is a view)
     // for (extracted_view, mut transparent_phase) in extracted_views.iter_mut() 
-    {
-        // transparent_phase.items.reserve(extracted_elements.elements.len());
-            
-        for //((depth,image_handle), (entity,elements)) 
-            element in extracted_elements.elements.iter() {
-            // println!("d {entity:?}, {depth}");
-            let Ok((view_entity, view)) = views.get_mut(element.camera_entity) else {
-                continue;
-            };
+    // {
+    // transparent_phase.items.reserve(extracted_elements.elements.len());
+        
+    for element in extracted_elements.elements.iter() {
+        
+        // println!("{} : {}",
+        //     element.camera_entity,
+        //     views.iter().map(|x|x.0.to_string()).collect::<Vec<_>>().join(", "));
+        
+        let Ok((view_entity, _view)) = views.get_mut(element.camera_entity) else {
+            continue;
+        };
+        // println!("sss {view_entity}");
+        
+        let Some(transparent_phase) = transparent_render_phases.get_mut(&view_entity) else {
+            continue;
+        };
+        
+        // println!("ttt");
+        
 
-            let Some(transparent_phase) = transparent_render_phases.get_mut(&view_entity) else {
-                continue;
-            };
-    
-            transparent_phase.add(MyTransparentUi {
-                entity: element.entity, //*entity,
-                draw_function: draw_colored_mesh2d,
-                pipeline,
-                // sort_key: FloatOrd(0.0),//FloatOrd(*depth as f32),
-                sort_key: FloatOrd(element.depth as f32),
-                // sort_key: FloatOrd(*depth as f32),
-                // sort_key: (FloatOrd(*depth as f32),entity.index(),),
-                // This material is not batched
-                batch_range: 0..1,//0..c,//c..c+(elements.len()*6) as u32,
-                // dynamic_offset:None,
-                extra_index: PhaseItemExtraIndex::NONE,
-            });
-        }
+        transparent_phase.add(MyTransparentUi {
+            entity: element.entity, //*entity,
+            draw_function: draw_colored_mesh2d,
+            pipeline,
+            // sort_key: FloatOrd(0.0),//FloatOrd(*depth as f32),
+            sort_key: FloatOrd(element.depth as f32),
+            // sort_key: FloatOrd(*depth as f32),
+            // sort_key: (FloatOrd(*depth as f32),entity.index(),),
+            // This material is not batched
+            batch_range: 0..1,//0..c,//c..c+(elements.len()*6) as u32,
+            // dynamic_offset:None,
+            extra_index: PhaseItemExtraIndex::NONE,
+        });
+
+    // }
     }
 }
 
@@ -658,16 +578,10 @@ pub fn prepare_uinodes(
 
     mut image_bind_groups: ResMut<MyUiImageBindGroups>,
     image_asset_events: Res<bevy::sprite::SpriteAssetEvents>,
-    // gpu_images: Res<RenderAssets<Image>>,
     gpu_images: Res<RenderAssets<GpuImage>>,
     dummy_gpu_image : Res<DummyGpuImage>,
-    
-    // mut phases: Query<&mut RenderPhase<MyTransparentUi>>,
 ) {
 
-    if dummy_gpu_image.gpu_image.is_none() {
-        return;
-    }
 
     if let Some(view_binding) = view_uniforms.uniforms.binding() {
         for entity in extracted_views.iter() {
@@ -691,6 +605,7 @@ pub fn prepare_uinodes(
     }
 
     //
+    if dummy_gpu_image.gpu_image.is_none() { return; }
     let dummy_gpu_image = dummy_gpu_image.gpu_image.as_ref().unwrap();
 
     //
@@ -698,9 +613,8 @@ pub fn prepare_uinodes(
     for element in extracted_elements.elements.iter()
     {
         let image_id=element.image.clone().map(|x|x.id());
-        // println!("depth {depth}");
-        //
 
+        //
         if !image_bind_groups.values.contains_key(&image_id) {
             let gpu_image=image_id.map(|image_id|gpu_images.get(image_id)).unwrap_or(Some(dummy_gpu_image));
             let bind_group=gpu_image.map(|gpu_image|render_device.create_bind_group(
@@ -715,39 +629,16 @@ pub fn prepare_uinodes(
                 image_bind_groups.values.insert(image_id, bind_group);
             }
         }
-        // image_bind_groups.values.entry(image_id).or_insert_with(||{
-        //     image_id.and_then(|image_id|gpu_images.get(image_id))
-        //     let gpu_image = gpu_images
-        //         .get(image_id.id())
-        //         .unwrap_or(dummy_gpu_image);
-
-        //     render_device.create_bind_group(
-        //         "my_ui_material_bind_group",
-        //         &mesh2d_pipeline.image_layout,
-        //         &[
-        //             BindGroupEntry {binding: 0, resource: BindingResource::TextureView(&gpu_image.texture_view),},
-        //             BindGroupEntry {binding: 1, resource: BindingResource::Sampler(&gpu_image.sampler),},
-        //         ],
-        //     )
-        // });
     }
 
     //
     ui_meta.vertices.clear();
 
     //
-    // println!("{:?}",extracted_elements.elements.iter().map(|(k,v)|(k.0,v.1.len())).collect::<Vec<_>>());
-
     let mut batches = HashMap::<Entity,MyUiBatch>::new();
 
-    for element //((depth,image_handle), (entity,elements)) 
-        in extracted_elements.elements.iter() {
-        // println!("e {entity:?} ");
-        // let x=phases.get_mut(*entity).unwrap();
-        // x.items[0].
-
-        let z= element.depth as f32;
-        // let z= z*-1.0;
+    for element in extracted_elements.elements.iter() {
+        let z= element.depth as f32; // let z= z*-1.0;
         
         let mut batch = MyUiBatch {
             image_handle:element.image.clone(), //image_handle.clone(),
@@ -762,12 +653,12 @@ pub fn prepare_uinodes(
         {
             // let z=element.z;
 
-            let mut v_pos = vec![
+            let v_pos = vec![
                 [element.bl.x,element.bl.y,z], [element.br.x,element.br.y,z], [element.tl.x,element.tl.y,z],
                 [element.tl.x,element.tl.y,z], [element.br.x,element.br.y,z], [element.tr.x,element.tr.y,z],
             ];
                 
-            let mut v_tex = vec![
+            let v_tex = vec![
                 element.bl_uv.to_array(), element.br_uv.to_array(), element.tl_uv.to_array(),
                 element.tl_uv.to_array(), element.br_uv.to_array(), element.tr_uv.to_array(),
             ];
@@ -786,38 +677,19 @@ pub fn prepare_uinodes(
             batch.range.end=ui_meta.vertices.len() as u32;
         }
 
-        // println!("e {entity:?}, {:?}",batch.range);
 
         batches.insert(element.entity,batch);
 
         // commands.entity(*entity).insert(batch);
     }
 
-    //
-    // for mut ui_phase in &mut phases {        
-    //     for item in ui_phase.items.iter_mut() {
-    //         let batch=batches.get(&item.entity).unwrap();
-    //         // item.batch_range=batch.range.clone();
-    //         // item.batch_range.end=(batch.range.end-batch.range.start)/6;
-    //         // item.batch_range.end=1;
-    //         // item.batch_range=0..ui_meta.vertices.len() as u32;
-    //         println!("f {:?}, {:?}",item.entity,item.batch_range);
-    //         // item.batch_range.start=0;
-    //         // item.batch_range.end=ui_meta.vertices.len() as u32;
-    //         // item.batch_range_mut().end += 1;
-
-
-    //     }
-    // }
 
     for (entity, batch) in batches.iter() {
         // println!("g {entity:?} {batch:?}");
         commands.entity(*entity).insert(batch.clone());
     }
 
-
     // commands.spawn(()).insert(batch.clone());
     
-
     ui_meta.vertices.write_buffer(&render_device, &render_queue);
 }

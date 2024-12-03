@@ -98,7 +98,7 @@ pub fn update_press_events(
 
     //remove dead roots/pressed entities
 
-    device_cursors.retain(|&(root_entity,device),_|{
+    device_cursors.retain(|&(root_entity,_device),_|{
         root_query.contains(root_entity)
     });
 
@@ -106,7 +106,7 @@ pub fn update_press_events(
         root_query.contains(root_entity) && pressable_query.contains(pressed_entity)
     });
 
-    press_states.device_presseds.retain(|&(root_entity,device,is_cursor),(pressed_entity,pressed)|{
+    press_states.device_presseds.retain(|&(root_entity,device,is_cursor),(pressed_entity,_pressed)|{
         root_query.contains(root_entity) &&
             entities_presseds.get(&(root_entity,*pressed_entity))
                 .map(|x|x.contains(&Some((device,is_cursor))))
@@ -216,7 +216,7 @@ pub fn update_press_events(
     }
 
     //sort press_root_entities by computed.order
-    for (&root_entity, root_pressable_entities) in roots_pressable_entities.iter_mut() {
+    for (&_root_entity, root_pressable_entities) in roots_pressable_entities.iter_mut() {
         root_pressable_entities.sort_by(|&a,&b|{
             let computed_a = layout_computed_query.get(a).unwrap();
             let computed_b = layout_computed_query.get(b).unwrap();
@@ -288,7 +288,7 @@ pub fn update_press_events(
                 
                 if let Some((entity,pressed)) = press_states.device_presseds.get_mut(&(root_entity,device,true)) {
                     let entity=*entity;
-                    let entity_presseds=entities_presseds.entry((root_entity,entity)).or_default();
+                    // let entity_presseds=entities_presseds.entry((root_entity,entity)).or_default();
                     let pressable=pressable_query.get(entity).map(|x|x.1).unwrap();
                  
 

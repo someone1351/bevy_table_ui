@@ -1,11 +1,9 @@
-use bevy::{render::{camera::Camera, render_resource::BindGroup}, render::extract_component::ExtractComponent, ecs::query::QueryItem};
+use bevy::prelude::Image;
+use bevy::reflect::Reflect;
+use bevy::render::render_resource::BindGroup;
 use bevy::ecs::prelude::*;
 
-// use bevy::render::color::Color;
-use bevy::ecs::system::{lifetimeless::*, SystemParamItem};
-use bevy::asset::prelude::*;
-use bevy::render::texture::Image;
-use bevy::asset::{Assets, Handle};
+use bevy::asset::Handle;
 
 use core::ops::Range;
 
@@ -21,3 +19,20 @@ pub struct MyUiBatch {
 pub struct MyViewBindGroup { 
     pub value: BindGroup,
 }
+
+
+#[derive(Component)]
+pub struct MyDefaultCameraView(pub Entity);
+
+// #[derive(Component)]
+// pub struct IsMyDefaultUiCamera;
+
+
+#[derive(Component, Clone, Debug, Reflect, Eq, PartialEq)]
+pub struct MyTargetCamera(pub Entity);
+
+// impl MyTargetCamera {
+//     pub fn entity(&self) -> Entity {
+//         self.0
+//     }
+// }

@@ -9,7 +9,7 @@ use bevy::math::Vec2;
 use super::super::super::layout::components::UiLayoutComputed;
 
 use super::super::components::*;
-use super::super::resources::*;
+// use super::super::resources::*;
 use super::super::events::*;
 // use super::super::utils::*;
 // use super::super::values::*;
@@ -40,7 +40,7 @@ pub fn update_hover_events(
     //un hover inactive/disabled/invisible, and cursor no longer inside due to node pos/size change
     //remove inactive root nodes
 
-    cur_hover_entities.retain(|(root_entity,device),(entity,cursor)|{
+    cur_hover_entities.retain(|(_root_entity,device),(entity,cursor)|{
         if let Ok((_,layout_computed,hoverable)) = hoverable_query.get(*entity) {
             if hoverable.enable && layout_computed.unlocked && layout_computed.clamped_border_rect().contains_point(*cursor) {
                 return true;
@@ -71,7 +71,7 @@ pub fn update_hover_events(
     }
     
     //sort hover_root_entities by computed.order
-    for (&root_entity, entities) in hover_root_entities.iter_mut() {
+    for (&_root_entity, entities) in hover_root_entities.iter_mut() {
         entities.sort_by_key(|x|x.1);
     }
 

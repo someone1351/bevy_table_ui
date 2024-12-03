@@ -49,6 +49,11 @@ TODO 6
 
 TODO 7
 * add UiPriority component for root/floating nodes, higher priority are ordered ahead/ontop of their siblings
+
+TODO 8
+* have ui h/v align allow neg values which then align from right/bottom
+
+
 */
 
 
@@ -633,7 +638,7 @@ pub fn ui_calc_computeds(
             let mut row_heights = vec![0.0 as f32;rows_num];
 
             { 
-                let mut child_ind = 0;
+                // let mut child_ind = 0;
 
                 for &child_entity in children.clone() //children.iter() 
                 { //children here!
@@ -682,7 +687,7 @@ pub fn ui_calc_computeds(
                         col_widths[col]=col_widths[col].max(child_w);
                         row_heights[row]=row_heights[row].max(child_h);
 
-                        child_ind+=1;
+                        // child_ind+=1;
                     }
                 }
             }
@@ -896,7 +901,7 @@ pub fn ui_calc_computeds(
             //
             //if child_count > 0 //hmm
             {
-                let mut child_ind = 0;
+                // let mut child_ind = 0;
 
                 for &child_entity in children.clone() //.iter() 
                 {
@@ -944,7 +949,7 @@ pub fn ui_calc_computeds(
 
                         // println!("row_height2 {}",row_heights[row]);
 
-                        child_ind+=1;
+                        // child_ind+=1;
                     }
                 }
             }
@@ -981,7 +986,7 @@ pub fn ui_calc_computeds(
 
                 //get col/row expands
                 {
-                    let mut child_ind = 0;
+                    // let mut child_ind = 0;
 
                     for &child_entity in children.clone() //.iter() 
                     { //children here!
@@ -1005,7 +1010,7 @@ pub fn ui_calc_computeds(
                                 row_expands[row] = child_expand.vexpand;
                             }
 
-                            child_ind+=1;
+                            // child_ind+=1;
                         }
                     }
                 }
@@ -1114,7 +1119,7 @@ pub fn ui_calc_computeds(
 
             //recalc child wh's for new expands, calc percent margins/paddings for fills
             {
-                let mut child_ind=0;
+                // let mut child_ind=0;
 
                 for &child_entity in children.clone() //.iter() 
                 {         
@@ -1298,18 +1303,18 @@ pub fn ui_calc_computeds(
                             // }
                             //                                                        
                             if !child_float {
-                                child_ind+=1;
+                                // child_ind+=1;
                             }
                         }
                     } else {
-                        child_ind+=1;
+                        // child_ind+=1;
                     }
                 }
             }
 
             //calc spcs 
             {
-                let mut child_ind=0;
+                // let mut child_ind=0;
 
                 for &child_entity in children.clone() //.iter() 
                 {
@@ -1418,7 +1423,7 @@ pub fn ui_calc_computeds(
                                 child_computed.cell_size.top=top_space;
                                 child_computed.cell_size.bottom=(vspace-top_space).max(0.0); 
 
-                                child_ind+=1;
+                                // child_ind+=1;
                             }
                         }
                     }
@@ -1476,8 +1481,8 @@ pub fn ui_calc_computeds(
 
         // let computed = *computed_query.get(entity).unwrap();
         let computed = entity.and_then(|entity|computed_query.get(entity).ok()).cloned().unwrap_or(top_computed);
-        // let span = span_query.get(entity).cloned().unwrap_or_default().span as usize;
-        let span = entity.and_then(|entity|span_query.get(entity).ok()).cloned().unwrap_or_default().span as usize;
+        // // let span = span_query.get(entity).cloned().unwrap_or_default().span as usize;
+        // let span = entity.and_then(|entity|span_query.get(entity).ok()).cloned().unwrap_or_default().span as usize;
 
         // if let Ok(children) = children_query.get(entity) 
         if let Some(children) = &children
@@ -1506,7 +1511,7 @@ pub fn ui_calc_computeds(
 
             //get row/col sizes
             {
-                let mut child_ind = 0;
+                // let mut child_ind = 0;
 
                 for &child_entity in children.clone() //.iter() 
                 {
@@ -1547,7 +1552,7 @@ pub fn ui_calc_computeds(
                         col_widths[col]=col_widths[col].max(w);
                         row_heights[row]=row_heights[row].max(h);
 
-                        child_ind+=1;
+                        // child_ind+=1;
                     }
                 }
             }
@@ -1561,7 +1566,7 @@ pub fn ui_calc_computeds(
                 let mut y = computed.pos.y; //ydir2
                 // println!("ystart {}",computed.y);
 
-                let mut child_ind=0;
+                // let mut child_ind=0;
 
                 for &child_entity in children.clone() //.iter() 
                 {
@@ -1634,7 +1639,7 @@ pub fn ui_calc_computeds(
                                     y+=row_heights[row]; //ydir2
                                 }
 
-                                child_ind+=1;
+                                // child_ind+=1;
                             }
                         }
                     }

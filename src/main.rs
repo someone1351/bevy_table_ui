@@ -93,7 +93,7 @@ pub fn setup_ui(
         //0
         parent.spawn((
             UiLayoutComputed::default(),
-            UiInnerSize::default(),
+            // UiInnerSize::default(),
             UiColor{
                 back:Color::BLACK,
                 cell:Color::srgb(0.3,0.3,0.3),
@@ -119,8 +119,6 @@ pub fn setup_ui(
                 cell:Color::srgb(1.0,0.5,0.1),
                 ..Default::default()
             },
-            UiInnerSize::default(),
-            UiTextComputed::default(),
             UiText{
                 value:"Hello".to_string(),
                 font_size:30.0,
@@ -129,8 +127,6 @@ pub fn setup_ui(
                 halign:UiTextHAlign::Right,
                 update:true,..Default::default()
             },
-            ComputedTextBlock::default(),
-            TextLayoutInfo::default(),
             UiFill{ 
                 hfill: UiVal::None,
                 // hfill: UiVal::Scale(1.0), 
@@ -150,8 +146,6 @@ pub fn setup_ui(
                 cell:Color::srgb(1.0,0.5,0.1),
                 ..Default::default()
             },
-            UiInnerSize::default(),
-            UiTextComputed::default(),
             UiText{
                 value:"Hello".to_string(),
                 font_size:30.0,
@@ -161,8 +155,6 @@ pub fn setup_ui(
                 valign:UiTextVAlign::Top,
                 update:true,..Default::default()
             },
-            ComputedTextBlock::default(),
-            TextLayoutInfo::default(),
             UiFill{ 
                 // hfill: UiVal::None,
                 hfill: UiVal::Scale(1.0), 
@@ -179,8 +171,6 @@ pub fn setup_ui(
                 cell:Color::srgb(1.0,0.5,0.1),
                 ..Default::default()
             },
-            UiInnerSize::default(),
-            UiTextComputed::default(),
             UiText{
                 value:"Hello".to_string(),
                 font_size:30.0,
@@ -190,8 +180,6 @@ pub fn setup_ui(
                 valign:UiTextVAlign::Center,
                 update:true,..Default::default()
             },
-            ComputedTextBlock::default(),
-            TextLayoutInfo::default(),
             UiFill{ 
                 // hfill: UiVal::None,
                 hfill: UiVal::Scale(1.0), 
@@ -208,8 +196,6 @@ pub fn setup_ui(
                 cell:Color::srgb(1.0,0.5,0.1),
                 ..Default::default()
             },
-            UiInnerSize::default(),
-            UiTextComputed::default(),
             UiText{
                 value:"X".to_string(),
                 hlen:3,
@@ -223,8 +209,6 @@ pub fn setup_ui(
                 // valign:UiTextVAlign::Top,
                 update:true,..Default::default()
             },
-            ComputedTextBlock::default(),
-            TextLayoutInfo::default(),
             UiFill{ 
                 // hfill: UiVal::None,
                 // hfill: UiVal::Scale(1.0), 

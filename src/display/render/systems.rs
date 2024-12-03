@@ -298,7 +298,7 @@ pub fn extract_uinodes(
                 tr_uv : Vec2::new(1.0,0.0),
                 depth,
                 image:None,
-                entity:commands.spawn_empty().id(),
+                entity:commands.spawn((TemporaryRenderEntity,)).id(),
                 camera_entity,
             });
 
@@ -351,7 +351,7 @@ pub fn extract_uinodes(
                                 tr_uv : Vec2::new(1.0,0.0),
                                 depth,
                                 image:None,
-                                entity:commands.spawn_empty().id(),
+                                entity:commands.spawn((TemporaryRenderEntity,)).id(),
                                 camera_entity,
                             });
                         }        
@@ -413,7 +413,7 @@ pub fn extract_uinodes(
                     depth:image_depth,
                     image:Some(image.handle.clone()),
 
-                    entity:commands.spawn_empty().id(),
+                    entity:commands.spawn((TemporaryRenderEntity,)).id(),
                     camera_entity,
                 });
             }
@@ -496,7 +496,7 @@ pub fn extract_uinodes(
                         color : color.clone(),
                         depth:text_depth,
                         image:Some(texture.clone()),
-                        entity:commands.spawn_empty().id(),
+                        entity:commands.spawn((TemporaryRenderEntity,)).id(),
                         camera_entity,
                     });
                 }

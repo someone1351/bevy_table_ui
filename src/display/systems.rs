@@ -36,7 +36,7 @@ pub fn update_text_image(
     // text_settings: Res<TextSettings>,
     // mut font_atlas_warning:ResMut<FontAtlasWarning>,
 
-    mut ui_query: Query<(Entity, 
+    mut ui_query: Query<(Entity,
         &UiLayoutComputed,
         &mut UiInnerSize,
         Option<&mut UiText>,
@@ -53,12 +53,12 @@ pub fn update_text_image(
     let scale_factor = windows.get_single().and_then(|window|Ok(window.scale_factor() as f64)).unwrap_or(1.0);
     // println!("scale_factor={scale_factor}");
     //only on visible, updated?
-    
 
-    for (entity, 
-        &layout_computed, 
-        mut inner_size, 
-        text, 
+
+    for (entity,
+        &layout_computed,
+        mut inner_size,
+        text,
         text_layout_info,
         text_computed,
         computed_text_block,
@@ -88,7 +88,7 @@ pub fn update_text_image(
         if let Some(image) = image {
             if let Some(texture) = textures.get(&image.handle) {
                 let size = texture.size().as_vec2();
-                
+
                 //todo keep aspect ratio
 
                 if image.width_scale>0.0 {
@@ -110,8 +110,8 @@ pub fn update_text_image(
             Some(mut text),
             Some(mut text_computed),
             Some(mut text_layout_info),
-            Some(mut computed_text_block)) 
-            = (text,text_computed,text_layout_info,computed_text_block ) 
+            Some(mut computed_text_block))
+            = (text,text_computed,text_layout_info,computed_text_block )
         {
             let mut fonts_loaded=true;
             let handle=&text.font;
@@ -144,11 +144,11 @@ pub fn update_text_image(
                     if text.vlen>1 {
                         value.push_str("\n ".repeat((text.vlen-1) as usize).as_str());
                     }
-                    
-                    let text_spans=[(entity, 0 /*depth*/, " ", &TextFont{ 
+
+                    let text_spans=[(entity, 0 /*depth*/, " ", &TextFont{
                         font: text.font.clone(), font_size: text.font_size, font_smoothing: FontSmoothing::None,
                     },text.color)];
-                    
+
                     let mut temp_text_layout_info = TextLayoutInfo::default();
 
                     if let Ok(()) = text_pipeline.queue_text(
@@ -179,7 +179,7 @@ pub fn update_text_image(
                 }
 
                 //
-                let text_spans=[(entity, 0 /*depth*/, text.value.as_str(), &TextFont{ 
+                let text_spans=[(entity, 0 /*depth*/, text.value.as_str(), &TextFont{
                     font: text.font.clone(), font_size: text.font_size, font_smoothing: FontSmoothing::AntiAliased,
                 },text.color)];
 
@@ -209,22 +209,22 @@ pub fn update_text_image(
                     Err(e @ TextError::FailedToAddGlyph(_)) => {
                         panic!("Fatal error when processing text: {}.", e);
                     },
-                    Ok(()) => {                        
+                    Ok(()) => {
                         new_text_max_size.x=new_text_max_size.x.max(text_layout_info.size.x);
                         new_text_max_size.y=new_text_max_size.y.max(text_layout_info.size.y);
                     }
                 };
 
-                //                
-                inner_size.width = inner_size.width.max(new_text_max_size.x); 
-                inner_size.height = inner_size.height.max(new_text_max_size.y); 
+                //
+                inner_size.width = inner_size.width.max(new_text_max_size.x);
+                inner_size.height = inner_size.height.max(new_text_max_size.y);
 
                 //
                 text_computed.max_size=new_text_max_size;
                 text_computed.bounds=layout_computed.size.max(new_text_max_size); //layout_computed.size before it's possibly recalculated?
-            
+
                 //
-                text.update=false; 
+                text.update=false;
             } else { //whats this for again? because inner_size is cleared at top, need to reset it when not updated? what about for image?
                 inner_size.width = inner_size.width.max(text_computed.max_size.x); //size
                 inner_size.height = inner_size.height.max(text_computed.max_size.y); //size

@@ -1,4 +1,7 @@
 
+#![allow(unused_mut)]
+#![allow(unused_variables)]
+
 use std::collections::HashSet;
 
 use bevy::app::*;
@@ -7,10 +10,10 @@ use bevy::color::Color;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::ecs::prelude::*;
 use bevy::text::*;
-use bevy::ui::{AlignSelf, JustifySelf, Node};
+// use bevy::ui::{AlignSelf, JustifySelf, Node};
 use bevy::window::*;
 use bevy::DefaultPlugins;
-use bevy::prelude::{BuildChildren, Camera3d, ChildBuild, KeyCode, PluginGroup, Text};
+use bevy::prelude::{BuildChildren, Camera3d, ChildBuild, KeyCode, PluginGroup, };
 
 use bevy_table_ui as table_ui;
 use table_ui::*;
@@ -37,7 +40,7 @@ fn main() {
             table_ui::UiDisplayPlugin,
             table_ui::UiAffectPlugin,
         ))
-        
+
 
         // .add_systems(Startup, ( setup_input, setup_camera, setup_menu, ))
         // .add_systems(PreUpdate, ( update_input, ))
@@ -55,7 +58,7 @@ fn main() {
             show_fps.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(300))),
         ))
         ;
-    
+
     app.run();
 }
 
@@ -75,7 +78,7 @@ pub fn setup_ui(
     //          height:UiVal::Px(500.0),
     //     },
     // ));
-    
+
     commands.spawn((
         MenuUiRoot,
         UiLayoutComputed::default(),
@@ -105,9 +108,9 @@ pub fn setup_ui(
                 height_scale:0.5,
                 ..Default::default()
             },
-            UiCongruent { 
-                row_width_scale: 0.0, 
-                col_height_scale: 1.0, 
+            UiCongruent {
+                row_width_scale: 0.0,
+                col_height_scale: 1.0,
             },
         ));
 
@@ -127,17 +130,17 @@ pub fn setup_ui(
                 halign:UiTextHAlign::Right,
                 update:true,..Default::default()
             },
-            UiFill{ 
+            UiFill{
                 hfill: UiVal::None,
-                // hfill: UiVal::Scale(1.0), 
+                // hfill: UiVal::Scale(1.0),
                 // vfill: UiVal::None,
-                vfill: UiVal::Scale(1.0), 
+                vfill: UiVal::Scale(1.0),
             },
             // UiSize{width:UiVal::Px(200.0),height:UiVal::Px(70.0)},
             UiSize{width:UiVal::Px(200.0),height:UiVal::None},
             // UiAlign{halign:UiVal::Scale(0.0),..Default::default()},
         ));
-        
+
         //2
         parent.spawn((
             UiLayoutComputed::default(),
@@ -155,9 +158,9 @@ pub fn setup_ui(
                 valign:UiTextVAlign::Top,
                 update:true,..Default::default()
             },
-            UiFill{ 
+            UiFill{
                 // hfill: UiVal::None,
-                hfill: UiVal::Scale(1.0), 
+                hfill: UiVal::Scale(1.0),
                 vfill: UiVal::None,
             },
             // UiSize{width:UiVal::Px(200.0),height:UiVal::Px(70.0)},
@@ -180,9 +183,9 @@ pub fn setup_ui(
                 valign:UiTextVAlign::Center,
                 update:true,..Default::default()
             },
-            UiFill{ 
+            UiFill{
                 // hfill: UiVal::None,
-                hfill: UiVal::Scale(1.0), 
+                hfill: UiVal::Scale(1.0),
                 vfill: UiVal::None,
             },
             // UiSize{width:UiVal::Px(200.0),height:UiVal::None},
@@ -209,20 +212,20 @@ pub fn setup_ui(
                 // valign:UiTextVAlign::Top,
                 update:true,..Default::default()
             },
-            UiFill{ 
+            UiFill{
                 // hfill: UiVal::None,
-                // hfill: UiVal::Scale(1.0), 
+                // hfill: UiVal::Scale(1.0),
                 // vfill: UiVal::None,
                 ..Default::default()
             },
             UiSize{
                 // width:UiVal::Px(200.0),
-                // height:UiVal::Px(70.0), 
+                // height:UiVal::Px(70.0),
                 ..Default::default()
             },
-            UiCongruent { 
-                // row_width_scale: 0.0, 
-                // col_height_scale: 1.0, 
+            UiCongruent {
+                // row_width_scale: 0.0,
+                // col_height_scale: 1.0,
                 ..Default::default()
             },
         ));
@@ -242,19 +245,19 @@ fn update_input(
     // mut screenshot_manager: ResMut<bevy::render::view::screenshot::ScreenshotManager>,
     // main_window: Query<Entity, With<bevy::window::PrimaryWindow>>,
     mut last_pressed:Local<HashSet<KeyCode>>,
-    mut commands: Commands, 
+    mut commands: Commands,
 
-    
+
 ) {
     // let Ok(window_entity) = main_window.get_single() else {return;};
-   
+
     for ev in key_events.read() {
-        if ev.state==bevy::input::ButtonState::Pressed && !last_pressed.contains(&ev.key_code) { 
+        if ev.state==bevy::input::ButtonState::Pressed && !last_pressed.contains(&ev.key_code) {
             if ev.key_code==KeyCode::Escape || ev.key_code==KeyCode::F4 {
-                exit.send(AppExit::Success); 
+                exit.send(AppExit::Success);
             } else if ev.key_code==KeyCode::F12 {
                 if let Some(path) = generate_screenshot_path("./screenshots","screenshot_","png") {
-                    // if screenshot_manager.save_screenshot_to_disk(window_entity, &path).is_err() {                            
+                    // if screenshot_manager.save_screenshot_to_disk(window_entity, &path).is_err() {
                     //     eprintln!("Failed to take screenshot at {path:?}.");
                     // }
                     commands
@@ -276,21 +279,21 @@ fn update_input(
 struct FpsText;
 
 fn setup_fps(
-    mut commands: Commands, 
+    mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
-    let font = asset_server.load("fonts/FiraMono-Medium.ttf");
+    // let font = asset_server.load("fonts/FiraMono-Medium.ttf");
 
-    commands.spawn((
-        Text::default(),
-        TextLayout::new_with_justify(JustifyText::Center),
-        Node {align_self:AlignSelf::Start,justify_self:JustifySelf::End,..Default::default()},
-    )).with_child((
-        TextSpan::new(""),
-        TextColor::from(bevy::color::palettes::css::WHITE),
-        TextFont {font:font.clone(),font_size: 15.0,..Default::default()},
-        FpsText
-    ));
+    // commands.spawn((
+    //     Text::default(),
+    //     TextLayout::new_with_justify(JustifyText::Center),
+    //     Node {align_self:AlignSelf::Start,justify_self:JustifySelf::End,..Default::default()},
+    // )).with_child((
+    //     TextSpan::new(""),
+    //     TextColor::from(bevy::color::palettes::css::WHITE),
+    //     TextFont {font:font.clone(),font_size: 15.0,..Default::default()},
+    //     FpsText
+    // ));
 }
 
 fn show_fps(
@@ -349,7 +352,7 @@ where
 
         last_num=last_num.max(x);
     }
-    
-    //    
+
+    //
     Some(dir.join(format!("{name_start}{:04}{name_end}", last_num+1)))
 }

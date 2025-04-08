@@ -1,28 +1,28 @@
 use super::values::{UiVal, UiRectVal, UiRect};
 
-
+//problem with l/r being positive and t/b being negative, leads to nodes being cut off vertically
 pub fn calc_edge(edge:UiRectVal,w:f32,h:f32) -> UiRect {
     UiRect {
         left : match edge.left {
-            UiVal::Px(v)=>v,
+            UiVal::Px(v)=>v.max(0.0),
             UiVal::Scale(v) if v<0.0=>v.abs()*h,
             UiVal::Scale(v)=>v*w,
             UiVal::None => 0.0
         },
         right : match edge.right {
-            UiVal::Px(v)=>v,
+            UiVal::Px(v)=>v.max(0.0),
             UiVal::Scale(v) if v<0.0=>v.abs()*h,
             UiVal::Scale(v)=>v*w,
             UiVal::None => 0.0
         },
         top : match edge.top {
-            UiVal::Px(v)=>v,
+            UiVal::Px(v)=>v.max(0.0),
             UiVal::Scale(v) if v<0.0=>v.abs()*w,
             UiVal::Scale(v)=>v*h,
             UiVal::None => 0.0
         },
         bottom : match edge.bottom {
-            UiVal::Px(v)=>v,
+            UiVal::Px(v)=>v.max(0.0),
             UiVal::Scale(v) if v<0.0=>v.abs()*w,
             UiVal::Scale(v)=>v*h,
             UiVal::None => 0.0
@@ -43,7 +43,7 @@ pub fn distrib_empty_space2(
         UiVal::Scale(p) if p>=0.0 => computed_w/(1.0+p*(1.0-1.0/(cols_num as f32))),
         UiVal::Scale(p) if p<0.0 => match gap_vgap {
             UiVal::Scale(q) if q>=0.0 => {
-                let y=computed_h/(1.0+q*(1.0-1.0/(rows_num as f32)));                
+                let y=computed_h/(1.0+q*(1.0-1.0/(rows_num as f32)));
                 let x=computed_w - (y/(rows_num as f32))*p.abs()*((cols_num-1) as f32);
                 x
             },
@@ -89,7 +89,7 @@ pub fn distrib_empty_space2(
         let spc=empty_space_width;
 
         for col in 0..cols_num {
-            if let UiVal::Px(p) = col_expands[col] {                                
+            if let UiVal::Px(p) = col_expands[col] {
                 let x = (if col_expand_px_sum>spc{(p/col_expand_px_sum)*spc}else{p}).max(0.0);
                 col_widths[col]+=x;
                 empty_space_width=(empty_space_width-x).max(0.0);
@@ -162,7 +162,7 @@ pub fn distrib_empty_space2(
 //         let spc=empty_space_width;
 
 //         for col in 0..cols_num {
-//             if let UiVal::Px(p) = col_expands[col] {                                
+//             if let UiVal::Px(p) = col_expands[col] {
 //                 let x = (if col_expand_px_sum>spc{(p/col_expand_px_sum)*spc}else{p}).max(0.0);
 //                 col_widths[col]+=x;
 //                 empty_space_width=(empty_space_width-x).max(0.0);

@@ -120,8 +120,17 @@ pub fn setup_ui(
             UiColor{
                 back:Color::srgb(1.0,0.3,0.1),
                 cell:Color::srgb(1.0,0.5,0.1),
+                // border:Color::srgb(0.1,0.5,1.0),
+                border:Color::srgb(0.1,1.0,0.5),
                 ..Default::default()
             },
+            UiEdge{border:UiRectVal {
+                // left: UiVal::Scale(-10.0),
+                right: UiVal::Px(-10.0),
+                // top: UiVal::Px(10.0),
+                // bottom: UiVal::Px(10.0),
+                ..Default::default()
+            }, ..Default::default()},
             UiText{
                 value:"Hello".to_string(),
                 font_size:30.0,

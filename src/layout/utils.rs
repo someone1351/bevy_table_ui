@@ -1,6 +1,5 @@
 use super::values::{UiVal, UiRectVal, UiRect};
 
-//problem with l/r being positive and t/b being negative, leads to nodes being cut off vertically
 pub fn calc_edge(edge:UiRectVal,w:f32,h:f32) -> UiRect {
     UiRect {
         left : match edge.left {

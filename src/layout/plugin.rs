@@ -1,6 +1,6 @@
 
 // use bevy::app::prelude::*;
-use bevy::ecs::prelude::*; 
+use bevy::ecs::prelude::*;
 
 // use super::values::*;
 use super::components::*;
@@ -29,26 +29,30 @@ impl bevy::app::Plugin for UiLayoutPlugin {
     fn build(&self, app: &mut bevy::app::App) {
         app
 
-            .register_type::<UiEdge>() 
-            .register_type::<UiGap>() 
-            .register_type::<UiExpand>() 
-            .register_type::<UiFill>() 
-            .register_type::<UiScroll>() 
-            .register_type::<UiFloat>() 
-            .register_type::<UiHide>() 
-            .register_type::<UiSpan>() 
-            .register_type::<UiAlign>() 
-            .register_type::<UiSize>() 
-            .register_type::<UiInnerSize>() 
-            .register_type::<UiLayoutComputed>() 
-            
-            .add_systems(bevy::app::PostUpdate, 
+            .register_type::<UiEdge>()
+            .register_type::<UiGap>()
+            .register_type::<UiExpand>()
+            .register_type::<UiFill>()
+            .register_type::<UiScroll>()
+            .register_type::<UiFloat>()
+            .register_type::<UiHide>()
+            .register_type::<UiSpan>()
+            .register_type::<UiAlign>()
+            .register_type::<UiSize>()
+            .register_type::<UiInnerSize>()
+            .register_type::<UiLayoutComputed>()
+
+            .add_systems(bevy::app::PostUpdate,
                 (
                     ui_init_computeds,
-                    ui_calc_computeds,
-                ).chain().in_set(UiLayoutSystem) 
+                    ui_calc_rows_cols,
+                    ui_calc_computeds2,
+                    ui_calc_computeds3,
+                    ui_calc_computed_pos,
+                    ui_calc_computed_clamp,
+                ).chain().in_set(UiLayoutSystem)
             )
             ;
-        
+
     }
 }

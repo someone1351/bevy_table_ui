@@ -14,7 +14,7 @@ bytemuck = "1.7"
 
 [dev-dependencies]
 bevy = { version = "0.15.0", default-features = false, features = [
-    "file_watcher","png" #,"bevy_ui"
+    "file_watcher","png","dynamic_linking" #,"bevy_ui"
 ] }
 
 [lib]
@@ -22,5 +22,9 @@ name = "bevy_table_ui"
 path = "src/lib.rs"
 
 [[example]]
-name = "test"
-path = "examples/test.rs"
+name = "example1"
+path = "examples/example1.rs"
+
+[[example]]
+name = "test1"
+path = "examples/test1.rs"

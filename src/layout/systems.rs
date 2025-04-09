@@ -5,7 +5,7 @@ TODOS 1
 * make gaps/edges/size each able to use aspect(none,horizontal,vertical)
 
 TODOS 2
-* mark row/col not to use nodes past those, for internal size, 
+* mark row/col not to use nodes past those, for internal size,
 * have max internal size, eg via px, scale (positive, ie from parent)
 
 * need min size, so if window is shrunk too far, it won't shrink past min size
@@ -45,7 +45,7 @@ TODO 5
 TODO 6
 * make size etc work for root
 * * loop through entities parents instead of entities, so Option<Entity>, where root parent is None
-* * 
+* *
 
 TODO 7
 * add UiPriority component for root/floating nodes, higher priority are ordered ahead/ontop of their siblings
@@ -53,6 +53,8 @@ TODO 7
 TODO 8
 * have ui h/v align allow neg values which then align from right/bottom
 
+TODO 9
+* problem with l/r being positive and t/b being negative, leads to nodes being cut off vertically
 
 */
 
@@ -70,8 +72,8 @@ use bevy::math::Vec2;
 // use bevy::render::view::window;
 use bevy::utils::default;
 use bevy::{
-    // asset::prelude::*, 
-    ecs::prelude::*, 
+    // asset::prelude::*,
+    ecs::prelude::*,
     hierarchy::prelude::*,
     window::prelude::*,
 };
@@ -89,22 +91,22 @@ pub fn ui_init_computeds(
     children_query: Query<&Children,With<UiLayoutComputed>>,
     parent_query: Query<&Parent,With<UiLayoutComputed>>,
 
-    size_query: Query<&UiSize,>, //(With<Parent>,)
+    size_query: Query<&UiSize,>,
 
     hide_query: Query<&UiHide>,
     disable_query: Query<&UiDisable>,
     lock_query: Query<&UiLock>,
 
     edge_query: Query<&UiEdge,>, //,(With<Parent>)
-    // aspect_query: Query<&UiAspect,>, //(With<Parent>,)
- 
- 
+    // aspect_query: Query<&UiAspect,>,
+
+
     // change_query: Query<&UiChange>,
 
     // edge_query: Query<&UiEdge,(With<Parent>,)>,
     // mut c:Local<usize>,
 ) {
-    
+
     // println!("ui_init_computeds {}",*c);
     // *c+=1;
 
@@ -116,7 +118,7 @@ pub fn ui_init_computeds(
     for mut computed in computed_query.iter_mut() {
         *computed=Default::default();
     }
-    
+
     //
     let mut stk = root_query.iter().collect::<Vec<_>>();
     let mut order=0;
@@ -125,18 +127,18 @@ pub fn ui_init_computeds(
         let parent=parent_query.get(entity);
         let parent_computed = parent.and_then(|p|computed_query.get(p.get()))
             .cloned()
-            .unwrap_or(UiLayoutComputed { 
-                visible: true, 
+            .unwrap_or(UiLayoutComputed {
+                visible: true,
                 unlocked : true,
                 size:Vec2::new(window_size.0, window_size.1),
-                ..Default::default() 
+                ..Default::default()
             });
             // .unwrap_or_default();
 
         // let is_root=parent.is_err();
 
 
-        //necessary, as  newly added ui child entities seem to lack their ui components, 
+        //necessary, as  newly added ui child entities seem to lack their ui components,
         // but also necessary for child entities that lack any ui component
         let Ok(mut computed) = computed_query.get_mut(entity) else {
             continue;
@@ -207,7 +209,7 @@ pub fn ui_init_computeds(
         //     computed.size.x=window_size.0;
         //     computed.size.y=window_size.1;
         //     // println!("{entity:?} {computed:?}");
-        // } else 
+        // } else
         {
             // if is_root {
             //     //init root
@@ -216,13 +218,13 @@ pub fn ui_init_computeds(
             //     // computed.size.x=window_size.0;
             //     // computed.size.y=window_size.1;
             //     // println!("{entity:?} {computed:?}");
-            // } 
+            // }
 
             let size = size_query.get(entity).cloned().unwrap_or_default();
             let edge = edge_query.get(entity).cloned().unwrap_or_default();
             // let aspect = aspect_query.get(entity).cloned().unwrap_or_default();
 
-            // // if is_root 
+            // // if is_root
             // {
             //     println!("wh1 {:?} {size:?} {entity} {is_root} {:?}",computed.size,size_query.get(entity));
             // }
@@ -232,7 +234,7 @@ pub fn ui_init_computeds(
                     computed.size.x = p;
                 }
             }
-        
+
             if let UiVal::Px(p) = size.height {
                 if p>=0.0 {
                     computed.size.y = p;
@@ -243,12 +245,12 @@ pub fn ui_init_computeds(
             if computed.size.x < 0.0 { //is unset
                 computed.size.x = -parent_computed.size.x.abs();
             }
-            
+
             if computed.size.y < 0.0 { //is unset
-                computed.size.y = -parent_computed.size.y.abs();          
+                computed.size.y = -parent_computed.size.y.abs();
             }
 
-            
+
             //calc wh for positive percent size
             if let UiVal::Scale(s) = size.width {
                 if s>=0.0 {
@@ -291,68 +293,14 @@ pub fn ui_init_computeds(
 
 
 
-
-
-pub fn ui_calc_computeds(
-    windows: Query<&Window>,
-
+pub fn ui_calc_rows_cols(
     mut computed_query: Query<&mut UiLayoutComputed>,
     root_query: Query<Entity,(Without<Parent>,With<UiLayoutComputed>)>,
     children_query: Query<&Children,With<UiLayoutComputed>>,
-    parent_query: Query<&Parent,With<UiLayoutComputed>>,
-
-    //
-    // span_query: Query<&UiSpan>,
-    // gap_query: Query<&UiGap>,
-
-    (span_query,gap_query): (Query<&UiSpan>,Query<&UiGap>),
-
-    //only work with non root entities
-    size_query: Query<&UiSize,>, //(With<Parent>,)
-    inner_size_query: Query<&UiInnerSize,>, //(With<Parent>,)
-    align_query: Query<&UiAlign,>, //(With<Parent>,)
-    float_query: Query<&UiFloat,>, //(With<Parent>,)
-    fill_query: Query<&UiFill,>, //(With<Parent>,)
-    expand_query: Query<&UiExpand,>, //(With<Parent>,)
-    scroll_query: Query<&UiScroll,>, //(With<Parent>,)
-    edge_query: Query<&UiEdge,>, //(With<Parent>,)
-    congruent_query: Query<&UiCongruent,>, //(With<Parent>,)    
-    // mut c:Local<usize>,
+    span_query:Query<&UiSpan>,
+    float_query: Query<&UiFloat>,
 ) {
-    
-    // println!("ui_calc_computeds {}",*c);
-    // *c+=1;
-    
-    // println!("2");
-    // let now = std::time::Instant::now();
-    // println!("ui_calc_computeds Elapsed: {}", now.elapsed().as_secs_f64());
 
-    // let window_size = if let Some(window) = windows.get_primary() {(window.width(),window.height())} else {(0.0,0.0)};
-    let window_size=windows.get_single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
-
-    // let inv_scale_factor = 1. / scale_factor;
-
-    // println!("w {:?}",window_size);
-    //init df
-    // let mut df_entities = Vec::<Entity>::new();
-    
-    // {
-    //     let mut stk = root_query.iter().collect::<Vec<_>>();
-    
-    //     while let Some(entity) = stk.pop() {
-    //         let Ok(computed) = computed_query.get(entity) else {continue;};
-            
-    //         // if !computed.visible {continue;}
-    //         if !computed.enabled {continue;}
-
-    //         df_entities.push(entity);
-
-    //         stk.extend(children_query.get(entity)
-    //             .and_then(|c: &Children|Ok(c.iter().rev()))
-    //             .unwrap_or_default()
-    //         );
-    //     }
-    // }
 
     //calc row/cols
 
@@ -360,14 +308,10 @@ pub fn ui_calc_computeds(
     let mut stk = root_query.iter().map(|x|(x,false)).collect::<Vec<_>>();
     stk.reverse(); //not needed?
 
-    while let Some((entity,b)) = stk.pop()
-    // for &entity in df_entities.iter().rev() 
- 
-    {
-
+    while let Some((entity,b)) = stk.pop() {
         //so that entities are visited in reverse
         if !b {
-        
+
             let Ok(computed) = computed_query.get(entity) else {
                 continue;
             };
@@ -387,7 +331,7 @@ pub fn ui_calc_computeds(
         if let Ok(children)=children_query.get(entity) {
             //get enabled, not float child count
             let mut child_count=0;
-            
+
             for &child_entity in children.iter() {
                 let child_float = float_query.get(child_entity).cloned().unwrap_or_default().float;
                 let mut child_computed = computed_query.get_mut(child_entity).unwrap();
@@ -407,55 +351,57 @@ pub fn ui_calc_computeds(
             let cells_num = child_count;
             let cols_num = if span == 0 {cells_num} else {span.min(cells_num)};
             let rows_num = if cells_num==0 {0} else { (cells_num+cols_num-1)/cols_num };
-        
+
             let mut computed = computed_query.get_mut(entity).unwrap();
             computed.rows=rows_num;
             computed.cols = cols_num;
         }
     }
+}
 
 
 
+
+pub fn ui_calc_computeds2(
+    windows: Query<&Window>,
+
+    mut computed_query: Query<&mut UiLayoutComputed>,
+    root_query: Query<Entity,(Without<Parent>,With<UiLayoutComputed>)>,
+    children_query: Query<&Children,With<UiLayoutComputed>>,
+
+    gap_query: Query<&UiGap>,
+
+    size_query: Query<&UiSize,>,
+    inner_size_query: Query<&UiInnerSize,>,
+    float_query: Query<&UiFloat,>,
+    edge_query: Query<&UiEdge,>,
+    congruent_query: Query<&UiCongruent,>,
+) {
+
+    let window_size=windows.get_single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
+    // let inv_scale_factor = 1. / scale_factor;
 
 
     //
     let root_entities=root_query.iter().collect::<Vec<_>>();
-    let top_computed=UiLayoutComputed{
-            unlocked:true,
-            visible:true,
-            enabled:true,        
-            size:Vec2::new(window_size.0, window_size.1),
-        ..default()
-    };
-
-    // let top_size=UiSize {width:UiVal::Px(window_size.0),height:UiVal::Px(window_size.1)};
-
+    let top_computed=UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(window_size.0,window_size.1),..default()};
 
     //calc wh for none/negative sizes of non roots (todo: need to start with left leaves (does it?))
     //for non roots calc initial w,h (also edges,gaps, but not stored)
     //calc child w,h for congruent (aka perpendicular) sizes
-    
-    //
-    //root_query.iter().collect::<Vec<_>>()
-
-    // let mut stk = root_query.iter().map(|x|(x,false)).collect::<Vec<_>>();
-    // stk.reverse(); //not needed?
 
     //
-    let mut stk: Vec<(Option<Entity>, bool)> = vec![(None,false)]; 
+    let mut stk: Vec<(Option<Entity>, bool)> = vec![(None,false)];
 
-    //    
-    while let Some((entity,b)) = stk.pop()
-    // for &entity in df_entities.iter().rev() 
-    
-    {
+    //
+    while let Some((entity,b)) = stk.pop() {
 
         if !b {
             let children=entity
                 .map(|entity|children_query.get(entity).map(|children|children.iter().rev()).ok())
                 .unwrap_or(Some(root_entities.iter().rev()));
-            
-            if entity.map(|entity|computed_query.get(entity).map(|computed|!computed.enabled).unwrap_or(true)).unwrap_or(false) 
+
+            if entity.map(|entity|computed_query.get(entity).map(|computed|!computed.enabled).unwrap_or(true)).unwrap_or(false)
             {
                 continue;
             }
@@ -484,7 +430,7 @@ pub fn ui_calc_computeds(
         let mut max_space_w : f32 = 0.0;
         let mut max_space_h : f32 = 0.0;
 
-        if let Some(children)=&children //children_query.get(entity) 
+        if let Some(children)=&children //children_query.get(entity)
         // if children.is_some()
         {
             //get non hidden/float child count
@@ -494,13 +440,13 @@ pub fn ui_calc_computeds(
             //     if child_computed.enabled && !child_float {acc+1} else {acc}
             // });
 
-            // if child_count > 0 
-   
+            // if child_count > 0
+
             // let cells_num = child_count;
             // let cols_num = if span == 0 {cells_num} else {span.min(cells_num)};
             // let rows_num = if cells_num==0 {0} else { (cells_num+cols_num-1)/cols_num };
 
-            
+
             // let computed = *computed_query.get(entity).unwrap();
             let computed = entity.map(|entity|*computed_query.get(entity).unwrap()).unwrap_or(top_computed);
 
@@ -514,13 +460,13 @@ pub fn ui_calc_computeds(
             {
                 struct NodeScale {entity:Entity,col_vscale:f32,row_hscale:f32,w:f32,h:f32}
                 let mut child_node_scales = Vec::<NodeScale>::new();
-                
+
                 // let mut row_hscales = Vec::<(Entity,f32,f32)>::new();
                 // let mut col_vscales = Vec::<(Entity,f32,f32)>::new();
 
                 for &child_entity in children.clone() { //children here!
                     // println!("child_entity {child_entity:?}");
-                
+
                     //println!("Dfdsf8 {entity:?}");
                     let child_float = entity.is_none() || float_query.get(child_entity).cloned().unwrap_or_default().float;
                     // let child_size = size_query.get(child_entity).cloned().unwrap_or_default();
@@ -548,7 +494,7 @@ pub fn ui_calc_computeds(
                         .filter_map(|row|child_node_scales.get(col+row*cols_num))
                         .map(|x|x.col_vscale)
                         .sum::<f32>();
-                    
+
 
                     let mut col_max_height = 0.0;
 
@@ -569,7 +515,7 @@ pub fn ui_calc_computeds(
                         node_scale.col_vscale/=col_vscale_sum; //norm
                         col_max_height=(node_scale.h/node_scale.col_vscale).max(col_max_height); //calc max height
                     }
-                    
+
                     for row in 0..rows_num {
                         let ind= col+row*cols_num;
                         // let node_scale=&mut child_node_scales[ind];
@@ -580,7 +526,7 @@ pub fn ui_calc_computeds(
                         if node_scale.col_vscale == 0.0 {
                             continue;
                         }
-                        
+
                         let mut child_computed=computed_query.get_mut(node_scale.entity).unwrap();
                         child_computed.size.y = node_scale.col_vscale*col_max_height;
                     }
@@ -614,7 +560,7 @@ pub fn ui_calc_computeds(
                         node_scale.row_hscale/=row_hscale_sum; //norm
                         row_max_width=(node_scale.w/node_scale.row_hscale).max(row_max_width); //calc max width
                     }
-                    
+
                     for col in 0..cols_num {
                         let ind= row+col*rows_num;
                         // let node_scale=&mut child_node_scales[ind];
@@ -626,7 +572,7 @@ pub fn ui_calc_computeds(
                         if node_scale.row_hscale == 0.0 {
                             continue;
                         }
-                        
+
                         let mut child_computed=computed_query.get_mut(node_scale.entity).unwrap();
                         child_computed.size.x = node_scale.row_hscale*row_max_width;
                     }
@@ -637,16 +583,16 @@ pub fn ui_calc_computeds(
             let mut col_widths = vec![0.0 as f32;cols_num];
             let mut row_heights = vec![0.0 as f32;rows_num];
 
-            { 
+            {
                 // let mut child_ind = 0;
 
-                for &child_entity in children.clone() //children.iter() 
+                for &child_entity in children.clone() //children.iter()
                 { //children here!
                     //println!("Dfdsf7 {entity:?}");
                     //child entities without ui components are treated as visible (ie have a row/col)
                     let child_edge = edge_query.get(child_entity).cloned().unwrap_or_default();
                     let child_float = entity.is_none() || float_query.get(child_entity).cloned().unwrap_or_default().float;
-                    
+
                     let child_computed=computed_query.get(child_entity).unwrap();
 
                     if !child_computed.enabled {
@@ -672,7 +618,7 @@ pub fn ui_calc_computeds(
                         child_edge.v_px() + //child_vedge_px +
                         child_computed.size.y* child_edge.v_scale()+ //child_vedge_scale +
                         child_computed.size.x*child_edge.v_transverse_scale(); //child_vnedge_scale;
-                                                
+
                     //
                     if child_float { // || is_root_children
                         max_space_w = max_space_w.max(child_w);
@@ -680,7 +626,7 @@ pub fn ui_calc_computeds(
                     } else {
                         // let col = child_ind % cols_num;
                         // let row = child_ind / cols_num;
-                        
+
                         let col=child_computed.col as usize;
                         let row=child_computed.row as usize;
 
@@ -697,11 +643,11 @@ pub fn ui_calc_computeds(
             let total_row_height = row_heights.iter().sum::<f32>();
 
             //
-            if child_count>0 { // !is_root_children || 
+            if child_count>0 { // !is_root_children ||
                 //gaps
 
                 //should probably recalc avg col/row width/height for gap percent size after
-                // expands/fills in section further down like how margin/border/padding is 
+                // expands/fills in section further down like how margin/border/padding is
 
 
                 let hgap_space =  match gap.hgap {
@@ -723,7 +669,7 @@ pub fn ui_calc_computeds(
                 if cols_num!=0 && rows_num!=0 {
                     let hgap_spaces = hgap_space*((cols_num-1) as f32);
                     let vgap_spaces = vgap_space*((rows_num-1) as f32);
-    
+
                     max_space_w=max_space_w.max(total_col_width + hgap_spaces);
                     max_space_h=max_space_h.max(total_row_height + vgap_spaces);
                 }
@@ -732,7 +678,7 @@ pub fn ui_calc_computeds(
                 max_space_h=max_space_h.max(total_row_height);
             }
 
-            
+
             //
             //println!("e3b {entity:?} {:?}",computed.size);
         }
@@ -740,8 +686,8 @@ pub fn ui_calc_computeds(
         // !is_root_children
 
         //
-        // if let Ok(inner_size) = inner_size_query.get(entity)         
-        if let Some(inner_size) = entity.and_then(|entity|inner_size_query.get(entity).ok()) 
+        // if let Ok(inner_size) = inner_size_query.get(entity)
+        if let Some(inner_size) = entity.and_then(|entity|inner_size_query.get(entity).ok())
         {
             max_space_w = max_space_w.max(inner_size.width);
             max_space_h = max_space_h.max(inner_size.height);
@@ -752,7 +698,7 @@ pub fn ui_calc_computeds(
         {
             let size = size_query.get(entity).cloned().unwrap_or_default();
             let mut computed = computed_query.get_mut(entity).unwrap();
-    
+
             //
             //println!("e3a2 {entity:?} {:?}, {max_space_w} {max_space_h} : {size:?}",computed.size);
 
@@ -768,7 +714,7 @@ pub fn ui_calc_computeds(
                 }
                 _ => {},
             }
-    
+
             match size.height {
                 UiVal::Px(p) if p<0.0 => {
                     computed.size.y = max_space_h+p.abs();
@@ -782,7 +728,7 @@ pub fn ui_calc_computeds(
                 _ => {},
             }
 
-            
+
             //
             //println!("e3a1 {entity:?} {:?}",computed.size);
         }
@@ -790,16 +736,39 @@ pub fn ui_calc_computeds(
 
 
 
+}
+
+pub fn ui_calc_computeds3(
+    windows: Query<&Window>,
+
+    mut computed_query: Query<&mut UiLayoutComputed>,
+    root_query: Query<Entity,(Without<Parent>,With<UiLayoutComputed>)>,
+    children_query: Query<&Children,With<UiLayoutComputed>>,
+
+    gap_query: Query<&UiGap>,
+
+    size_query: Query<&UiSize,>,
+    align_query: Query<&UiAlign,>,
+    float_query: Query<&UiFloat,>,
+    fill_query: Query<&UiFill,>,
+    expand_query: Query<&UiExpand,>,
+    edge_query: Query<&UiEdge,>,
+) {
+
+    let window_size=windows.get_single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
+    // let inv_scale_factor = 1. / scale_factor;
 
 
 
 
+    let root_entities=root_query.iter().collect::<Vec<_>>();
+    let top_computed=UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(window_size.0,window_size.1),..default()};
 
 
     // //
-    // let mut stk: Vec<(Option<Entity>, bool)> = vec![(None,false)]; 
+    // let mut stk: Vec<(Option<Entity>, bool)> = vec![(None,false)];
 
-    // //    
+    // //
     // while let Some((entity,b)) = stk.pop()
 
 
@@ -808,14 +777,14 @@ pub fn ui_calc_computeds(
     //
     // let mut stk = root_query.iter().collect::<Vec<_>>();
 
-    // //    
+    // //
     // while let Some(entity) = stk.pop()
-    // // for &entity in df_entities.iter() 
-    let mut stk: Vec<Option<Entity>> = vec![None]; 
+    // // for &entity in df_entities.iter()
+    let mut stk: Vec<Option<Entity>> = vec![None];
 
     //
     while let Some(entity) = stk.pop()
-    
+
     {
 
         {
@@ -823,7 +792,7 @@ pub fn ui_calc_computeds(
                 .map(|entity|children_query.get(entity).map(|children|children.iter().rev()).ok())
                 .unwrap_or(Some(root_entities.iter().rev()));
 
-            if entity.map(|entity|computed_query.get(entity).map(|computed|!computed.enabled).unwrap_or(true)).unwrap_or(false) 
+            if entity.map(|entity|computed_query.get(entity).map(|computed|!computed.enabled).unwrap_or(true)).unwrap_or(false)
 
             {
                 continue;
@@ -867,7 +836,7 @@ pub fn ui_calc_computeds(
         let pos_width=(computed.size.x-neg_width).max(0.0); //max probably not necessary
         let pos_height=(computed.size.y-neg_height).max(0.0);
 
-        // if let Ok(children) = children_query.get(entity) 
+        // if let Ok(children) = children_query.get(entity)
         if let Some(children) = &children
         {
             //get non hidden/float child count
@@ -886,7 +855,7 @@ pub fn ui_calc_computeds(
             // let cols_num = if span == 0 {cells_num} else {span.min(cells_num)};
             // let rows_num = if cells_num==0 {0} else { (cells_num+cols_num-1)/cols_num };
 
-            
+
             let cols_num = computed.cols as usize;
             let rows_num = computed.rows as usize;
             let cells_num = cols_num*rows_num;
@@ -897,13 +866,13 @@ pub fn ui_calc_computeds(
             //calc table row/col sizes (ignoring gaps/spaces) + max h/v expands
             let mut col_widths = vec![0.0 as f32;cols_num];
             let mut row_heights = vec![0.0 as f32;rows_num];
-            
+
             //
             //if child_count > 0 //hmm
             {
                 // let mut child_ind = 0;
 
-                for &child_entity in children.clone() //.iter() 
+                for &child_entity in children.clone() //.iter()
                 {
                     //println!("Dfdsf6 {entity:?}");
                     let child_computed = computed_query.get(child_entity).cloned().unwrap_or_default();
@@ -988,16 +957,16 @@ pub fn ui_calc_computeds(
                 {
                     // let mut child_ind = 0;
 
-                    for &child_entity in children.clone() //.iter() 
+                    for &child_entity in children.clone() //.iter()
                     { //children here!
                         //println!("Dfdsf5 {entity:?}");
                         let child_computed = computed_query.get(child_entity).cloned().unwrap_or_default();
                         let child_float = entity.is_none() || float_query.get(child_entity).cloned().unwrap_or_default().float;
                         let child_expand = expand_query.get(child_entity).cloned().unwrap_or_default();
-    
+
                         if child_computed.enabled && !child_float {
                             // let col = child_ind % cols_num;
-                            // let row = child_ind / cols_num;    
+                            // let row = child_ind / cols_num;
 
                             let col=child_computed.col as usize;
                             let row=child_computed.row as usize;
@@ -1064,7 +1033,7 @@ pub fn ui_calc_computeds(
                         UiVal::Px(p) => p.max(0.0),
                         _ => 0.0
                     };
-        
+
                     vgap_space =  match gap.vgap {
                         // Val::Scale(p) => p.max(0.0)*(total_row_height/(rows_num as f32)),
                         UiVal::Scale(p) if p>=0.0 => p*(total_row_height/(rows_num as f32)),
@@ -1111,7 +1080,7 @@ pub fn ui_calc_computeds(
 
                 computed2.children_size.x=children_w;
                 computed2.children_size.y=children_h;
-                
+
                 computed2.gap_size.x=hgap_space;
                 computed2.gap_size.y=vgap_space;
             }
@@ -1121,9 +1090,9 @@ pub fn ui_calc_computeds(
             {
                 // let mut child_ind=0;
 
-                for &child_entity in children.clone() //.iter() 
-                {         
-                    //println!("Dfdsf4 {entity:?}");           
+                for &child_entity in children.clone() //.iter()
+                {
+                    //println!("Dfdsf4 {entity:?}");
                     if let Ok(mut child_computed) = computed_query.get_mut(child_entity) {
                         // let child_edge = edge_query.get(child_entity).cloned().unwrap_or_default();
 
@@ -1148,7 +1117,7 @@ pub fn ui_calc_computeds(
                                 pos_width
                             } else {
                                 // let col = child_ind % cols_num;
-                                
+
                                 let col=child_computed.col as usize;
 
                                 col_widths[col]
@@ -1158,12 +1127,12 @@ pub fn ui_calc_computeds(
                                 pos_height
                             } else {
                                 // let row = child_ind / cols_num;
-                                
+
                                 let row=child_computed.row as usize;
 
                                 row_heights[row]
                             };
-                            
+
                             //
                             let fill_w=match child_fill.hfill {
                                 UiVal::Scale(p)=>{cell_w*p.max(0.0)},
@@ -1180,9 +1149,9 @@ pub fn ui_calc_computeds(
                             let pre_w=cell_w.min(
                                 child_computed.size.x+
                                 child_edge_h_px+
-                                child_computed.size.x*child_edge_h_scale+ 
+                                child_computed.size.x*child_edge_h_scale+
                                 child_computed.size.y*child_edge_h_nscale);
-                            
+
                             let pre_h=cell_h.min(
                                 child_computed.size.y+
                                 child_edge_v_px+
@@ -1191,14 +1160,14 @@ pub fn ui_calc_computeds(
 
                             // let fill_w=(fill_w.clamp(pre_w,cell_w)-child_hedge_px).max(0.0);
                             // let fill_h=(fill_h.clamp(pre_h,cell_h)-child_vedge_px).max(0.0);
-                            
+
                             // child_computed.w=fill_w/(child_hedge_scale+1.0); //move subtract px edge here ...
                             // child_computed.h=fill_h/(child_vedge_scale+1.0);
 
 
                             let fill_w=fill_w.clamp(pre_w,cell_w);
                             let fill_h=fill_h.clamp(pre_h,cell_h);
-                            
+
                             // child_computed.w=(fill_w-child_hedge_px).max(0.0)/(child_hedge_scale+1.0);
                             // child_computed.h=(fill_h-child_vedge_px).max(0.0)/(child_vedge_scale+1.0);
 
@@ -1242,7 +1211,7 @@ pub fn ui_calc_computeds(
                                 //quickfix for below
                                 let fill_w=fill_w.max(child_computed.size.x);
                                 let fill_h=fill_h.max(child_computed.size.y);
-                                
+
                                 //
                                 child_computed.size.x=x.clamp(child_computed.size.x,fill_w);
                                 child_computed.size.y=y.clamp(child_computed.size.y,fill_h);
@@ -1256,7 +1225,7 @@ pub fn ui_calc_computeds(
                             // child_computed.edge_r=child_edge.r_px.max(0.0)+child_edge.r_scale.max(0.0)*child_computed.w;
                             // child_computed.edge_t=child_edge.t_px.max(0.0)+child_edge.t_scale.max(0.0)*child_computed.h;
                             // child_computed.edge_b=child_edge.b_px.max(0.0)+child_edge.b_scale.max(0.0)*child_computed.h;
-                                
+
                             // child_computed.nedge_l=child_edge.l_neg_scale.max(0.0)*child_computed.h;
                             // child_computed.nedge_r=child_edge.r_neg_scale.max(0.0)*child_computed.h;
                             // child_computed.nedge_t=child_edge.t_neg_scale.max(0.0)*child_computed.w;
@@ -1265,7 +1234,7 @@ pub fn ui_calc_computeds(
                             child_computed.border_size=calc_edge(child_edge.border,child_computed.size.x,child_computed.size.y);
                             child_computed.padding_size=calc_edge(child_edge.padding,child_computed.size.x,child_computed.size.y);
                             child_computed.margin_size=calc_edge(child_edge.margin,child_computed.size.x,child_computed.size.y);
-                
+
                             // let edge_w=child_computed.edge_l+child_computed.edge_r+child_computed.nedge_l+child_computed.nedge_r;
                             // let edge_h=child_computed.edge_t+child_computed.edge_b+child_computed.nedge_t+child_computed.nedge_b;
 
@@ -1301,7 +1270,7 @@ pub fn ui_calc_computeds(
                             //         child_computed.nedge_b=0.0;
                             //     }
                             // }
-                            //                                                        
+                            //
                             if !child_float {
                                 // child_ind+=1;
                             }
@@ -1312,50 +1281,50 @@ pub fn ui_calc_computeds(
                 }
             }
 
-            //calc spcs 
+            //calc spcs
             {
                 // let mut child_ind=0;
 
-                for &child_entity in children.clone() //.iter() 
+                for &child_entity in children.clone() //.iter()
                 {
                     //println!("Dfdsf3 {entity:?}");
                     let align = align_query.get(child_entity).cloned().unwrap_or_default();
-                    
+
                     if let Ok(mut child_computed) = computed_query.get_mut(child_entity) {
                         if child_computed.enabled {
                             let child_float = entity.is_none() || float_query.get(child_entity).cloned().unwrap_or_default().float;
-                
+
                             //edge
                             // let houter = child_computed.edge_l+child_computed.edge_r + child_computed.nedge_l+child_computed.nedge_r;
                             // let vouter = child_computed.edge_t+child_computed.edge_b + child_computed.nedge_t+child_computed.nedge_b;
 
-                            let houter = 
+                            let houter =
                                 child_computed.border_size.left+child_computed.border_size.right+
                                 child_computed.padding_size.left+child_computed.padding_size.right+
                                 child_computed.margin_size.left+child_computed.margin_size.right;
 
-                            let vouter = 
+                            let vouter =
                                 child_computed.border_size.top+child_computed.border_size.bottom+
                                 child_computed.padding_size.top+child_computed.padding_size.bottom+
                                 child_computed.margin_size.top+child_computed.margin_size.bottom;
 
                             if child_float {
-                                let hspace=(computed.size.x-child_computed.size.x - houter).max(0.0); 
-                                let vspace=(computed.size.y-child_computed.size.y - vouter).max(0.0); 
-                
+                                let hspace=(computed.size.x-child_computed.size.x - houter).max(0.0);
+                                let vspace=(computed.size.y-child_computed.size.y - vouter).max(0.0);
+
                                 let left_space=match align.halign {
                                     UiVal::Scale(p)=>{hspace*p.clamp(0.0,1.0)},
                                     UiVal::Px(p)=>{p.clamp(0.0,hspace)},
                                     _=>{hspace* 0.5},
                                 };
-                
-                                // let vbottom_space=vspace-match align.valign { 
+
+                                // let vbottom_space=vspace-match align.valign {
                                 //     Val::Scale(p)=>{vspace*p.clamp(0.0,1.0)},
                                 //     Val::Px(p)=>{p.clamp(0.0,vspace)},
                                 //     _=>{vspace*0.5},
                                 // }; //ydir
 
-                                let top_space=match align.valign { 
+                                let top_space=match align.valign {
                                     UiVal::Scale(p)=>{vspace*p.clamp(0.0,1.0)},
                                     UiVal::Px(p)=>{p.clamp(0.0,vspace)},
                                     _=>{vspace*0.5},
@@ -1386,7 +1355,7 @@ pub fn ui_calc_computeds(
 
                                 let col_width_ratio =col_width/total_col_width;
                                 let row_height_ratio =row_height/total_row_height;
-                                
+
                                 let col_width=col_width + neg_width*col_width_ratio;
                                 let row_height=row_height + neg_height*row_height_ratio;
 
@@ -1398,14 +1367,14 @@ pub fn ui_calc_computeds(
                                     UiVal::Px(p)=>{p.clamp(0.0,hspace)},
                                     _=>{hspace* 0.5},
                                 };
-                
-                                // let vbottom_space=vspace-match align.valign { 
+
+                                // let vbottom_space=vspace-match align.valign {
                                 //     Val::Scale(p)=>{vspace*p.clamp(0.0,1.0)},
                                 //     Val::Px(p)=>{p.clamp(0.0,vspace)},
                                 //     _=>{vspace*0.5},
                                 // }; //ydir
-                
-                                let top_space=match align.valign { 
+
+                                let top_space=match align.valign {
                                     UiVal::Scale(p)=>{vspace*p.clamp(0.0,1.0)},
                                     UiVal::Px(p)=>{p.clamp(0.0,vspace)},
                                     _=>{vspace*0.5},
@@ -1416,12 +1385,12 @@ pub fn ui_calc_computeds(
 
                                 // child_computed.spc_b=vbottom_space; //ydir
                                 // child_computed.spc_t=(vspace-vbottom_space).max(0.0); //ydir
-                
+
                                 // child_computed.cell.top=top_space; //ydir2
                                 // child_computed.cell.bottom=(vspace-top_space).max(0.0); //ydir2
 
                                 child_computed.cell_size.top=top_space;
-                                child_computed.cell_size.bottom=(vspace-top_space).max(0.0); 
+                                child_computed.cell_size.bottom=(vspace-top_space).max(0.0);
 
                                 // child_ind+=1;
                             }
@@ -1439,6 +1408,29 @@ pub fn ui_calc_computeds(
 
 
 
+}
+
+pub fn ui_calc_computed_pos(
+    windows: Query<&Window>,
+
+    mut computed_query: Query<&mut UiLayoutComputed>,
+    root_query: Query<Entity,(Without<Parent>,With<UiLayoutComputed>)>,
+    children_query: Query<&Children,With<UiLayoutComputed>>,
+
+
+    float_query: Query<&UiFloat,>,
+    scroll_query: Query<&UiScroll,>,
+) {
+
+    let window_size=windows.get_single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
+    // let inv_scale_factor = 1. / scale_factor;
+
+
+
+    let root_entities=root_query.iter().collect::<Vec<_>>();
+    let top_computed=UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(window_size.0,window_size.1),..default()};
+
+
 
 
 
@@ -1447,11 +1439,11 @@ pub fn ui_calc_computeds(
     //
     // let mut stk = root_query.iter().collect::<Vec<_>>();
 
-    // //    
+    // //
     // while let Some(entity) = stk.pop()
-    // // for &entity in df_entities.iter() 
-    
-    let mut stk: Vec<Option<Entity>> = vec![None]; 
+    // // for &entity in df_entities.iter()
+
+    let mut stk: Vec<Option<Entity>> = vec![None];
 
     //
     while let Some(entity) = stk.pop()
@@ -1461,7 +1453,7 @@ pub fn ui_calc_computeds(
                 .map(|entity|children_query.get(entity).map(|children|children.iter().rev()).ok())
                 .unwrap_or(Some(root_entities.iter().rev()));
 
-            if entity.map(|entity|computed_query.get(entity).map(|computed|!computed.enabled).unwrap_or(true)).unwrap_or(false) 
+            if entity.map(|entity|computed_query.get(entity).map(|computed|!computed.enabled).unwrap_or(true)).unwrap_or(false)
 
             {
                 continue;
@@ -1484,7 +1476,7 @@ pub fn ui_calc_computeds(
         // // let span = span_query.get(entity).cloned().unwrap_or_default().span as usize;
         // let span = entity.and_then(|entity|span_query.get(entity).ok()).cloned().unwrap_or_default().span as usize;
 
-        // if let Ok(children) = children_query.get(entity) 
+        // if let Ok(children) = children_query.get(entity)
         if let Some(children) = &children
         {
             //get non hidden/float child count
@@ -1499,7 +1491,7 @@ pub fn ui_calc_computeds(
             // let cells_num = child_count;
             // let cols_num = if span == 0 {cells_num} else {span.min(cells_num)};
             // let rows_num = if cells_num==0 {0} else { (cells_num+cols_num-1)/cols_num };
-  
+
             let cols_num = computed.cols as usize;
             let rows_num = computed.rows as usize;
             // let cells_num = cols_num*rows_num;
@@ -1513,7 +1505,7 @@ pub fn ui_calc_computeds(
             {
                 // let mut child_ind = 0;
 
-                for &child_entity in children.clone() //.iter() 
+                for &child_entity in children.clone() //.iter()
                 {
                     //println!("Dfdsf2 {entity:?}");
                     let child_computed = computed_query.get(child_entity).cloned().unwrap_or_default();
@@ -1526,7 +1518,7 @@ pub fn ui_calc_computeds(
 
                         let col=child_computed.col as usize;
                         let row=child_computed.row as usize;
-                        
+
                         // let w=child_computed.w+
                         //     child_computed.edge_l+child_computed.edge_r+
                         //     child_computed.nedge_l+child_computed.nedge_r+
@@ -1568,7 +1560,7 @@ pub fn ui_calc_computeds(
 
                 // let mut child_ind=0;
 
-                for &child_entity in children.clone() //.iter() 
+                for &child_entity in children.clone() //.iter()
                 {
                     //println!("Dfdsf1 {entity:?}");
 
@@ -1600,7 +1592,7 @@ pub fn ui_calc_computeds(
 
                                 let col=child_computed.col as usize;
                                 let row=child_computed.row as usize;
-                                
+
                                 if col == 0 {
                                     x=computed.pos.x;
                                     // y-=row_heights[row]; //ydir
@@ -1609,7 +1601,7 @@ pub fn ui_calc_computeds(
                                     if row>0 { //hmm
                                         // y-=computed.gap_h;//ydir
                                         y+=computed.gap_size.y; //ydir2
-                                        
+
                                     // y+=row_heights[row]; //ydir2
                                     }
                                 } else {
@@ -1626,7 +1618,7 @@ pub fn ui_calc_computeds(
                                     child_computed.border_size.left+
                                     child_computed.padding_size.left+
                                     child_computed.margin_size.left;
-                                
+
                                 child_computed.pos.y=y+
                                     child_computed.cell_size.top+
                                     child_computed.border_size.top+
@@ -1643,12 +1635,12 @@ pub fn ui_calc_computeds(
                             }
                         }
                     }
-                    
+
                     // //todo remove? since no components without computed
-                    // else if cols_num > 0 { //entities without computed component treated as visible                
+                    // else if cols_num > 0 { //entities without computed component treated as visible
                     //     let col = child_ind % cols_num;
                     //     let row = child_ind / cols_num;
-                        
+
                     //     if col == 0 {
                     //         x=computed.x;
                     //         y-=row_heights[row];
@@ -1659,7 +1651,7 @@ pub fn ui_calc_computeds(
                     //     } else {
                     //         x+=computed.gap_w;//hgap_space;
                     //     }
-                        
+
                     //     x+= col_widths[col];
 
                     //     child_ind+=1;
@@ -1671,25 +1663,25 @@ pub fn ui_calc_computeds(
             //todo handle neg px scale vals as being size.x-scroll.x
             if let Some(entity)=entity {
                 if let Ok(children)=children_query.get(entity) {
-                    if let Ok(scroll) = scroll_query.get(entity) 
+                    if let Ok(scroll) = scroll_query.get(entity)
                     {
                         let hscroll_space = (computed.children_size.x-computed.size.x).max(0.0);
                         let vscroll_space = (computed.children_size.y-computed.size.y).max(0.0);
-        
+
                         let scroll_x=match scroll.hscroll {
                             UiVal::Scale(p)=>{hscroll_space*p.clamp(0.0,1.0)}
                             UiVal::Px(p) if p>=0.0 =>{p.clamp(0.0,hscroll_space)}
                             UiVal::Px(p)=>{hscroll_space-p.clamp(0.0,hscroll_space)}
                             _=>{0.0}
                         };
-        
+
                         let scroll_y=match scroll.vscroll {
                             UiVal::Scale(p)=>{vscroll_space*p.clamp(0.0,1.0)}
                             UiVal::Px(p) if p>=0.0 =>{p.clamp(0.0,vscroll_space)}
                             UiVal::Px(p) =>{vscroll_space-p.clamp(0.0,vscroll_space)}
                             _=>{0.0}
                         };
-                        
+
                         {
                             let mut computed2=computed_query.get_mut(entity).unwrap();
                             computed2.scroll_pos.x=scroll_x;
@@ -1697,8 +1689,8 @@ pub fn ui_calc_computeds(
                             computed2.scroll_size.x=hscroll_space;
                             computed2.scroll_size.y=vscroll_space;
                         }
-        
-                        for &child_entity in children.iter() 
+
+                        for &child_entity in children.iter()
                         {
                             if let Ok(mut child_computed) = computed_query.get_mut(child_entity) {
                                 child_computed.pos.x-=scroll_x;
@@ -1719,6 +1711,21 @@ pub fn ui_calc_computeds(
 
 
 
+}
+
+pub fn ui_calc_computed_clamp(
+    windows: Query<&Window>,
+
+    mut computed_query: Query<&mut UiLayoutComputed>,
+    root_query: Query<Entity,(Without<Parent>,With<UiLayoutComputed>)>,
+    children_query: Query<&Children,With<UiLayoutComputed>>,
+    parent_query: Query<&Parent,With<UiLayoutComputed>>,
+
+
+) {
+
+    let window_size=windows.get_single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
+    // let inv_scale_factor = 1. / scale_factor;
 
 
 
@@ -1729,9 +1736,9 @@ pub fn ui_calc_computeds(
     //
     let mut stk = root_query.iter().collect::<Vec<_>>();
 
-    //    
+    //
     while let Some(entity) = stk.pop()
-    // for &entity in df_entities.iter() 
+    // for &entity in df_entities.iter()
     {
         {
             let Ok(computed) = computed_query.get(entity) else {
@@ -1741,7 +1748,7 @@ pub fn ui_calc_computeds(
             if !computed.enabled {
                 continue;
             }
-            // if entity.map(|entity|computed_query.get(entity).map(|computed|!computed.enabled).unwrap_or(true)).unwrap_or(false) 
+            // if entity.map(|entity|computed_query.get(entity).map(|computed|!computed.enabled).unwrap_or(true)).unwrap_or(false)
             // {
             //     continue;
             // }
@@ -1761,7 +1768,7 @@ pub fn ui_calc_computeds(
             }, //y is down
             ..Default::default()}
         };
-        
+
         let mut computed = computed_query.get_mut(entity).unwrap();
 
         // println!("entity {entity:?}, vis {}",computed.visible);
@@ -1775,7 +1782,7 @@ pub fn ui_calc_computeds(
 
             let inner_rect = computed.inner_rect();
             let cell_rect = inner_rect.expand_by(computed.padding_size + computed.border_size + computed.margin_size + computed.cell_size);
-            
+
             //
             computed.clamped_rect = inner_rect.clamp(parent_computed.clamped_rect);
             computed.clamped_cell_rect = cell_rect.clamp(parent_computed.clamped_rect);
@@ -1792,7 +1799,7 @@ pub fn ui_calc_computeds(
 // ) {
 //     // for (entity, computed) in uinode_query.iter() {
 //     //     if computed.v { //don't care if hidden as they aren't computed
-//     //         if computed.w < 0.0 || computed.h < 0.0 { //computed.x < 0.0 || computed.y < 0.0 || 
+//     //         if computed.w < 0.0 || computed.h < 0.0 { //computed.x < 0.0 || computed.y < 0.0 ||
 //     //             panic!("Not computed ui entity {:?}:\n\t{:?}",entity,computed); //\n\t{:?}\n\t{:?} ,size,parent
 //     //         }
 //     //     }

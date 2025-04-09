@@ -78,27 +78,35 @@ pub fn setup_ui(
         //     width:UiVal::Scale(1.0),
         //     height:UiVal::Scale(1.0),
         // },
-        UiSpan{span:1},
+        // UiSpan{span:1},
         // UiGap{hgap:UiVal::Px(5.0),vgap:UiVal::Px(5.0)},
     )).with_children(|parent|{
 
-        for i in 0 .. 4 {
+        for i in 1 ..=2 {
             if
             true
-            // false
+            &&false
             {
                 parent.spawn((
                     UiLayoutComputed::default(),
-                    UiFill{ hfill: UiVal::Scale(1.0), vfill: UiVal::None },
+                    UiFill{
+                        // hfill: UiVal::Scale(1.0),
+                        vfill: UiVal::Scale(1.0),
+                        ..Default::default()
+                    },
                     UiColor{
                         back:Color::srgb(0.1,0.5,1.0),
                         border:Color::srgb(0.8,0.8,0.8),
                         ..Default::default()
                     },
-                    UiEdge{ border:UiRectVal { top: UiVal::Scale(-0.3), ..Default::default() }, ..Default::default() },
+                    UiEdge{ border:UiRectVal {
+                        // top: UiVal::Scale(-0.3),
+                        left: UiVal::Scale(-0.5),
+                        ..Default::default()
+                    }, ..Default::default() },
                     UiText{
-                        value:format!("{i}").repeat(i+1),
-                        font_size:30.0,
+                        value:format!("{i}").repeat(i+0),
+                        font_size:20.0+((i*35) as f32),
                         color:Color::WHITE,
                         font:asset_server.load("fonts/FiraMono-Medium.ttf"),
                         update:true,
@@ -110,15 +118,20 @@ pub fn setup_ui(
                     UiLayoutComputed::default(),
                     UiFill{ hfill: UiVal::Scale(1.0), vfill: UiVal::None },
                     UiColor{ back:Color::srgb(0.5,0.1,1.0), ..Default::default() },
-                    UiSize{ width:UiVal::None, height:UiVal::Scale(-1.5), },
+                    UiSize{
+                        width:UiVal::Scale(-1.5),
+                        // height:UiVal::Scale(-1.5),
+                        ..Default::default()
+                    },
+                    UiAlign{ halign: UiVal::Scale(1.0), valign: UiVal::None },
                 )).with_children(|parent|{
                     parent.spawn((
                         UiLayoutComputed::default(),
                         // UiFill{ hfill: UiVal::Scale(1.0), vfill: UiVal::None },
                         UiColor{ back:Color::srgb(0.1,0.5,1.0), ..Default::default() },
                         UiText{
-                            value:format!("{i}").repeat(i+1),
-                            font_size:30.0,
+                            value:format!("{i}").repeat(i+0),
+                            font_size:20.0+((i*35) as f32),
                             color:Color::WHITE,
                             font:asset_server.load("fonts/FiraMono-Medium.ttf"),
                             update:true,

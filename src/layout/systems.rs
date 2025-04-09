@@ -55,7 +55,14 @@ TODO 8
 
 TODO 9
 * problem with l/r being positive and t/b being negative, leads to nodes being cut off vertically
+** it's because it precalcs the client size and border size, and uses the one with the largest client size + border size as the max row/col size and
+*** calcs all the other sibling cells off that, but if the largest sibling has a smaller client siz
 
+1 has smaller height, 2 has larger height
+border width is based on node height
+1's border width is smaller, 2's border width is larger
+vfill is scaled to 1.0, so 1's height is set to 2's height
+but 1's col's max width is smaller than 2's,
 */
 
 
@@ -401,7 +408,9 @@ pub fn ui_calc_computeds2(
                 .map(|entity|children_query.get(entity).map(|children|children.iter().rev()).ok())
                 .unwrap_or(Some(root_entities.iter().rev()));
 
-            if entity.map(|entity|computed_query.get(entity).map(|computed|!computed.enabled).unwrap_or(true)).unwrap_or(false)
+            if entity.map(|entity|computed_query.get(entity)
+                .map(|computed|!computed.enabled)
+                .unwrap_or(true)).unwrap_or(false)
             {
                 continue;
             }
@@ -694,8 +703,7 @@ pub fn ui_calc_computeds2(
         }
 
         // if parent_query.get(entity).is_ok() //has parent
-        if let Some(entity)=entity
-        {
+        if let Some(entity)=entity {
             let size = size_query.get(entity).cloned().unwrap_or_default();
             let mut computed = computed_query.get_mut(entity).unwrap();
 
@@ -895,10 +903,8 @@ pub fn ui_calc_computeds3(
                         // let child_hedge_px= child_edge.l_px.max(0.0)+child_edge.r_px.max(0.0);
                         // let child_vedge_px= child_edge.t_px.max(0.0)+child_edge.b_px.max(0.0);
 
-
                         // let child_hnedge_scale= child_edge.l_neg_scale.max(0.0)+child_edge.r_neg_scale.max(0.0);
                         // let child_vnedge_scale= child_edge.t_neg_scale.max(0.0)+child_edge.b_neg_scale.max(0.0);
-
 
                         let child_w = child_computed.size.x+
                             child_edge.h_px()+//child_hedge_px +

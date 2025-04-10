@@ -63,6 +63,8 @@ border width is based on node height
 1's border width is smaller, 2's border width is larger
 vfill is scaled to 1.0, so 1's height is set to 2's height
 but 1's col's max width is smaller than 2's,
+
+** could just not allow neg edge when fill used or when fill used on adjacent h/v
 */
 
 

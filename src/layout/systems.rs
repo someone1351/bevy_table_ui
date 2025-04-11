@@ -65,6 +65,11 @@ vfill is scaled to 1.0, so 1's height is set to 2's height
 but 1's col's max width is smaller than 2's,
 
 ** could just not allow neg edge when fill used or when fill used on adjacent h/v
+
+TODO 10
+* for align, add option to align from near/far edge of node,
+** currently pixel is space before near edge
+** currently scale is space befor near edge divided by near space+far space
 */
 
 

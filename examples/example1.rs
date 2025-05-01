@@ -13,7 +13,8 @@ use bevy::text::*;
 // use bevy::ui::{AlignSelf, JustifySelf, Node};
 use bevy::window::*;
 use bevy::DefaultPlugins;
-use bevy::prelude::{BuildChildren, Camera3d, ChildBuild, KeyCode, PluginGroup, };
+use bevy::prelude::{Camera3d, KeyCode, PluginGroup, };
+
 
 use bevy_table_ui as table_ui;
 use table_ui::*;
@@ -263,7 +264,7 @@ fn update_input(
     for ev in key_events.read() {
         if ev.state==bevy::input::ButtonState::Pressed && !last_pressed.contains(&ev.key_code) {
             if ev.key_code==KeyCode::Escape || ev.key_code==KeyCode::F4 {
-                exit.send(AppExit::Success);
+                exit.write(AppExit::Success);
             } else if ev.key_code==KeyCode::F12 {
                 if let Some(path) = generate_screenshot_path("./screenshots","screenshot_","png") {
                     // if screenshot_manager.save_screenshot_to_disk(window_entity, &path).is_err() {
@@ -309,7 +310,7 @@ fn show_fps(
     diagnostics: Res<DiagnosticsStore>,
     mut marker_query: Query< &mut TextSpan,With<FpsText>>,
 ) {
-    if let Ok(mut text)=marker_query.get_single_mut() {
+    if let Ok(mut text)=marker_query.single_mut() {
         let v=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS);
         let fps = v.and_then(|x|x.value()).map(|x|x.round()).unwrap_or_default();
         let avg = v.and_then(|x|x.average()).unwrap_or_default();

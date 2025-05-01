@@ -18,7 +18,7 @@ use super::super::interact::events::{UiInteractEvent,UiInteractEventType};
 
 pub fn run_affect_states(
     mut interact_event_reader: EventReader<UiInteractEvent>,
-    
+
     mut affect_computed_query: Query<&mut UiAffect,>,
     // mut color_query: Query<(&UiAffectColor, &mut UiColor,)>,
     // mut text_query: Query<(&mut UiText,&UiAffectText)>,
@@ -30,7 +30,7 @@ pub fn run_affect_states(
         affect_computed.remove_states.clear();
         affect_computed.states.retain(|x|!removes.contains(x));
     }
-    
+
     //
     let mut new_states=BTreeSet::<UiAffectState>::new();
 
@@ -112,7 +112,7 @@ fn get_state_val<T:Default+Clone>(cur_states : &BTreeSet<UiAffectState>,state_va
     if !state_vals.is_empty() {
         let keys=state_vals.keys().filter_map(|&x|x).collect::<BTreeSet<_>>();
         let states=cur_states.intersection(&keys).map(|&x|x).collect::<Vec<_>>();
-        
+
         Some(if states.is_empty() {
             state_vals.get(&None).cloned().unwrap_or_default()
         } else {
@@ -126,9 +126,9 @@ fn get_state_val<T:Default+Clone>(cur_states : &BTreeSet<UiAffectState>,state_va
 pub fn run_affect_vals(
     // mut color_query: Query<(Entity,&UiAffectComputed,&mut UiAffectColor, &mut UiColor,)>,
     mut affect_query: Query<(Entity,&UiLayoutComputed,&UiAffect,)>, //&UiAffectColor, &mut UiColor,
-    mut commands: Commands, 
+    mut commands: Commands,
 ) {
-    // for (entity,affect_computed,mut affect_color,mut color) in color_query.iter_mut() 
+    // for (entity,affect_computed,mut affect_color,mut color) in color_query.iter_mut()
     for (entity,layout_computed,affect,) in affect_query.iter_mut()  //affect_color,mut color
     {
         if !layout_computed.enabled||!layout_computed.visible {
@@ -145,16 +145,16 @@ pub fn run_affect_vals(
         if let Some(x)=get_state_val(&affect.states,&affect.back_color) {
             commands.queue(move|world: &mut World| {
                 let mut e=world.entity_mut(entity);
-                let mut c=e.entry::<UiColor>().or_default();
+                let mut c=e.entry::<UiColor>().or_default().into_mut();
                 c.back=x;
             });
         }
-        
+
         //border color
         if let Some(x)=get_state_val(&affect.states,&affect.border_color) {
             commands.queue(move|world: &mut World| {
                 let mut e=world.entity_mut(entity);
-                let mut c=e.entry::<UiColor>().or_default();
+                let mut c=e.entry::<UiColor>().or_default().into_mut();
                 c.border=x;
             });
         }
@@ -174,7 +174,7 @@ pub fn run_affect_vals(
 
             commands.queue(move|world: &mut World| {
                 let mut e=world.entity_mut(entity);
-                let mut c=e.entry::<UiText>().or_default();
+                let mut c=e.entry::<UiText>().or_default().into_mut();
                 c.color=x;
             });
         }
@@ -183,7 +183,7 @@ pub fn run_affect_vals(
         if let Some(x)=get_state_val(&affect.states,&affect.padding_color) {
             commands.queue(move|world: &mut World| {
                 let mut e=world.entity_mut(entity);
-                let mut c=e.entry::<UiColor>().or_default();
+                let mut c=e.entry::<UiColor>().or_default().into_mut();
                 c.padding=x;
             });
         }
@@ -192,7 +192,7 @@ pub fn run_affect_vals(
         if let Some(x)=get_state_val(&affect.states,&affect.margin_color) {
             commands.queue(move|world: &mut World| {
                 let mut e=world.entity_mut(entity);
-                let mut c=e.entry::<UiColor>().or_default();
+                let mut c=e.entry::<UiColor>().or_default().into_mut();
                 c.margin=x;
             });
         }
@@ -201,7 +201,7 @@ pub fn run_affect_vals(
         if let Some(x)=get_state_val(&affect.states,&affect.cell_color) {
             commands.queue(move|world: &mut World| {
                 let mut e=world.entity_mut(entity);
-                let mut c=e.entry::<UiColor>().or_default();
+                let mut c=e.entry::<UiColor>().or_default().into_mut();
                 c.cell=x;
             });
         }

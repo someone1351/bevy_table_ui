@@ -18,7 +18,7 @@ TODO
 use std::collections::{HashMap, HashSet};
 
 use bevy::ecs::prelude::*;
-use bevy::hierarchy::prelude::*;
+// use bevy::hierarchy::prelude::*;
 use bevy::math::Vec2;
 
 use super::super::components::*;
@@ -41,7 +41,7 @@ fn is_no_entity_pressed(
         } else {
             false
         };
-        
+
         // let not_pressed=!entity_pressed.is_none() && !entity_pressed.unwrap().1;
         prev && not_pressed
     });
@@ -51,7 +51,7 @@ fn is_no_entity_pressed(
 }
 
 // pub fn pre_update_press(
-    
+
 //     parent_query : Query<&Parent,With<UiLayoutComputed>>,
 //     mut interact_event_reader: EventReader<UiInteractEvent>,
 
@@ -75,8 +75,8 @@ fn is_no_entity_pressed(
 
 
 pub fn update_press_events(
-    root_query: Query<Entity,(Without<Parent>,With<UiLayoutComputed>)>,
-    parent_query : Query<&Parent,With<UiLayoutComputed>>,
+    root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
+    parent_query : Query<&ChildOf,With<UiLayoutComputed>>,
     layout_computed_query: Query<&UiLayoutComputed>, //,With<UiPressable>
     mut pressable_query: Query<(Entity,&mut UiPressable)>,
 
@@ -86,7 +86,7 @@ pub fn update_press_events(
 
     mut press_states:ResMut<UiPressStates>,
 
-    focusable_query : Query<&UiFocusable>,    
+    focusable_query : Query<&UiFocusable>,
     focus_states : Res<UiFocusStates>,
 
     mut input_event_reader: EventReader<UiInteractInputEvent>,
@@ -123,32 +123,32 @@ pub fn update_press_events(
         //     let entity_presseds=entities_presseds.get_mut(&(root_entity,pressed_entity)).unwrap();
 
         //     if !pressable.pressed &&
-        //         entity_presseds.remove(&None) 
-        //         && is_no_entity_pressed(entity_presseds,&device_presseds,root_entity,pressable.always) 
+        //         entity_presseds.remove(&None)
+        //         && is_no_entity_pressed(entity_presseds,&device_presseds,root_entity,pressable.always)
         //     {
-        //         ui_output_event_writer.send(UiInteractEvent{entity:pressed_entity,event_type:UiInteractEventType::PressEnd});
+        //         ui_output_event_writer.write(UiInteractEvent{entity:pressed_entity,event_type:UiInteractEventType::PressEnd});
         //     }
         // }
 
         //focus pressed but unfocused
         //  ... removed
-        
+
         //inactive/disabled/invisible/no_devices/
         let root_entity_alive=layout_computed_query.get(root_entity).is_ok();
         let unlocked=layout_computed_query.get(pressed_entity).map(|x|x.unlocked).unwrap_or_default();
 
         let pressable_enable=pressable.as_ref().map(|x|x.enable).unwrap_or_default();
         //let pressable_pressed=pressable.as_ref().map(|x|x.pressed).unwrap_or_default();
-        
+
         // let entity_presseds=entities_presseds.get(&(root_entity,pressed_entity)).unwrap();
         // let no_devices_pressed=entity_presseds.is_empty();//is_no_entity_pressed(entity_presseds);//;
-        
-        if !root_entity_alive || !unlocked || !pressable_enable //|| no_devices_pressed 
+
+        if !root_entity_alive || !unlocked || !pressable_enable //|| no_devices_pressed
         {
             let entity_presseds= entities_presseds.remove(&(root_entity,pressed_entity)).unwrap();
 
             if !entity_presseds.is_empty() {
-                ui_output_event_writer.send(UiInteractEvent{entity:pressed_entity,event_type:UiInteractEventType::PressEnd});
+                ui_output_event_writer.write(UiInteractEvent{entity:pressed_entity,event_type:UiInteractEventType::PressEnd});
             }
 
             // if let Ok(mut pressable)=pressable {
@@ -183,7 +183,7 @@ pub fn update_press_events(
 
     //     //
     //     if is_no_entity_pressed(entity_presseds,&device_presseds,root_entity,pressable.always) {
-    //         ui_output_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::PressBegin});
+    //         ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::PressBegin});
     //     }
 
     //     //
@@ -192,7 +192,7 @@ pub fn update_press_events(
 
     //
     let mut roots_pressable_entities: HashMap<Entity, Vec<Entity>> = HashMap::new();
-    
+
     //get root entities with their pressable descendants
     for (entity,pressable) in pressable_query.iter() {
         if !pressable.enable {
@@ -237,38 +237,38 @@ pub fn update_press_events(
 
         if is_cursor {
             if pressable.always && *pressed==false {
-                // ui_output_event_writer.send(UiEvent{entity,event_type:UiEventType::PressBegin});
+                // ui_output_event_writer.write(UiEvent{entity,event_type:UiEventType::PressBegin});
                 // *pressed=true;
             } else if !pressable.always {
                 if let Some(&cursor)=device_cursors.get(&(root_entity,device)) {
                     let computed = layout_computed_query.get(entity).unwrap();
                     let outer_rect=computed.clamped_border_rect();//.clamped_padding_rect();
                     let cursor_inside= !outer_rect.is_zero() && outer_rect.contains_point(cursor);
-        
+
                     if cursor_inside && *pressed==false {
-                        ui_output_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::PressBegin});
+                        ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::PressBegin});
                         *pressed=true;
                     } else if !cursor_inside && *pressed==true {
-                        ui_output_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::PressEnd});
+                        ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::PressEnd});
                         *pressed=false;
                     }
                 } else if *pressed==true {
-                    ui_output_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::PressEnd});
+                    ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::PressEnd});
                     *pressed=false;
                 }
             }
         } else { //focus
             let focused = focusable_query.get(entity).map(|x|x.focused).unwrap_or_default();
-            
+
             if focused && *pressed==false {
                 if !pressable.always {
-                    ui_output_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::PressBegin});
+                    ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::PressBegin});
                 }
 
                 *pressed=true;
             } else if !focused && *pressed==true { //re enable to work like cursor when pressed+unfocus
                 if !pressable.always {
-                    ui_output_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::PressEnd});
+                    ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::PressEnd});
                 }
 
                 *pressed=false;
@@ -285,39 +285,39 @@ pub fn update_press_events(
                 } else {
                     device_cursors.remove(&(root_entity,device));
                 }
-                
+
                 if let Some((entity,pressed)) = press_states.device_presseds.get_mut(&(root_entity,device,true)) {
                     let entity=*entity;
                     // let entity_presseds=entities_presseds.entry((root_entity,entity)).or_default();
                     let pressable=pressable_query.get(entity).map(|x|x.1).unwrap();
-                 
+
 
                     if let Some(&cursor)=device_cursors.get(&(root_entity,device)) {
                         let computed = layout_computed_query.get(entity).unwrap();
                         let outer_rect=computed.clamped_border_rect();//.clamped_padding_rect();
                         let cursor_inside= !outer_rect.is_zero() && outer_rect.contains_point(cursor);
-            
+
                         if cursor_inside && *pressed==false {
                             *pressed=true;
 
                             if !pressable.always {
                                 // if entity_presseds.len() == 1 {
-                                ui_output_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::PressBegin});
+                                ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::PressBegin});
                                 // }
                             }
 
                         } else if !cursor_inside && *pressed==true {
                             *pressed=false;
 
-                            if !pressable.always { 
-                                ui_output_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::PressEnd});
+                            if !pressable.always {
+                                ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::PressEnd});
                             }
                         }
                     } else if *pressed==true {
                         *pressed=false;
 
-                        if !pressable.always { 
-                            ui_output_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::PressEnd});
+                        if !pressable.always {
+                            ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::PressEnd});
                         }
 
                     }
@@ -329,7 +329,7 @@ pub fn update_press_events(
                 let Some(entities)=roots_pressable_entities.get(&root_entity) else {
                     continue;
                 };
-        
+
                 let cursor = device_cursors.get(&(root_entity,device)).cloned();
 
                 //device can't press if it is alway pressed
@@ -338,14 +338,14 @@ pub fn update_press_events(
                         let computed = layout_computed_query.get(entity).unwrap();
                         let outer_rect=computed.clamped_border_rect();//.clamped_padding_rect();
                         let cursor_inside= !outer_rect.is_zero() && outer_rect.contains_point(cursor.unwrap());
-    
+
                         if cursor_inside { //begin press
                             let entity_presseds=entities_presseds.entry((root_entity,entity)).or_default();
                             let pressable=pressable_query.get(entity).map(|x|x.1).unwrap();
                             let no_entity_pressed=is_no_entity_pressed(entity_presseds,&press_states.device_presseds,root_entity,pressable.always);
 
                             if no_entity_pressed {
-                                ui_output_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::PressBegin});
+                                ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::PressBegin});
                             }
 
                             press_states.device_presseds.insert((root_entity,device,true),(entity,true));
@@ -369,11 +369,11 @@ pub fn update_press_events(
                             let pressable=pressable_query.get(entity).map(|x|x.1).unwrap();
 
                             if pressable.always || pressed {
-                                ui_output_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::PressEnd});
+                                ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::PressEnd});
                             }
 
                             if pressed {
-                                ui_output_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::Click});
+                                ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::Click});
                             }
 
                             if pressed || no_entity_pressed {
@@ -397,13 +397,13 @@ pub fn update_press_events(
                         entity_presseds.remove(&Some((device,true)));
 
                         if pressable.always || pressed { //always means it will always be pressed (when cursor/focus is no longer on entity)
-                            ui_output_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::PressEnd});
+                            ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::PressEnd});
                         }
-                        
+
                         to_unpress=Some(entity);
                     }
                 }
-                
+
                 press_states.device_presseds.remove(&(root_entity,device,true));
 
                 if let Some(pressed_entity)=to_unpress {
@@ -425,13 +425,13 @@ pub fn update_press_events(
 
                 //device can't press if it is alway pressed
                 if press_states.device_presseds.get(&(root_entity,device,false)).is_none() {
-                    
+
                     let entity_presseds=entities_presseds.entry((root_entity,entity)).or_default();
                     let pressable=pressable_query.get(entity).map(|x|x.1).unwrap();
                     let no_entity_pressed=is_no_entity_pressed(entity_presseds,&press_states.device_presseds,root_entity,pressable.always);
 
                     if no_entity_pressed {
-                        ui_output_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::PressBegin});
+                        ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::PressBegin});
                     }
 
                     press_states.device_presseds.insert((root_entity,device,false),(entity,true));
@@ -447,16 +447,16 @@ pub fn update_press_events(
 
                         let pressable=pressable_query.get(entity).map(|x|x.1).unwrap();
                         let no_entity_pressed=is_no_entity_pressed(entity_presseds,&press_states.device_presseds,root_entity,pressable.always);
-                    
+
                         if !pressable.physical || no_entity_pressed {
                             let pressable=pressable_query.get(entity).map(|x|x.1).unwrap();
 
                             if pressable.always || pressed { //always means it will always be pressed (when cursor/focus is no longer on entity)
-                                ui_output_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::PressEnd});
+                                ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::PressEnd});
                             }
 
                             if pressed {
-                                ui_output_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::Click});
+                                ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::Click});
                             }
 
                             if pressed || no_entity_pressed {
@@ -465,7 +465,7 @@ pub fn update_press_events(
                         }
                     }
                 }
-                
+
                 if let Some(pressed_entity)=to_unpress {
                     entities_presseds.remove(&(root_entity,pressed_entity)).unwrap();
                 }
@@ -480,13 +480,13 @@ pub fn update_press_events(
                         let pressable=pressable_query.get(entity).map(|x|x.1).unwrap();
 
                         if pressable.always || pressed {
-                            ui_output_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::PressEnd});
+                            ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::PressEnd});
                         }
-                        
+
                         to_unpress=Some(entity);
                     }
                 }
-                
+
                 press_states.device_presseds.remove(&(root_entity,device,false));
 
                 if let Some(pressed_entity)=to_unpress {

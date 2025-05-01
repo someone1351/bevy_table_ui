@@ -88,7 +88,7 @@ use bevy::utils::default;
 use bevy::{
     // asset::prelude::*,
     ecs::prelude::*,
-    hierarchy::prelude::*,
+    // hierarchy::prelude::*,
     window::prelude::*,
 };
 
@@ -101,9 +101,9 @@ pub fn ui_init_computeds(
     windows: Query<&Window>,
     mut computed_query: Query<&mut UiLayoutComputed>,
 
-    root_query: Query<Entity,(Without<Parent>,With<UiLayoutComputed>)>,
+    root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
     children_query: Query<&Children,With<UiLayoutComputed>>,
-    parent_query: Query<&Parent,With<UiLayoutComputed>>,
+    parent_query: Query<&ChildOf,With<UiLayoutComputed>>,
 
     size_query: Query<&UiSize,>,
 
@@ -124,7 +124,7 @@ pub fn ui_init_computeds(
     // println!("ui_init_computeds {}",*c);
     // *c+=1;
 
-    let window_size=windows.get_single()
+    let window_size=windows.single()
         .and_then(|window|Ok((window.width(),window.height())))
         .unwrap_or((0.0,0.0));
 
@@ -139,7 +139,7 @@ pub fn ui_init_computeds(
 
     while let Some(entity) = stk.pop() {
         let parent=parent_query.get(entity);
-        let parent_computed = parent.and_then(|p|computed_query.get(p.get()))
+        let parent_computed = parent.and_then(|p|computed_query.get(p.parent()))
             .cloned()
             .unwrap_or(UiLayoutComputed {
                 visible: true,
@@ -207,11 +207,11 @@ pub fn ui_init_computeds(
         computed.depth=0;
 
         {
-            let mut p=parent.ok().map(|p|p.get());
+            let mut p=parent.ok().map(|p|p.parent());
 
             while let Some(pp)=p {
                 computed.depth+=1;
-                p=parent_query.get(pp).ok().map(|p|p.get());
+                p=parent_query.get(pp).ok().map(|p|p.parent());
             }
         }
 
@@ -309,7 +309,7 @@ pub fn ui_init_computeds(
 
 pub fn ui_calc_rows_cols(
     mut computed_query: Query<&mut UiLayoutComputed>,
-    root_query: Query<Entity,(Without<Parent>,With<UiLayoutComputed>)>,
+    root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
     children_query: Query<&Children,With<UiLayoutComputed>>,
     span_query:Query<&UiSpan>,
     float_query: Query<&UiFloat>,
@@ -335,7 +335,7 @@ pub fn ui_calc_rows_cols(
             }
 
             stk.push((entity,true));
-            stk.extend(children_query.get(entity).map(|c|c.iter()).unwrap_or_default().map(|&x|(x,false)));
+            stk.extend(children_query.get(entity).map(|c|c.iter()).unwrap_or_default().map(|x|(x,false)));
             continue;
         }
 
@@ -346,7 +346,7 @@ pub fn ui_calc_rows_cols(
             //get enabled, not float child count
             let mut child_count=0;
 
-            for &child_entity in children.iter() {
+            for child_entity in children.iter() {
                 let child_float = float_query.get(child_entity).cloned().unwrap_or_default().float;
                 let mut child_computed = computed_query.get_mut(child_entity).unwrap();
 
@@ -380,7 +380,7 @@ pub fn ui_calc_computeds2(
     windows: Query<&Window>,
 
     mut computed_query: Query<&mut UiLayoutComputed>,
-    root_query: Query<Entity,(Without<Parent>,With<UiLayoutComputed>)>,
+    root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
     children_query: Query<&Children,With<UiLayoutComputed>>,
 
     gap_query: Query<&UiGap>,
@@ -392,7 +392,7 @@ pub fn ui_calc_computeds2(
     congruent_query: Query<&UiCongruent,>,
 ) {
 
-    let window_size=windows.get_single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
+    let window_size=windows.single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
     // let inv_scale_factor = 1. / scale_factor;
 
 
@@ -413,7 +413,7 @@ pub fn ui_calc_computeds2(
         if !b {
             let children=entity
                 .map(|entity|children_query.get(entity).map(|children|children.iter().rev()).ok())
-                .unwrap_or(Some(root_entities.iter().rev()));
+                .unwrap_or(Some(root_entities.iter().copied().rev()));
 
             if entity.map(|entity|computed_query.get(entity)
                 .map(|computed|!computed.enabled)
@@ -423,7 +423,7 @@ pub fn ui_calc_computeds2(
             }
 
             stk.push((entity,true));
-            stk.extend(children.clone().unwrap_or_default().map(|child_entity|(Some(*child_entity),false)));
+            stk.extend(children.clone().unwrap_or_default().map(|child_entity|(Some(child_entity),false)));
 
             // println!("xx {entity:?}");
             continue;
@@ -432,7 +432,7 @@ pub fn ui_calc_computeds2(
         //
         let children=entity
             .map(|entity|children_query.get(entity).map(|children|children.iter()).ok())
-            .unwrap_or(Some(root_entities.iter()));
+            .unwrap_or(Some(root_entities.iter().copied()));
 
         //
         // let span = span_query.get(entity).cloned().unwrap_or_default().span as usize;
@@ -470,7 +470,7 @@ pub fn ui_calc_computeds2(
             let rows_num = computed.rows as usize;
             // let cells_num = cols_num*rows_num;
 
-            let child_count=children.clone().filter(|&&child_entity|computed_query.get(child_entity).is_ok()).count();
+            let child_count=children.clone().filter(|&child_entity|computed_query.get(child_entity).is_ok()).count();
             // println!("ccount {entity:?} {child_count}");
 
             {
@@ -480,7 +480,7 @@ pub fn ui_calc_computeds2(
                 // let mut row_hscales = Vec::<(Entity,f32,f32)>::new();
                 // let mut col_vscales = Vec::<(Entity,f32,f32)>::new();
 
-                for &child_entity in children.clone() { //children here!
+                for child_entity in children.clone() { //children here!
                     // println!("child_entity {child_entity:?}");
 
                     //println!("Dfdsf8 {entity:?}");
@@ -602,7 +602,7 @@ pub fn ui_calc_computeds2(
             {
                 // let mut child_ind = 0;
 
-                for &child_entity in children.clone() //children.iter()
+                for child_entity in children.clone() //children.iter()
                 { //children here!
                     //println!("Dfdsf7 {entity:?}");
                     //child entities without ui components are treated as visible (ie have a row/col)
@@ -757,7 +757,7 @@ pub fn ui_calc_computeds3(
     windows: Query<&Window>,
 
     mut computed_query: Query<&mut UiLayoutComputed>,
-    root_query: Query<Entity,(Without<Parent>,With<UiLayoutComputed>)>,
+    root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
     children_query: Query<&Children,With<UiLayoutComputed>>,
 
     gap_query: Query<&UiGap>,
@@ -770,7 +770,7 @@ pub fn ui_calc_computeds3(
     edge_query: Query<&UiEdge,>,
 ) {
 
-    let window_size=windows.get_single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
+    let window_size=windows.single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
     // let inv_scale_factor = 1. / scale_factor;
 
 
@@ -805,7 +805,7 @@ pub fn ui_calc_computeds3(
         {
             let children=entity
                 .map(|entity|children_query.get(entity).map(|children|children.iter().rev()).ok())
-                .unwrap_or(Some(root_entities.iter().rev()));
+                .unwrap_or(Some(root_entities.iter().copied().rev()));
 
             if entity.map(|entity|computed_query.get(entity).map(|computed|!computed.enabled).unwrap_or(true)).unwrap_or(false)
 
@@ -813,7 +813,7 @@ pub fn ui_calc_computeds3(
                 continue;
             }
 
-            stk.extend(children.clone().unwrap_or_default().map(|child_entity|Some(*child_entity)));
+            stk.extend(children.clone().unwrap_or_default().map(|child_entity|Some(child_entity)));
 
             // stk.extend(children_query.get(entity).map(|c|c.iter().rev()).unwrap_or_default());
         }
@@ -821,7 +821,7 @@ pub fn ui_calc_computeds3(
         //
         let children=entity
             .map(|entity|children_query.get(entity).map(|children|children.iter()).ok())
-            .unwrap_or(Some(root_entities.iter()));
+            .unwrap_or(Some(root_entities.iter().copied()));
 
         //
 
@@ -887,7 +887,7 @@ pub fn ui_calc_computeds3(
             {
                 // let mut child_ind = 0;
 
-                for &child_entity in children.clone() //.iter()
+                for child_entity in children.clone() //.iter()
                 {
                     //println!("Dfdsf6 {entity:?}");
                     let child_computed = computed_query.get(child_entity).cloned().unwrap_or_default();
@@ -970,7 +970,7 @@ pub fn ui_calc_computeds3(
                 {
                     // let mut child_ind = 0;
 
-                    for &child_entity in children.clone() //.iter()
+                    for child_entity in children.clone() //.iter()
                     { //children here!
                         //println!("Dfdsf5 {entity:?}");
                         let child_computed = computed_query.get(child_entity).cloned().unwrap_or_default();
@@ -1103,7 +1103,7 @@ pub fn ui_calc_computeds3(
             {
                 // let mut child_ind=0;
 
-                for &child_entity in children.clone() //.iter()
+                for child_entity in children.clone() //.iter()
                 {
                     //println!("Dfdsf4 {entity:?}");
                     if let Ok(mut child_computed) = computed_query.get_mut(child_entity) {
@@ -1298,7 +1298,7 @@ pub fn ui_calc_computeds3(
             {
                 // let mut child_ind=0;
 
-                for &child_entity in children.clone() //.iter()
+                for child_entity in children.clone() //.iter()
                 {
                     //println!("Dfdsf3 {entity:?}");
                     let align = align_query.get(child_entity).cloned().unwrap_or_default();
@@ -1427,7 +1427,7 @@ pub fn ui_calc_computed_pos(
     windows: Query<&Window>,
 
     mut computed_query: Query<&mut UiLayoutComputed>,
-    root_query: Query<Entity,(Without<Parent>,With<UiLayoutComputed>)>,
+    root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
     children_query: Query<&Children,With<UiLayoutComputed>>,
 
 
@@ -1435,7 +1435,7 @@ pub fn ui_calc_computed_pos(
     scroll_query: Query<&UiScroll,>,
 ) {
 
-    let window_size=windows.get_single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
+    let window_size=windows.single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
     // let inv_scale_factor = 1. / scale_factor;
 
 
@@ -1464,7 +1464,7 @@ pub fn ui_calc_computed_pos(
         {
             let children=entity
                 .map(|entity|children_query.get(entity).map(|children|children.iter().rev()).ok())
-                .unwrap_or(Some(root_entities.iter().rev()));
+                .unwrap_or(Some(root_entities.iter().copied().rev()));
 
             if entity.map(|entity|computed_query.get(entity).map(|computed|!computed.enabled).unwrap_or(true)).unwrap_or(false)
 
@@ -1472,7 +1472,7 @@ pub fn ui_calc_computed_pos(
                 continue;
             }
 
-            stk.extend(children.clone().unwrap_or_default().map(|child_entity|Some(*child_entity)));
+            stk.extend(children.clone().unwrap_or_default().map(|child_entity|Some(child_entity)));
 
             // stk.extend(children_query.get(entity).map(|c|c.iter().rev()).unwrap_or_default());
         }
@@ -1480,7 +1480,7 @@ pub fn ui_calc_computed_pos(
         //
         let children=entity
             .map(|entity|children_query.get(entity).map(|children|children.iter()).ok())
-            .unwrap_or(Some(root_entities.iter()));
+            .unwrap_or(Some(root_entities.iter().copied()));
 
         //
 
@@ -1518,7 +1518,7 @@ pub fn ui_calc_computed_pos(
             {
                 // let mut child_ind = 0;
 
-                for &child_entity in children.clone() //.iter()
+                for child_entity in children.clone() //.iter()
                 {
                     //println!("Dfdsf2 {entity:?}");
                     let child_computed = computed_query.get(child_entity).cloned().unwrap_or_default();
@@ -1573,7 +1573,7 @@ pub fn ui_calc_computed_pos(
 
                 // let mut child_ind=0;
 
-                for &child_entity in children.clone() //.iter()
+                for child_entity in children.clone() //.iter()
                 {
                     //println!("Dfdsf1 {entity:?}");
 
@@ -1703,7 +1703,7 @@ pub fn ui_calc_computed_pos(
                             computed2.scroll_size.y=vscroll_space;
                         }
 
-                        for &child_entity in children.iter()
+                        for child_entity in children.iter()
                         {
                             if let Ok(mut child_computed) = computed_query.get_mut(child_entity) {
                                 child_computed.pos.x-=scroll_x;
@@ -1730,14 +1730,14 @@ pub fn ui_calc_computed_clamp(
     windows: Query<&Window>,
 
     mut computed_query: Query<&mut UiLayoutComputed>,
-    root_query: Query<Entity,(Without<Parent>,With<UiLayoutComputed>)>,
+    root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
     children_query: Query<&Children,With<UiLayoutComputed>>,
-    parent_query: Query<&Parent,With<UiLayoutComputed>>,
+    parent_query: Query<&ChildOf,With<UiLayoutComputed>>,
 
 
 ) {
 
-    let window_size=windows.get_single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
+    let window_size=windows.single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
     // let inv_scale_factor = 1. / scale_factor;
 
 
@@ -1771,7 +1771,7 @@ pub fn ui_calc_computed_clamp(
 
         //
         let parent_computed = if let Ok(parent) = parent_query.get(entity) {
-            *computed_query.get(parent.get()).unwrap()
+            *computed_query.get(parent.parent()).unwrap()
         } else {
             UiLayoutComputed {clamped_rect:UiRect{
                 left:0.0,

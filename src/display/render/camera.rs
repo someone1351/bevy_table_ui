@@ -1,5 +1,5 @@
 use bevy::{ecs::system::SystemParam, prelude::*, render::camera::RenderTarget, window::{PrimaryWindow, WindowRef}};
-
+use tracing::warn;
 // use super::components::*;
 
 
@@ -44,10 +44,11 @@ pub struct MyDefaultUiCamera<'w, 's> {
 
 impl<'w, 's> MyDefaultUiCamera<'w, 's> {
     pub fn get(&self) -> Option<Entity> {
-        self.default_cameras.get_single().ok().or_else(|| {
+        self.default_cameras.single().ok().or_else(|| {
             // If there isn't a single camera and the query isn't empty, there is two or more cameras queried.
             if !self.default_cameras.is_empty() {
-                warn_once!("Two or more Entities with IsDefaultUiCamera found when only one Camera with this marker is allowed.");
+                // warn_once!("Two or more Entities with IsDefaultUiCamera found when only one Camera with this marker is allowed.");
+                warn!("Two or more Entities with IsDefaultUiCamera found when only one Camera with this marker is allowed.");
             }
             self.cameras
                 .iter()

@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 use bevy::color::Color;
 use bevy::image::Image;
-use bevy::prelude::{Vec2, AssetId, Entity};
+use bevy::prelude::{AssetId, Entity, Resource, Vec2};
 use bevy::render::texture::GpuImage;
 use bevy::asset::Handle;
 use bevy::render::render_resource::{BindGroup, BufferUsages, RawBufferVec};
-use bevy::ecs::system::Resource;
+// use bevy::ecs::system::Resource;
 
 #[derive(Resource,Default)]
 pub struct DummyImage {pub handle : Handle<Image>}

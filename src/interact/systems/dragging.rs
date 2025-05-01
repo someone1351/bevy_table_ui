@@ -7,7 +7,7 @@ use std::collections::BTreeMap;
 use std::collections::HashMap;
 
 use bevy::ecs::prelude::*;
-use bevy::hierarchy::prelude::*;
+// use bevy::hierarchy::prelude::*;
 
 use bevy::math::Vec2;
 
@@ -31,19 +31,19 @@ pub fn update_drag_events(
     mut device_drags : Local<HashMap<(Entity,i32,),(Entity,Vec2,Vec2,Vec2)>>, //[(root_entity,device,)]=(dragged_entity,size,offset,cursor,)
     // mut entities_presseds : Local<HashMap<(Entity,Entity),HashSet<Option<i32>>>>, //[(root_entity,press_entity)]=set<Some(device)>, the None is a separate device representing pressable.pressed
 
-    // mut last_cursors : Local<HashMap<(Entity,i32),Vec2>>, //[(root_entity,device)]=cursor 
-    
+    // mut last_cursors : Local<HashMap<(Entity,i32),Vec2>>, //[(root_entity,device)]=cursor
+
 
     // press_states:Res<UiPressStates>,
     draggable_query: Query<(Entity,&UiLayoutComputed,&UiDraggable)>,
-    parent_query : Query<&Parent,With<UiLayoutComputed>>,
+    parent_query : Query<&ChildOf,With<UiLayoutComputed>>,
 
 
     mut input_event_reader: EventReader<UiInteractInputEvent>,
     mut ui_output_event_writer: EventWriter<UiInteractEvent>,
     // root_query: Query<Entity,(Without<Parent>,With<UiLayoutComputed>)>,
     // children_query: Query<&Children,(With<UiLayoutComputed>,)>,
-    
+
 ) {
     //remove disabled or without drag component
     device_drags.retain(|(_root_entity,_device,),( dragged_entity,_size,_offset,_cursor,)|{
@@ -52,7 +52,7 @@ pub fn update_drag_events(
 
     //
     let mut roots_pressable_entities: HashMap<Entity, BTreeMap<u32,(Entity,Vec2,UiRect)>> = HashMap::new(); //[root_entity][order]=draggable_entity
-    
+
     //get root entities with their pressable descendants
     for (entity,computed,dragable) in draggable_query.iter() {
         if !dragable.enable {
@@ -73,7 +73,7 @@ pub fn update_drag_events(
 
 
     //
-    
+
     //
     for ev in input_event_reader.read() {
         match ev.clone() {
@@ -84,7 +84,7 @@ pub fn update_drag_events(
                 } else {
                     device_cursors.remove(&(root_entity,device));
                 }
-                
+
                 let Some(cursor)=cursor else {
                     continue;
                 };
@@ -100,15 +100,15 @@ pub fn update_drag_events(
                 // *drag_start_offset=start_cursor - offset;
                 let dragged_px = cursor-*offset-(*start_cursor - *offset);
                 let dragged_scale = dragged_px/ *size; //computed.cell_size.sum()
-                
+
                 *start_cursor=cursor;
-                
+
                 if dragged_px.x != 0.0 {
-                    ui_output_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::DragX {px:dragged_px.x,scale:dragged_scale.x}});
+                    ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::DragX {px:dragged_px.x,scale:dragged_scale.x}});
                 }
 
                 if dragged_px.y != 0.0 {
-                    ui_output_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::DragY {px:dragged_px.y,scale:dragged_scale.y}});
+                    ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::DragY {px:dragged_px.y,scale:dragged_scale.y}});
                 }
             }
 

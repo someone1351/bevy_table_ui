@@ -8,11 +8,11 @@ use bevy::ecs::prelude::*;
 use bevy::asset::prelude::*;
 // use bevy::hierarchy::prelude::*;
 
-use bevy::image::Image;
+use bevy::image::{Image, TextureAtlasLayout};
 use bevy::math::Vec2;
 // use bevy::render::texture::Image;
-use bevy::sprite::TextureAtlasLayout;
-use bevy::text::{ComputedTextBlock, CosmicFontSystem, Font, FontAtlasSets, FontSmoothing, JustifyText, LineBreak, SwashCache, TextBounds, TextError, TextFont, TextLayout, TextLayoutInfo, TextPipeline, YAxisOrientation};
+// use bevy::sprite::TextureAtlasLayout;
+use bevy::text::{ComputedTextBlock, CosmicFontSystem, Font, FontAtlasSets, FontSmoothing, JustifyText, LineBreak, LineHeight, SwashCache, TextBounds, TextError, TextFont, TextLayout, TextLayoutInfo, TextPipeline, YAxisOrientation};
 use bevy::window::Window;
 
 use super::super::layout::components::{UiLayoutComputed, UiInnerSize};
@@ -50,7 +50,7 @@ pub fn update_text_image(
 ) {
     // let window_size=windows.get_single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
     //todo need to get window for camera?
-    let scale_factor = windows.get_single().and_then(|window|Ok(window.scale_factor() as f64)).unwrap_or(1.0);
+    let scale_factor = windows.single().and_then(|window|Ok(window.scale_factor() as f64)).unwrap_or(1.0);
     // println!("scale_factor={scale_factor}");
     //only on visible, updated?
 
@@ -147,6 +147,7 @@ pub fn update_text_image(
 
                     let text_spans=[(entity, 0 /*depth*/, " ", &TextFont{
                         font: text.font.clone(), font_size: text.font_size, font_smoothing: FontSmoothing::None,
+                        line_height: LineHeight::RelativeToFont(1.2),
                     },text.color)];
 
                     let mut temp_text_layout_info = TextLayoutInfo::default();
@@ -181,6 +182,7 @@ pub fn update_text_image(
                 //
                 let text_spans=[(entity, 0 /*depth*/, text.value.as_str(), &TextFont{
                     font: text.font.clone(), font_size: text.font_size, font_smoothing: FontSmoothing::AntiAliased,
+                    line_height: LineHeight::RelativeToFont(1.2),
                 },text.color)];
 
 

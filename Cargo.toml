@@ -4,16 +4,16 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = { version = "0.15.0", default-features = false, features = [
+bevy = { version = "0.16", default-features = false, features = [
     "serialize","bevy_window","x11", "bevy_render", "bevy_asset","bevy_color","bevy_text","multi_threaded"
 ] }
-bevy_internal = { version = "0.15", features = [ "bevy_image" ]}
+bevy_internal = { version = "0.16", features = [ "bevy_image" ]}
 bytemuck = "1.7"
-
+tracing = { version = "0.1", default-features = false, features = ["std"] }
 #cosmic-text = "0.12.1"
 
 [dev-dependencies]
-bevy = { version = "0.15.0", default-features = false, features = [
+bevy = { version = "0.16", default-features = false, features = [
     "file_watcher","png","dynamic_linking" #,"bevy_ui"
 ] }
 

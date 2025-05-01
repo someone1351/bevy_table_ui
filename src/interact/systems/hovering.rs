@@ -2,7 +2,7 @@
 use std::collections::HashMap;
 
 use bevy::ecs::prelude::*;
-use bevy::hierarchy::prelude::*;
+// use bevy::hierarchy::prelude::*;
 use bevy::math::Vec2;
 
 
@@ -19,7 +19,7 @@ use super::super::events::*;
     // // active_nodes: Res<UiActiveNodes>,
     // root_query: Query<Entity,(Without<Parent>,With<UiLayoutComputed>)>,
     // // computed_query: Query<&UiComputed,With<UiHoverable>>,
-    
+
     // computed_query: Query<&UiLayoutComputed>,
     // hoverable_query: Query<(Entity,&UiHoverable)>,
     // mut cur_hover_entities : Local<HashMap<Entity,Entity>>, //[root_entity]=cur_hover_entity
@@ -28,9 +28,9 @@ use super::super::events::*;
 
 pub fn update_hover_events(
 
-    parent_query : Query<&Parent,With<UiLayoutComputed>>,
+    parent_query : Query<&ChildOf,With<UiLayoutComputed>>,
     hoverable_query: Query<(Entity,&UiLayoutComputed,&UiHoverable)>,
-    
+
     mut input_event_reader: EventReader<UiInteractInputEvent>,
     mut ui_event_writer: EventWriter<UiInteractEvent>,
 
@@ -47,10 +47,10 @@ pub fn update_hover_events(
             }
         }
 
-        ui_event_writer.send(UiInteractEvent{entity:*entity,event_type:UiInteractEventType::HoverEnd{device:*device}}); //what if entity removed? ok to return a dead one?
+        ui_event_writer.write(UiInteractEvent{entity:*entity,event_type:UiInteractEventType::HoverEnd{device:*device}}); //what if entity removed? ok to return a dead one?
         false
     });
-    
+
     //
     let mut hover_root_entities: HashMap<Entity, Vec<_>> = HashMap::new(); //[root]=entities
 
@@ -63,13 +63,13 @@ pub fn update_hover_events(
         if !layout_computed.unlocked {
             continue;
         }
-        
+
 
         let root_entity=parent_query.iter_ancestors(entity).last().unwrap_or(entity);
-        
+
         hover_root_entities.entry(root_entity).or_default().push((entity,layout_computed.order,layout_computed.clamped_border_rect()));
     }
-    
+
     //sort hover_root_entities by computed.order
     for (&_root_entity, entities) in hover_root_entities.iter_mut() {
         entities.sort_by_key(|x|x.1);
@@ -90,23 +90,23 @@ pub fn update_hover_events(
 
         for &(entity,_,rect) in entities.iter() {
             let is_inside = !rect.is_zero() && rect.contains_point(cursor);
-        
+
             if is_inside {
                 if cur_hover_entity != Some(entity) {
                     if let Some(other_entity) = cur_hover_entity {
-                        ui_event_writer.send(UiInteractEvent{entity:other_entity,event_type:UiInteractEventType::HoverEnd{device}});
+                        ui_event_writer.write(UiInteractEvent{entity:other_entity,event_type:UiInteractEventType::HoverEnd{device}});
                     }
 
-                    ui_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::HoverBegin{device}});
+                    ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::HoverBegin{device}});
                     cur_hover_entities.insert((root_entity,device), (entity,cursor));
                 }
-                
+
                 break;
             } else if cur_hover_entity == Some(entity) { //not inside
-                ui_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::HoverEnd{device}});
+                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::HoverEnd{device}});
                 cur_hover_entities.remove(&(root_entity,device)).unwrap();
             }
-        }    
+        }
     }
 
 

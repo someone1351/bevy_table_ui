@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 
 use bevy::ecs::prelude::*;
-use bevy::hierarchy::prelude::*;
+// use bevy::hierarchy::prelude::*;
 
 use super::super::super::layout::components::UiLayoutComputed;
 
@@ -17,7 +17,7 @@ use super::super::events::*;
 pub fn update_select_events(
     // mut active_nodes: ResMut<UiActiveNodes>,
     // root_query: Query<Entity,(Without<Parent>,With<UiLayoutComputed>)>,
-    parent_query : Query<&Parent,With<UiLayoutComputed>>,
+    parent_query : Query<&ChildOf,With<UiLayoutComputed>>,
     computed_query: Query<&UiLayoutComputed>, //,With<UiPressable>
     mut selectable_query: Query<(Entity,&mut UiSelectable)>,
     mut root_group_selecteds : Local<HashMap<Entity,HashMap<String,Entity>>>, //[root_entity][select_group]=node
@@ -28,10 +28,10 @@ pub fn update_select_events(
     //unselect removed entities, selecteds with changed group names, removed/disabled selectable
     for root_entity in root_group_selecteds.keys().cloned().collect::<Vec<_>>() {
         let root_entity_alive=computed_query.get(root_entity).is_ok();
-        
+
         //
         let group_selecteds=root_group_selecteds.get_mut(&root_entity).unwrap();
-        
+
         for group in group_selecteds.keys().cloned().collect::<Vec<_>>() {
             let &entity = group_selecteds.get(&group).unwrap();
 
@@ -46,7 +46,7 @@ pub fn update_select_events(
                 || !selected
                 || selectable_group.map(|x|x.is_empty()).unwrap_or_default()
             {
-                ui_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::SelectEnd});
+                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::SelectEnd});
                 group_selecteds.remove(&group);
             }
         }
@@ -54,7 +54,7 @@ pub fn update_select_events(
         //remove inactive roots
         // let no_groups= root_selecteds.get(&root_entity).map(|x|x.is_empty()).unwrap_or_default();
 
-        if !root_entity_alive //&& !no_groups 
+        if !root_entity_alive //&& !no_groups
         {
             root_group_selecteds.remove(&root_entity);
         }
@@ -63,10 +63,10 @@ pub fn update_select_events(
     //single selecteds
     for root_entity in root_single_selecteds.keys().cloned().collect::<Vec<_>>() {
         let root_entity_alive=computed_query.get(root_entity).is_ok();
-        
+
         //
         let single_selecteds=root_single_selecteds.get_mut(&root_entity).unwrap();
-        
+
         for entity in single_selecteds.clone() {
 
             let entity_alive=computed_query.get(entity).is_ok();
@@ -77,18 +77,18 @@ pub fn update_select_events(
             let selected=selectable.map(|x|x.selected).unwrap_or_default();
             // println!("send {entity:?} {selectable_enable:?} {selectable_group:?}");
 
-            if !root_entity_alive || !entity_alive || !selectable_enable 
+            if !root_entity_alive || !entity_alive || !selectable_enable
                 || !selected
-                || selectable_group.map(|x|!x.is_empty()).unwrap_or_default() 
+                || selectable_group.map(|x|!x.is_empty()).unwrap_or_default()
             {
-                ui_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::SelectEnd});
+                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::SelectEnd});
                 single_selecteds.remove(&entity);
             }
         }
 
         //remove inactive roots
 
-        if !root_entity_alive //&& !no_groups 
+        if !root_entity_alive //&& !no_groups
         {
             root_single_selecteds.remove(&root_entity);
         }
@@ -96,7 +96,7 @@ pub fn update_select_events(
 
     //
     let mut select_root_entities: HashMap<Entity, Vec<Entity>> = HashMap::new();
-    
+
     //get root entities with selectable descendants
     for (entity,selectable) in selectable_query.iter() {
         if !selectable.enable {
@@ -140,24 +140,24 @@ pub fn update_select_events(
             if cur_selectable.selected {
                 if cur_selectable.group.is_empty() { //single
                     if !single_selecteds.contains(&entity) {
-                        ui_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::SelectBegin});
+                        ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::SelectBegin});
                         single_selecteds.insert(entity);
                     }
                 } else { //group
                     if Some(entity)!=group_selecteds.get(&cur_selectable.group).cloned() {
                         if let Some(other_entity)=group_selecteds.get_mut(&cur_selectable.group) { //group has existing selected
                             let (_,mut other_selectable)=selectable_query.get_mut(*other_entity).unwrap();
-    
+
                             other_selectable.selected=false;
-                            ui_event_writer.send(UiInteractEvent{entity:*other_entity,event_type:UiInteractEventType::SelectEnd});
-    
+                            ui_event_writer.write(UiInteractEvent{entity:*other_entity,event_type:UiInteractEventType::SelectEnd});
+
                             //
-                            ui_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::SelectBegin});
+                            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::SelectBegin});
                             *other_entity=entity;
                         } else { //first time group has selected
-                            ui_event_writer.send(UiInteractEvent{entity,event_type:UiInteractEventType::SelectBegin});
+                            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::SelectBegin});
                             group_selecteds.insert(cur_selectable.group.clone(),entity);
-                        }      
+                        }
                     }
                 }
             }

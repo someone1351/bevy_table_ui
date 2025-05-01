@@ -1,17 +1,23 @@
 use bevy::prelude::*;
 use bevy::render::camera::ExtractedCamera;
+// use bevy::render::camera::ExtractedCamera;
 use bevy::render::render_graph::*;
 use bevy::render::render_graph::Node;
 use bevy::render::renderer::RenderContext;
 use bevy::render::render_phase::*;
 use bevy::render::view::*;
 use bevy::render::render_resource::*;
+use tracing::error;
 use super::components::*;
 use super::phase::*;
 // use super::MyDefaultCameraView;
 
 pub struct MyUiPassNode {
-    ui_view_query: QueryState<(&'static ViewTarget, &'static ExtractedCamera), With<ExtractedView>>,
+    // ui_view_query: QueryState<(&'static ViewTarget, &'static ExtractedCamera), With<ExtractedView>>,
+
+    ui_view_query: QueryState<(&'static ExtractedView, &'static MyUiViewTarget)>,
+    // ui_view_query: QueryState<(&'static ExtractedView, &'static ViewTarget)>,
+    ui_view_target_query: QueryState<(&'static ViewTarget, &'static ExtractedCamera)>,
     default_camera_view_query: QueryState<&'static MyDefaultCameraView>,
 }
 
@@ -21,6 +27,7 @@ impl MyUiPassNode {
         Self {
             ui_view_query: world.query_filtered(),
             default_camera_view_query: world.query(),
+            ui_view_target_query: world.query(),
         }
     }
 }
@@ -40,20 +47,33 @@ impl Node for MyUiPassNode {
         //
         let input_view_entity = graph.view_entity();
 
-        //
-        let Some(transparent_render_phases) = world.get_resource::<ViewSortedRenderPhases<MyTransparentUi>>() else {
+        // Query the UI view components.
+        let Ok((view, ui_view_target)) = self.ui_view_query.get_manual(world, input_view_entity)
+        else {
             return Ok(());
         };
-        
-        //
-        let Some(transparent_phase) = transparent_render_phases.get(&input_view_entity) else {
+
+        let Ok((target, _camera)) = self
+            .ui_view_target_query
+            .get_manual(world, ui_view_target.0)
+        else {
             return Ok(());
         };
 
         //
-        let Ok((target, _camera_ui)) = self.ui_view_query.get_manual(world, input_view_entity) else {
+        let Some(transparent_render_phases) = world.get_resource::<ViewSortedRenderPhases<MyTransparentUi>>() else {
             return Ok(());
         };
+
+        //
+        let Some(transparent_phase) = transparent_render_phases.get(&view.retained_view_entity) else { //&input_view_entity
+            return Ok(());
+        };
+
+        //
+        // let Ok((target, _camera_ui)) = self.ui_view_query.get_manual(world, input_view_entity) else {
+        //     return Ok(());
+        // };
 
         //
         if transparent_phase.items.is_empty() {

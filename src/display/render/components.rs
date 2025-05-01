@@ -16,7 +16,7 @@ pub struct MyUiBatch {
 }
 
 #[derive(Component)]
-pub struct MyViewBindGroup { 
+pub struct MyViewBindGroup {
     pub value: BindGroup,
 }
 
@@ -36,3 +36,7 @@ pub struct MyTargetCamera(pub Entity);
 //         self.0
 //     }
 // }
+
+/// This is the inverse of [`UiCameraView`].
+#[derive(Component)]
+pub struct MyUiViewTarget(pub Entity);

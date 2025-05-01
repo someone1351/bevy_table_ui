@@ -62,7 +62,7 @@ fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
     var uv = in.uv;
     //uv.y=1.0-uv.y;
     var tex_color = textureSample(sprite_texture, sprite_sampler, uv);
-    var c = in.color*tex_color;
+    var c = in.color;//*tex_color;
     //if (c.w==0.0) {c.w=0.5;}
     //if (c.w==0.0) {c=vec4<f32>(1.0,0.0,0.0,1.0);}
     return c;

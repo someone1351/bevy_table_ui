@@ -13,6 +13,7 @@ pub struct MyTransparentUi {
     pub draw_function: DrawFunctionId,
     pub batch_range: Range<u32>, /// Range in the vertex buffer of this item
     pub extra_index: PhaseItemExtraIndex,
+    pub indexed: bool,
 }
 
 impl PhaseItem for MyTransparentUi {
@@ -38,16 +39,16 @@ impl PhaseItem for MyTransparentUi {
 
     #[inline]
     fn extra_index(&self) -> PhaseItemExtraIndex {
-        self.extra_index
+        self.extra_index.clone()
     }
 
     #[inline]
     fn batch_range_and_extra_index_mut(&mut self) -> (&mut Range<u32>, &mut PhaseItemExtraIndex) {
         (&mut self.batch_range, &mut self.extra_index)
     }
-    
+
     fn main_entity(&self) -> MainEntity {
-        MainEntity::from(Entity::PLACEHOLDER) 
+        MainEntity::from(Entity::PLACEHOLDER)
     }
 }
 
@@ -69,5 +70,9 @@ impl SortedPhaseItem for MyTransparentUi {
     #[inline]
     fn sort(items: &mut [Self]) {
         items.sort_by_key(|item| item.sort_key());
+    }
+
+    fn indexed(&self) -> bool {
+        self.indexed
     }
 }

@@ -7,7 +7,7 @@ use bevy::color::Color;
 use bevy::ecs::prelude::*;
 // use bevy::hierarchy::Parent;
 use bevy::image::{BevyDefault, Image, TextureAtlasLayout, TextureFormatPixelInfo};
-use bevy::math::{FloatOrd, Mat4, URect, UVec4, Vec2};
+use bevy::math::{FloatOrd, Mat4, UVec4, Vec2};
 use bevy::prelude::{Camera, Camera2d, Camera3d, GlobalTransform};
 use bevy::render::sync_world::{RenderEntity, TemporaryRenderEntity};
 // use bevy::sprite::TextureAtlasLayout;
@@ -156,7 +156,7 @@ pub fn extract_default_ui_camera_view(
 
     live_entities.clear();
 
-    let scale = 1.0;//ui_scale.0.recip();
+    // let scale = 1.0;//ui_scale.0.recip();
     for (entity, render_entity,camera) in &query {
         // let render_entity=entity;
         // ignore inactive cameras
@@ -166,13 +166,23 @@ pub fn extract_default_ui_camera_view(
             continue;
         }
 
-        if let (Some(logical_size),Some(URect {min: physical_origin,..}), Some(physical_size),) = (
-            camera.logical_viewport_size(),
-            camera.physical_viewport_rect(),
-            camera.physical_viewport_size(),
-        ) {
+        // if let (Some(logical_size),Some(URect {min: physical_origin,..}), Some(physical_size),) = (
+        //     camera.logical_viewport_size(),
+        //     camera.physical_viewport_rect(),
+        //     camera.physical_viewport_size(),
+        // )
+        if let Some(physical_viewport_rect) = camera.physical_viewport_rect()
+        {
             // use a projection matrix with the origin in the top left instead of the bottom left that comes with OrthographicProjection
-            let projection_matrix = Mat4::orthographic_rh(0.0, logical_size.x * scale, logical_size.y * scale, 0.0, 0.0, UI_CAMERA_FAR,);
+            let projection_matrix = Mat4::orthographic_rh(
+                0.0,
+                // logical_size.x * scale,
+                // logical_size.y * scale,
+                physical_viewport_rect.width() as f32,
+                physical_viewport_rect.height() as f32,
+                0.0,
+                0.0, UI_CAMERA_FAR,
+            );
 
             /// The ID of the subview associated with a camera on which UI is to be drawn.
             ///
@@ -184,13 +194,17 @@ pub fn extract_default_ui_camera_view(
 
             let default_camera_view = commands
                 .spawn((ExtractedView {
+                    retained_view_entity,
                     clip_from_view: projection_matrix,
                     world_from_view: GlobalTransform::from_xyz(0.0, 0.0, UI_CAMERA_FAR + UI_CAMERA_TRANSFORM_OFFSET,),
                     clip_from_world: None,
                     hdr: camera.hdr,
-                    viewport: UVec4::new( physical_origin.x, physical_origin.y, physical_size.x, physical_size.y, ),
+                    // viewport: UVec4::new( physical_origin.x, physical_origin.y, physical_size.x, physical_size.y, ),
+                    viewport: UVec4::from((
+                        physical_viewport_rect.min,
+                        physical_viewport_rect.size(),
+                    )),
                     color_grading: Default::default(),
-                    retained_view_entity,
                 },
                 TemporaryRenderEntity,
                 MyUiViewTarget(render_entity),
@@ -198,10 +212,9 @@ pub fn extract_default_ui_camera_view(
 
             let mut entity_commands = commands.get_entity(render_entity).expect("Camera entity wasn't synced.");
             entity_commands.insert(MyDefaultCameraView(default_camera_view));
-            transparent_render_phases.insert_or_clear(retained_view_entity); //entity
 
+            transparent_render_phases.insert_or_clear(retained_view_entity); //entity
             live_entities.insert(retained_view_entity); //entity
-            // transparent_render_phases.retain(|entity, _| live_entities.contains(&retained_view_entity)); //entity
         }
     }
 

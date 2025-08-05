@@ -253,7 +253,7 @@ fn setup_camera(mut commands: Commands) {
     // commands.spawn((Camera3d::default(),));
     // commands.spawn((CameraMy::default(),));
     commands.spawn((
-        CameraMy::default(),
+        CameraUi::default(),
         // Projection::Orthographic(OrthographicProjection::default_2d()),
 
         // Camera {

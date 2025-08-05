@@ -37,8 +37,8 @@ pub struct CoreMyPlugin;
 
 impl Plugin for CoreMyPlugin {
     fn build(&self, app: &mut App) {
-        app.register_type::<CameraMy>()
-            .add_plugins(ExtractComponentPlugin::<CameraMy>::default())
+        app.register_type::<CameraUi>()
+            .add_plugins(ExtractComponentPlugin::<CameraUi>::default())
             ;
 
         let Some(render_app) = app.get_sub_app_mut(RenderApp) else {

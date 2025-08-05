@@ -33,7 +33,7 @@ const UI_CAMERA_FAR: f32 = 1000.0;
 
     Transform::from_xyz( 0.0, 0.0, UI_CAMERA_FAR + UI_CAMERA_TRANSFORM_OFFSET, ),
 )]
-pub struct CameraMy;
+pub struct CameraUi;
 // struct Aa(Frustum);
 //handled in bevy\crates\bevy_render\src\camera\camera.rs
 // #[derive(Debug,Clone)]

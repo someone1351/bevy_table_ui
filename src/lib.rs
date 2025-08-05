@@ -17,7 +17,7 @@ pub use interact::{plugin::*,components::*,resources::*,events::*};
 pub use display::{plugin::*,components::*,values::*};
 pub use affect::{plugin::*,components::*};
 
-pub use display::render_core::core_my::CameraMy; //mesh
+pub use display::render_core::core_my::CameraUi; //mesh
 pub use display::TestRenderComponent;
 
 /*

@@ -1,234 +1,258 @@
 
-use std::collections::{HashMap, HashSet};
+// use bevy::ecs::prelude::*;
+use std::collections::HashMap;
 
-use bevy::asset::*;
+
+
+use bevy::asset::{AssetEvent, Assets, Handle};
 use bevy::color::Color;
-// use bevy::ecs::entity::EntityHashSet;
-use bevy::ecs::prelude::*;
-// use bevy::hierarchy::Parent;
-use bevy::image::{BevyDefault, Image, TextureAtlasLayout, TextureFormatPixelInfo};
-use bevy::math::{FloatOrd, Mat4, UVec4, Vec2};
-use bevy::prelude::{Camera, Camera2d, Camera3d, GlobalTransform};
-use bevy::render::sync_world::{RenderEntity, TemporaryRenderEntity};
-// use bevy::sprite::TextureAtlasLayout;
-use bevy::text::*;
-use bevy::window::{Window,PrimaryWindow};
+use bevy::ecs::entity::Entity;
+use bevy::ecs::query::With;
+use bevy::image::{Image, TextureAtlasLayout};
+use bevy::math::{FloatOrd, Vec2};
+use bevy::prelude::{ChildOf, EventReader, Msaa};
+use bevy::render::render_asset::RenderAssets;
+use bevy::render::texture::GpuImage;
+use bevy::render::{render_phase::*, Extract};
+use bevy::render::renderer::{RenderDevice, RenderQueue};
+use bevy::render::sync_world::{MainEntity, TemporaryRenderEntity};
+use bevy::render::view::{ExtractedView, RenderLayers, ViewUniforms};
+use bevy::ecs::system::*;
 
-use bevy::render::Extract;
-use bevy::render::render_asset::*;
+
 use bevy::render::render_resource::*;
-use bevy::render::render_phase::{DrawFunctions, PhaseItemExtraIndex, ViewSortedRenderPhases};
-use bevy::render::renderer::*;
-use bevy::render::texture::*;
-use bevy::render::view::*;
+use bevy::text::TextLayoutInfo;
 
 
-use super::draw::*;
-use super::phase::*;
-use super::pipeline::*;
-use super::resources::*;
+use super::draws::DrawMesh;
+use super::dummy_image::create_dummy_image;
+use super::pipelines::*;
 use super::components::*;
-use super::camera::*;
+use super::resources::*;
+
+use super::super::render_core::core_my::TransparentMy;
+use super::super::TestRenderComponent;
 
 use super::super::{components::{UiColor,UiText,UiTextComputed,UiImage},values::{UiTextHAlign,UiTextVAlign}};
 use super::super::super::layout::{components::*,values::UiRect};
+//systems
 
-
-pub fn dummy_image_setup(
-    mut has_ran: Local<bool>,
-    mut images: ResMut<Assets<Image>>,
-    mut dummy_image: ResMut<DummyImage>,
+fn create_image_bind_group(
+    render_device: &RenderDevice,
+    mesh2d_pipeline: &MyUiPipeline,
+    image_bind_groups: &mut MyUiImageBindGroups,
+    handle:Option<Handle<Image>>,
+    gpu_image:&GpuImage,
 ) {
 
-    if *has_ran { return; }
-    *has_ran = true;
-
-    //
-    let image = Image::new_fill(
-        Extent3d::default(),
-        TextureDimension::D2,
-        &[255u8; 4],
-        TextureFormat::bevy_default(),
-        RenderAssetUsages::RENDER_WORLD,
+    let bind_group=render_device.create_bind_group(
+        "my_ui_material_bind_group",
+        &mesh2d_pipeline.image_layout, &[
+            BindGroupEntry {binding: 0, resource: BindingResource::TextureView(&gpu_image.texture_view),},
+            BindGroupEntry {binding: 1, resource: BindingResource::Sampler(&gpu_image.sampler),},
+        ]
     );
 
-    let handle = images.add(image);
-    dummy_image.handle = handle;
-
-    println!("dummy image inited!");
+    let image_id=handle.clone().map(|x|x.id());
+    image_bind_groups.values.insert(image_id, bind_group);
 }
-
-pub fn extract_dummy_image_setup(
-    mut has_ran: Local<bool>,
-    images: Extract<Res<Assets<Image>>>,
-    // mut gpu_images : ResMut<RenderAssets<GpuImage>>,
-
-    dummy_image: Extract<Res<DummyImage>>,
-    render_device : Res<RenderDevice>,
-    render_queue : Res<RenderQueue>,
-    // default_sampler : ResMut<DefaultImageSampler>,
-    mut dummy_gpu_image : ResMut<DummyGpuImage>,
-
+fn create_image_bind_group2(
+    render_device: &RenderDevice,
+    mesh2d_pipeline: &MyUiPipeline,
+    gpu_images: &RenderAssets<GpuImage>,
+    image_bind_groups: &mut MyUiImageBindGroups,
+    handle:Option<Handle<Image>>,
 ) {
-    //crates/bevy_pbr/src/render/mesh.rs
 
 
-    if *has_ran { return; }
+    //
+    let image_id=handle.clone().map(|x|x.id());
+    // let image_id=test.handle.id();
+    //
+    if image_bind_groups.values.contains_key(&image_id) {
+        return;
+    }
 
-    let Some(image) = images.get(&dummy_image.handle) else //.unwrap(); //crashed here ...
-    {
+    let Some(image_id)=image_id else {
         return;
     };
 
-    *has_ran = true;
-
-    //
-    let texture = render_device.create_texture(&image.texture_descriptor);
-
-    let sampler = render_device.create_sampler(&SamplerDescriptor {
-        min_filter: FilterMode::Nearest,
-        mag_filter: FilterMode::Nearest,
-        address_mode_u: AddressMode::Repeat,
-        address_mode_v: AddressMode::Repeat,
-        ..Default::default()
-    });
-
-    let format_size = image.texture_descriptor.format.pixel_size();
-
-    render_queue.write_texture(
-        // ImageCopyTexture {
-        //     texture: &texture,
-        //     mip_level: 0,
-        //     origin: Origin3d::ZERO,
-        //     aspect: TextureAspect::All,
-        // },
-        texture.as_image_copy(),
-        // &image.data,
-        image.data.as_ref().expect("Image was created without data"),
-        // ImageDataLayout {
-        //     offset: 0,
-        //     bytes_per_row: Some(image.texture_descriptor.size.width * format_size as u32),
-        //     rows_per_image: None,
-        // },
-        TexelCopyBufferLayout {
-            offset: 0,
-            bytes_per_row: Some(image.width() * format_size as u32),
-            rows_per_image: None,
-        },
-        image.texture_descriptor.size,
-    );
-
-    let texture_view = texture.create_view(&TextureViewDescriptor::default());
-
-    let gpu_image = GpuImage {
-        texture,
-        texture_view,
-        texture_format: image.texture_descriptor.format,
-        sampler,
-        // size: bevy::math::UVec2::new(
-        //     image.texture_descriptor.size.width,
-        //     image.texture_descriptor.size.height,
-        // ),
-        // size:Extent3d { width: image.texture_descriptor.size.width, height: image.texture_descriptor.size.height, depth_or_array_layers: () },
-        size:image.texture_descriptor.size,
-        mip_level_count:1, //todo what
+    let Some(gpu_image)=gpu_images.get(image_id) else {
+        return;
     };
 
-    dummy_gpu_image.gpu_image = Some(gpu_image);
+    create_image_bind_group(render_device,mesh2d_pipeline,image_bind_groups,handle,gpu_image);
+}
 
-    println!("extract dummy image inited!");
+pub fn dummy_image_setup(
+    render_device: Res<RenderDevice>,
+    render_queue: Res<RenderQueue>,
+    mesh2d_pipeline: Res<MyUiPipeline>,
+    mut image_bind_groups: ResMut<MyUiImageBindGroups>,
+    mut init:Local<bool>,
+) {
+
+    if *init {
+        return;
+    }
+
+    *init=true;
+
+
+    let gpu_image=create_dummy_image(&render_device,&render_queue);
+    create_image_bind_group(&render_device,&mesh2d_pipeline,&mut image_bind_groups,None,&gpu_image);
+
 }
 
 
 
-pub fn extract_default_ui_camera_view(
-    mut commands: Commands,
-    mut transparent_render_phases: ResMut<ViewSortedRenderPhases<MyTransparentUi>>,
-    query: Extract<Query<(Entity,RenderEntity, &Camera), Or<(With<Camera2d>, With<Camera3d>)>>>,
-    // query: Extract<Query<(Entity,&Camera), Or<(With<Camera2d>, With<Camera3d>)>>>,
-    // mut live_entities: Local<EntityHashSet>,
-    mut live_entities: Local<HashSet<RetainedViewEntity>>,
+
+
+pub fn extract_images(
+    // mut commands: Commands,
+    uinode_query: Extract<Query<(
+        Entity,
+        &TestRenderComponent,
+    )> >,
+    mut image_asset_events: Extract<EventReader<AssetEvent<Image>>>,
+
+    render_device: Res<RenderDevice>,
+    mesh2d_pipeline: Res<MyUiPipeline>,
+    mut image_bind_groups: ResMut<MyUiImageBindGroups>,
+    gpu_images: Res<RenderAssets<GpuImage>>,
 ) {
-    /// Extracts all UI elements associated with a camera into the render world.
 
-    const UI_CAMERA_TRANSFORM_OFFSET: f32 = -0.1;
-    const UI_CAMERA_FAR: f32 = 1000.0;
-
-    live_entities.clear();
-
-    // let scale = 1.0;//ui_scale.0.recip();
-    for (entity, render_entity,camera) in &query {
-        // let render_entity=entity;
-        // ignore inactive cameras
-        if !camera.is_active {
-            let mut entity_commands = commands.get_entity(entity).expect("Camera entity wasn't synced.");
-            entity_commands.remove::<MyDefaultCameraView>();
-            continue;
-        }
-
-        // if let (Some(logical_size),Some(URect {min: physical_origin,..}), Some(physical_size),) = (
-        //     camera.logical_viewport_size(),
-        //     camera.physical_viewport_rect(),
-        //     camera.physical_viewport_size(),
-        // )
-        if let Some(physical_viewport_rect) = camera.physical_viewport_rect()
-        {
-            // use a projection matrix with the origin in the top left instead of the bottom left that comes with OrthographicProjection
-            let projection_matrix = Mat4::orthographic_rh(
-                0.0,
-                // logical_size.x * scale,
-                // logical_size.y * scale,
-                physical_viewport_rect.width() as f32,
-                physical_viewport_rect.height() as f32,
-                0.0,
-                0.0, UI_CAMERA_FAR,
-            );
-
-            /// The ID of the subview associated with a camera on which UI is to be drawn.
-            ///
-            /// When UI is present, cameras extract to two views: the main 2D/3D one and a
-            /// UI one. The main 2D or 3D camera gets subview 0, and the corresponding UI
-            /// camera gets this subview, 1.
-            const MYUI_CAMERA_SUBVIEW: u32 = 1;
-            let retained_view_entity = RetainedViewEntity::new(entity.into(), None, MYUI_CAMERA_SUBVIEW);
-
-            let default_camera_view = commands
-                .spawn((ExtractedView {
-                    retained_view_entity,
-                    clip_from_view: projection_matrix,
-                    world_from_view: GlobalTransform::from_xyz(0.0, 0.0, UI_CAMERA_FAR + UI_CAMERA_TRANSFORM_OFFSET,),
-                    clip_from_world: None,
-                    hdr: camera.hdr,
-                    // viewport: UVec4::new( physical_origin.x, physical_origin.y, physical_size.x, physical_size.y, ),
-                    viewport: UVec4::from((
-                        physical_viewport_rect.min,
-                        physical_viewport_rect.size(),
-                    )),
-                    color_grading: Default::default(),
-                },
-                TemporaryRenderEntity,
-                MyUiViewTarget(render_entity),
-            )).id();
-
-            let mut entity_commands = commands.get_entity(render_entity).expect("Camera entity wasn't synced.");
-            entity_commands.insert(MyDefaultCameraView(default_camera_view));
-
-            transparent_render_phases.insert_or_clear(retained_view_entity); //entity
-            live_entities.insert(retained_view_entity); //entity
+    for event in image_asset_events.read()
+    {
+        match event {
+            AssetEvent::Removed { id } | AssetEvent::Modified { id } => {
+                image_bind_groups.values.remove(&Some(id.clone()));//.unwrap();
+            }
+            _ =>{}
         }
     }
 
-    transparent_render_phases.retain(|entity, _| live_entities.contains(entity));
+    for (_entity, test,  ) in uinode_query.iter() {
+        if test.handle.is_some() {
+            let handle=test.handle.clone();
+            create_image_bind_group2(&render_device,&mesh2d_pipeline,&gpu_images,&mut image_bind_groups,handle);
+        }
+    }
+}
+
+
+pub fn extract_images2(
+    // mut commands: Commands,
+    uinode_query: Extract<Query<(
+        &UiLayoutComputed,
+        Option<&UiImage>,
+        Option<&TextLayoutInfo>,
+        // Option<&MyTargetCamera>,
+    )> >,
+    mut image_asset_events: Extract<EventReader<AssetEvent<Image>>>,
+
+    render_device: Res<RenderDevice>,
+    mesh2d_pipeline: Res<MyUiPipeline>,
+    mut image_bind_groups: ResMut<MyUiImageBindGroups>,
+    gpu_images: Res<RenderAssets<GpuImage>>,
+) {
+
+    for event in image_asset_events.read()
+    {
+        match event {
+            AssetEvent::Removed { id } | AssetEvent::Modified { id } => {
+                image_bind_groups.values.remove(&Some(id.clone()));//.unwrap();
+            }
+            _ =>{}
+        }
+    }
+
+
+    for (
+        layout_computed,
+        image,
+        text_layout_info,
+    ) in uinode_query.iter() {
+        if !layout_computed.visible {
+            continue;
+        }
+
+        //image
+        if image.is_some() {
+            let handle=image.map(|x|x.handle.clone());
+            create_image_bind_group2(&render_device,&mesh2d_pipeline,&gpu_images,&mut image_bind_groups,handle);
+        }
+
+        //text
+        if let Some(text_layout) =  text_layout_info
+            // text_pipeline.get_glyphs(&entity)
+         {
+            for text_glyph in text_layout.glyphs.iter() {
+
+                let handle=text_glyph.atlas_info.texture.clone();
+                let handle: Option<bevy::prelude::Handle<Image>>=Some(handle);
+
+                create_image_bind_group2(&render_device,&mesh2d_pipeline,&gpu_images,&mut image_bind_groups,handle);
+
+            }
+        }
+    }
+
+}
+
+pub fn extract_uinodes(
+    mut commands: Commands,
+    uinode_query: Extract<Query<(
+        Entity,
+        &TestRenderComponent,
+        Option<&RenderLayers>,
+    )> >,
+    mut extracted_elements : ResMut<MyUiExtractedElements>,
+    // default_ui_camera: Extract<MyDefaultUiCamera>,
+    // cameras: Extract<Query<(RenderEntity, &MyCameraView), With<CameraTest>, >>,
+    // mapping: Extract<Query<RenderEntity>>,
+) {
+
+    extracted_elements.elements.clear();
+
+
+    // let Some(camera_entity) = default_ui_camera.get() else {return;};
+
+    // let Ok(render_camera_entity) = mapping.get(camera_entity) else { return; };
+
+    // let camera_entity=render_camera_entity;
+
+    for (entity, test, render_layers, ) in uinode_query.iter() {
+        let x= test.x;
+        let y= test.y;
+        let x2= test.x+test.w;
+        let y2= test.y+test.h;
+
+        extracted_elements.elements.push(MyUiExtractedElement{
+            entity:commands.spawn((TemporaryRenderEntity,)).id(), //is this needed? instead spawn entity later?
+            main_entity:entity.into(),
+            // camera_entity,
+            // x: test.x,
+            // y: test.y,
+            // x2: test.x+test.w,
+            // y2: test.y+test.h,
+            color: test.col,
+            depth: 0,
+            render_layers: render_layers.cloned(),
+            image: test.handle.clone(),
+            bl: Vec2::new(x, y2),
+            br: Vec2::new(x2, y2),
+            tl: Vec2::new(x, y),
+            tr: Vec2::new(x2, y),
+            ..Default::default()
+        });
+    }
 }
 
 
 
-
-
-
-
-pub fn extract_uinodes(
-    windows: Extract<Query<&Window, With<PrimaryWindow>>>,
+pub fn extract_uinodes2(
+    // windows: Extract<Query<&Window, With<PrimaryWindow>>>,
     mut commands: Commands,
 
     textures: Extract<Res<Assets<Image>>>,
@@ -251,38 +275,32 @@ pub fn extract_uinodes(
     mut extracted_elements : ResMut<MyUiExtractedElements>,
 
     // camera_query: Extract<Query<(Entity, &Camera)>>,
-    default_ui_camera: Extract<MyDefaultUiCamera>,
-    mapping: Extract<Query<RenderEntity>>,
+    // default_ui_camera: Extract<MyDefaultUiCamera>,
+    // mapping: Extract<Query<RenderEntity>>,
 ) {
 
-    extracted_elements.elements.clear();
+    // extracted_elements.elements.clear();
 
 
-    let scale_factor = windows
-        .single()
-        .map(|window| window.resolution.scale_factor() as f32)
-        .unwrap_or(1.0);
+    // for (entity, test, render_layers, ) in uinode_query.iter() {
 
-    // let window=windows.get_single();
-    // // let window_size=window.and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
+    //     extracted_elements.elements.push(MyUiExtractedElement{
+    //         entity:commands.spawn((TemporaryRenderEntity,)).id(), //is this needed? instead spawn entity later?
+    //         main_entity:entity.into(),
+    //         // camera_entity,
+    //         x: test.x,
+    //         y: test.y,
+    //         x2: test.x+test.w,
+    //         y2: test.y+test.h,
+    //         color: test.col,
+    //         depth: 0,
+    //         render_layers: render_layers.cloned(),
+    //         image: test.handle.clone(),
+    //     });
+    // }
 
-    let _inv_scale_factor = 1. / scale_factor;
 
-    //camera.map(MyTargetCamera::entity).or(default_ui_camera.get())
-    // let Some(camera_entity) = default_ui_camera.get()  else { return; };
-    let Some(camera_entity) =
-        // camera.map(TargetCamera::entity).or(
-            default_ui_camera.get()
-        // )
-         else {return;};
-
-    let Ok(render_camera_entity) = mapping.get(camera_entity) else {
-        return;
-    };
-
-    let camera_entity=render_camera_entity;
-
-    for (_entity,
+    for (entity,
         layout_computed,
         image,
         text,
@@ -331,14 +349,19 @@ pub fn extract_uinodes(
                 bl,br,tl,tr,
                 // z,
                 color: back_color.clone(),
-                bl_uv : Vec2::new(0.0,1.0),
-                br_uv : Vec2::new(1.0,1.0),
-                tl_uv : Vec2::new(0.0,0.0),
-                tr_uv : Vec2::new(1.0,0.0),
+                // bl_uv : Vec2::new(0.0,1.0),
+                // br_uv : Vec2::new(1.0,1.0),
+                // tl_uv : Vec2::new(0.0,0.0),
+                // tr_uv : Vec2::new(1.0,0.0),
                 depth,
                 image:None,
                 entity:commands.spawn((TemporaryRenderEntity,)).id(),
-                camera_entity,
+
+                main_entity: entity.into(),
+                // render_layers: todo!(),
+                // camera_entity,
+
+                ..Default::default()
             });
 
             // println!("entity {_entity:?} {back_color:?} {clamped_inner_rect2:?} ");
@@ -384,14 +407,16 @@ pub fn extract_uinodes(
                                 color : cols[i].clone(),
                                 // ..Default::default()
 
-                                bl_uv : Vec2::new(0.0,1.0),
-                                br_uv : Vec2::new(1.0,1.0),
-                                tl_uv : Vec2::new(0.0,0.0),
-                                tr_uv : Vec2::new(1.0,0.0),
+                                // bl_uv : Vec2::new(0.0,1.0),
+                                // br_uv : Vec2::new(1.0,1.0),
+                                // tl_uv : Vec2::new(0.0,0.0),
+                                // tr_uv : Vec2::new(1.0,0.0),
                                 depth,
-                                image:None,
+                                // image:None,
                                 entity:commands.spawn((TemporaryRenderEntity,)).id(),
-                                camera_entity,
+                                // camera_entity,
+                                main_entity: entity.into(),
+                                ..Default::default()
                             });
                         }
                     }
@@ -453,7 +478,10 @@ pub fn extract_uinodes(
                     image:Some(image.handle.clone()),
 
                     entity:commands.spawn((TemporaryRenderEntity,)).id(),
-                    camera_entity,
+                    // camera_entity,
+                    main_entity: entity.into(),
+                    render_layers: None,
+                    // ..Default::default()
                 });
             }
         }
@@ -536,141 +564,129 @@ pub fn extract_uinodes(
                         depth:text_depth,
                         image:Some(texture.clone()),
                         entity:commands.spawn((TemporaryRenderEntity,)).id(),
-                        camera_entity,
+                        // camera_entity,
+                        main_entity: entity.into(),
+                        render_layers: None,
                     });
                 }
             }
         }
     }
 
-
 }
 
+//MainTransparentPass2dNode
 pub fn queue_uinodes(
-    transparent_draw_functions: Res<DrawFunctions<MyTransparentUi>>,
+    // transparent_draw_functions: Res<DrawFunctions<MyTransparentUi>>,
+    transparent_draw_functions: Res<DrawFunctions<TransparentMy>>,
 
     colored_mesh2d_pipeline: Res<MyUiPipeline>,
     mut pipelines: ResMut<SpecializedRenderPipelines<MyUiPipeline>>,
     pipeline_cache: Res<PipelineCache>,
 
     extracted_elements : Res<MyUiExtractedElements>,
-    mut views: Query<(Entity, &ExtractedView)>,
-    mut transparent_render_phases: ResMut<ViewSortedRenderPhases<MyTransparentUi>>,
+    views: Query<(
+        // Entity, &ExtractedView
+        &MainEntity,
+        &ExtractedView,
+        &Msaa,
+        Option<&RenderLayers>,
+    )>,
+
+    // // render_camera_query: Query<(Entity, &MyCameraView),  >,
+
+    // mut render_phases: ResMut<ViewSortedRenderPhases<MyTransparentUi>>,
+    mut render_phases: ResMut<ViewSortedRenderPhases<TransparentMy>>,
 ) {
 
     let draw_colored_mesh2d = transparent_draw_functions.read().get_id::<DrawMesh>().unwrap();
-    let pipeline = pipelines.specialize(&pipeline_cache, &colored_mesh2d_pipeline,MyUiPipelineKey{});
 
     // Iterate each view (a camera is a view)
-    // for (extracted_view, mut transparent_phase) in extracted_views.iter_mut()
-    // {
-    // transparent_phase.items.reserve(extracted_elements.elements.len());
 
-    for element in extracted_elements.elements.iter() {
+    // let Ok((view_entity, _view)) = views.get_mut(element.camera_entity) else {
+    //     continue;
+    // };
+    // for (view_entity,_view) in views.iter()
+    // for (camera_render_entity,_camera_view) in render_camera_query.iter()
 
-        // println!("{} : {}",
-        //     element.camera_entity,
-        //     views.iter().map(|x|x.0.to_string()).collect::<Vec<_>>().join(", "));
+    let default_render_layers = RenderLayers::layer(0);
 
-        let Ok((_view_entity, view)) = views.get_mut(element.camera_entity) else {
+    for (
+        //_view_entiy
+        _main_entity,
+        extracted_view,
+        msaa,
+        view_render_layers,
+    ) in views.iter() {
+        let Some(transparent_phase) = render_phases.get_mut(&extracted_view.retained_view_entity) else {
+            //skip transparent phases that aren't for my camera
             continue;
         };
-        // println!("sss {view_entity}");
-
-        let Some(transparent_phase) = transparent_render_phases.get_mut(&view.retained_view_entity) else {
-            continue;
-        };
-
-        // println!("ttt");
+        let view_render_layers=view_render_layers.unwrap_or(&default_render_layers);
 
 
-        transparent_phase.add(MyTransparentUi {
-            entity: element.entity, //*entity,
-            draw_function: draw_colored_mesh2d,
-            pipeline,
-            // sort_key: FloatOrd(0.0),//FloatOrd(*depth as f32),
-            sort_key: FloatOrd(element.depth as f32),
-            // sort_key: FloatOrd(*depth as f32),
-            // sort_key: (FloatOrd(*depth as f32),entity.index(),),
-            // This material is not batched
-            batch_range: 0..1,//0..c,//c..c+(elements.len()*6) as u32,
-            // dynamic_offset:None,
-            extra_index: PhaseItemExtraIndex::None,
-            indexed: false,
+        // if let Some(render_layers)=render_layers {
+        //     for x in render_layers.iter() {
 
-        });
+        //     }
 
-    // }
+        // }
+
+        let pipeline = pipelines.specialize(&pipeline_cache, &colored_mesh2d_pipeline,MyUiPipelineKey{ msaa_samples: msaa.samples() });
+
+        for element in extracted_elements.elements.iter() {
+
+            let element_render_layers=element.render_layers.as_ref().unwrap_or(&default_render_layers);
+
+            if element_render_layers.intersection(view_render_layers).iter().count()==0 {
+                continue;
+            }
+
+            transparent_phase.add(TransparentMy {
+                entity: (element.entity,element.main_entity), //what is it used for?
+                draw_function: draw_colored_mesh2d,
+                pipeline,
+                sort_key: FloatOrd(element.depth as f32),
+                batch_range: 0..1,
+                extra_index: PhaseItemExtraIndex::None,
+            });
+            // println!("camera_render_entity1 {:?}",extracted_view.retained_view_entity);
+        }
+
     }
 }
 
-pub fn prepare_uinodes(
+
+pub fn prepare_views(
     mut commands: Commands,
     render_device: Res<RenderDevice>,
-    render_queue: Res<RenderQueue>,
-
-    extracted_elements : Res<MyUiExtractedElements>,
-    mut ui_meta: ResMut<MyUiMeta>,
-
     mesh2d_pipeline: Res<MyUiPipeline>,
-
     view_uniforms: Res<ViewUniforms>,
     extracted_views: Query<Entity, With<ExtractedView>>,
-
-    mut image_bind_groups: ResMut<MyUiImageBindGroups>,
-    image_asset_events: Res<bevy::sprite::SpriteAssetEvents>,
-    gpu_images: Res<RenderAssets<GpuImage>>,
-    dummy_gpu_image : Res<DummyGpuImage>,
 ) {
-
-
     if let Some(view_binding) = view_uniforms.uniforms.binding() {
-        for entity in extracted_views.iter() {
+        for view_entity in extracted_views.iter() {
             let view_bind_group = render_device.create_bind_group(
                 "my_mesh2d_view_bind_group",&mesh2d_pipeline.view_layout,&[BindGroupEntry {
                     binding: 0,
                     resource: view_binding.clone(),
                 }],);
 
-            commands.entity(entity).insert(MyViewBindGroup { value: view_bind_group, });
+            commands.entity(view_entity).insert(MyViewBindGroup { value: view_bind_group, });
         }
     }
+}
 
-    for event in &image_asset_events.images {
-        match event {
-            AssetEvent::Removed { id } | AssetEvent::Modified { id } => {
-                image_bind_groups.values.remove(&Some(id.clone()));//.unwrap();
-            }
-            _ =>{}
-        }
-    }
 
-    //
-    if dummy_gpu_image.gpu_image.is_none() { return; }
-    let dummy_gpu_image = dummy_gpu_image.gpu_image.as_ref().unwrap();
 
-    //
-    // for (depth,image_handle) in extracted_elements.elements.keys()
-    for element in extracted_elements.elements.iter()
-    {
-        let image_id=element.image.clone().map(|x|x.id());
+pub fn prepare_uinodes(
+    mut commands: Commands,
+    render_device: Res<RenderDevice>,
+    render_queue: Res<RenderQueue>,
+    extracted_elements : Res<MyUiExtractedElements>,
+    mut ui_meta: ResMut<MyUiMeta>,
+) {
 
-        //
-        if !image_bind_groups.values.contains_key(&image_id) {
-            let gpu_image=image_id.map(|image_id|gpu_images.get(image_id)).unwrap_or(Some(dummy_gpu_image));
-            let bind_group=gpu_image.map(|gpu_image|render_device.create_bind_group(
-                "my_ui_material_bind_group",
-                &mesh2d_pipeline.image_layout, &[
-                    BindGroupEntry {binding: 0, resource: BindingResource::TextureView(&gpu_image.texture_view),},
-                    BindGroupEntry {binding: 1, resource: BindingResource::Sampler(&gpu_image.sampler),},
-                ]
-            ));
-
-            if let Some(bind_group)=bind_group {
-                image_bind_groups.values.insert(image_id, bind_group);
-            }
-        }
-    }
 
     //
     ui_meta.vertices.clear();
@@ -679,58 +695,51 @@ pub fn prepare_uinodes(
     let mut batches = HashMap::<Entity,MyUiBatch>::new();
 
     for element in extracted_elements.elements.iter() {
-        let z= element.depth as f32; // let z= z*-1.0;
-
-        let mut batch = MyUiBatch {
-            image_handle:element.image.clone(), //image_handle.clone(),
-            // z,
-            range :0..0,
-            // range: ui_meta.vertices.len() as u32 ..ui_meta.vertices.len() as u32,
-        };
-
+        let mut batch = MyUiBatch { range :0..0, image_handle: element.image.clone() };
         batch.range.start=ui_meta.vertices.len() as u32;
 
-        // for element in elements.iter()
-        {
-            // let z=element.z;
+        // let pos = vec![
+        //     [element.x,element.y2,0.0], [element.x2,element.y2,0.0], [element.x,element.y,0.0],
+        //     [element.x,element.y,0.0], [element.x2,element.y2,0.0],[element.x2,element.y,0.0],
+        // ];
 
-            let v_pos = vec![
-                [element.bl.x,element.bl.y,z], [element.br.x,element.br.y,z], [element.tl.x,element.tl.y,z],
-                [element.tl.x,element.tl.y,z], [element.br.x,element.br.y,z], [element.tr.x,element.tr.y,z],
-            ];
+        // let tex=vec![
+        //     [0.0,1.0],[1.0,1.0],[0.0,0.0],
+        //     [0.0,0.0],[1.0,1.0],[1.0,0.0],
+        // ];
+        let z= element.depth as f32; // let z= z*-1.0;
 
-            let v_tex = vec![
-                element.bl_uv.to_array(), element.br_uv.to_array(), element.tl_uv.to_array(),
-                element.tl_uv.to_array(), element.br_uv.to_array(), element.tr_uv.to_array(),
-            ];
+        let pos = vec![
+            [element.bl.x,element.bl.y,z], [element.br.x,element.br.y,z], [element.tl.x,element.tl.y,z],
+            [element.tl.x,element.tl.y,z], [element.br.x,element.br.y,z], [element.tr.x,element.tr.y,z],
+        ];
 
-            //
-            for i in 0..6 {
-                let c=element.color.to_linear();
-                let a=[c.red,c.green,c.blue,c.alpha];
-                ui_meta.vertices.push(MyUiVertex {
-                    position: v_pos[i],
-                    uv: v_tex[i],
-                    color : a,//element.color.as_rgba_f32(),
-                });
-            }
+        let tex = vec![
+            element.bl_uv.to_array(), element.br_uv.to_array(), element.tl_uv.to_array(),
+            element.tl_uv.to_array(), element.br_uv.to_array(), element.tr_uv.to_array(),
+        ];
 
-            batch.range.end=ui_meta.vertices.len() as u32;
+        let col=element.color.to_linear();
+        for i in 0..6 {
+            ui_meta.vertices.push(MyUiVertex {
+                position: pos[i],
+                color : [col.red,col.green,col.blue,col.alpha],
+                uv: tex[i],
+
+            });
         }
 
-
+        batch.range.end=ui_meta.vertices.len() as u32;
         batches.insert(element.entity,batch);
-
-        // commands.entity(*entity).insert(batch);
     }
 
 
     for (entity, batch) in batches.iter() {
-        // println!("g {entity:?} {batch:?}");
         commands.entity(*entity).insert(batch.clone());
+        // commands.spawn(batch.clone());
     }
-
-    // commands.spawn(()).insert(batch.clone());
 
     ui_meta.vertices.write_buffer(&render_device, &render_queue);
 }
+
+

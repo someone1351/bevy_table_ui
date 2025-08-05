@@ -9,15 +9,19 @@ use bevy::asset::prelude::*;
 use bevy::color::Color;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::ecs::prelude::*;
+
 use bevy::text::*;
 // use bevy::ui::{AlignSelf, JustifySelf, Node};
 use bevy::window::*;
 use bevy::DefaultPlugins;
-use bevy::prelude::{Camera3d, KeyCode, PluginGroup, };
+use bevy::prelude::{KeyCode, PluginGroup };
 
 
 use bevy_table_ui as table_ui;
+// use mesh::TestRenderComponent;
+// use render_core::core_my::CameraMy;
 use table_ui::*;
+
 
 fn main() {
     let mut app = App::new();
@@ -246,7 +250,55 @@ pub fn setup_ui(
 fn setup_camera(mut commands: Commands) {
     // commands.spawn(( Camera2dBundle { camera: Camera { ..Default::default() }, ..Default::default() }, ));
     // commands.spawn((Camera3dBundle { camera: Camera { ..Default::default() }, ..Default::default() },));
-    commands.spawn((Camera3d::default(),));
+    // commands.spawn((Camera3d::default(),));
+    // commands.spawn((CameraMy::default(),));
+    commands.spawn((
+        CameraMy::default(),
+        // Projection::Orthographic(OrthographicProjection::default_2d()),
+
+        // Camera {
+        //     // target: image_handle.clone().into(),
+        //     clear_color: Color::WHITE.into(),
+        //     order: 0,
+        //     // clear_color: ClearColorConfig::Custom(Color::srgb(0.2, 0.1, 0.5)),
+        //     viewport: Some(Viewport {
+        //         physical_position: UVec2::new(0, 0),
+        //         physical_size: UVec2::new(500, 500),
+        //         ..Default::default()
+        //     }),
+        //     ..Default::default()
+        // },
+        // RenderLayers::layer(0),
+        // Transform::from_xyz( 0.0, 0.0, 999.0, ),
+    ));
+
+    commands.spawn((
+        TestRenderComponent{
+            col: Color::srgb(1.0,0.0,0.0),
+            // col: Color::srgb(0.0,0.0,1.0),
+            // col:Color::WHITE.into(),
+            x: 0.0, y: 0.0, w: 50.0, h: 50.0,
+            // handle:Some(asset_server.load("bevy_logo_dark_big.png")),
+            handle:None,
+        },
+        // // RenderLayers::layer(1),
+        // RenderLayers::from_layers(&[0]),
+        // Transform::from_xyz( 0.0, 0.0, 0.0, ),
+    ));
+    commands.spawn((
+        TestRenderComponent{
+            col: Color::srgb(0.0,1.0,0.0),
+            x: 50.0, y: 50.0, w: 50.0, h: 50.0,
+            handle:None,
+        },
+    ));
+    commands.spawn((
+        TestRenderComponent{
+            col: Color::srgb(0.0,0.0,1.0),
+            x: 100.0, y: 100.0, w: 50.0, h: 50.0,
+            handle:None,
+        },
+    ));
 }
 
 fn update_input(

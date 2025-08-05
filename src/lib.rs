@@ -16,3 +16,15 @@ pub use layout::{plugin::*,components::*,values::*,};
 pub use interact::{plugin::*,components::*,resources::*,events::*};
 pub use display::{plugin::*,components::*,values::*};
 pub use affect::{plugin::*,components::*};
+
+pub use display::render_core::core_my::CameraMy; //mesh
+pub use display::TestRenderComponent;
+
+/*
+TODO
+
+* remove window from lib
+* handling scaling, for px, font size, scale?
+* handle render layers
+
+*/

@@ -18,9 +18,8 @@ pub struct MyUiPassNode {
     ui_view_query: QueryState<(&'static ExtractedView, &'static MyUiViewTarget)>,
     // ui_view_query: QueryState<(&'static ExtractedView, &'static ViewTarget)>,
     ui_view_target_query: QueryState<(&'static ViewTarget, &'static ExtractedCamera)>,
-    default_camera_view_query: QueryState<&'static MyDefaultCameraView>,
+    default_camera_view_query: QueryState<&'static MyCameraView>,
 }
-
 
 impl MyUiPassNode {
     pub fn new(world: &mut World) -> Self {

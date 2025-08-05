@@ -1,9 +1,13 @@
 // use bevy::app::PostUpdate;
 use bevy::ecs::prelude::*;
+// use bevy::render;
 
 use super::super::layout;
+use super::render::render_setup;
+// use super::TestRenderPlugin;
+use super::render_core::CorePipelinePlugin;
 use super::systems;
-use super::render;
+// use super::render;
 
 #[derive(Default)]
 pub struct UiDisplayPlugin;
@@ -66,7 +70,8 @@ impl bevy::app::Plugin for UiDisplayPlugin {
             // ).chain()
             //     .after(table_ui::ui_calc_computeds)
             // )
-
+            //TestRenderPlugin,
+            .add_plugins((CorePipelinePlugin, ))
             .add_systems(bevy::app::PostUpdate,
                 (
                     systems::update_text_image,
@@ -89,6 +94,6 @@ impl bevy::app::Plugin for UiDisplayPlugin {
         // render_app
         //     .init_resource::<RenderResourceNeedingDevice>();
 
-        render::setup(app);
+        render_setup(app);
     }
 }

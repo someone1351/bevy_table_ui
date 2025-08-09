@@ -89,7 +89,7 @@ use bevy::{
     // asset::prelude::*,
     ecs::prelude::*,
     // hierarchy::prelude::*,
-    window::prelude::*,
+    //window::prelude::*,
 };
 
 
@@ -98,10 +98,12 @@ use super::components::*;
 use super::utils::*;
 
 pub fn ui_init_computeds(
-    windows: Query<&Window>,
+    //windows: Query<&Window>,
     mut computed_query: Query<&mut UiLayoutComputed>,
 
-    root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
+    // root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
+    root_query: Query<(Entity,&UiRoot),With<UiLayoutComputed>>,
+
     children_query: Query<&Children,With<UiLayoutComputed>>,
     parent_query: Query<&ChildOf,With<UiLayoutComputed>>,
 
@@ -124,9 +126,9 @@ pub fn ui_init_computeds(
     // println!("ui_init_computeds {}",*c);
     // *c+=1;
 
-    let window_size=windows.single()
-        .and_then(|window|Ok((window.width(),window.height())))
-        .unwrap_or((0.0,0.0));
+    // let window_size=windows.single()
+    //     .and_then(|window|Ok((window.width(),window.height())))
+    //     .unwrap_or((0.0,0.0));
 
     //
     for mut computed in computed_query.iter_mut() {
@@ -134,172 +136,198 @@ pub fn ui_init_computeds(
     }
 
     //
-    let mut stk = root_query.iter().collect::<Vec<_>>();
+    let mut roots = root_query.iter().collect::<Vec<_>>();
+    roots.sort_by(|x,y|{
+        let a=x.1.order.cmp(&y.1.order).reverse();
+        if a.is_eq() {
+            x.0.cmp(&y.0).reverse()
+        } else {
+            a
+        }
+    });
+
     let mut order=0;
 
-    while let Some(entity) = stk.pop() {
-        let parent=parent_query.get(entity);
-        let parent_computed = parent.and_then(|p|computed_query.get(p.parent()))
-            .cloned()
-            .unwrap_or(UiLayoutComputed {
-                visible: true,
-                unlocked : true,
-                size:Vec2::new(window_size.0, window_size.1),
-                ..Default::default()
-            });
-            // .unwrap_or_default();
+    for (root_entity,root) in roots {
+        let mut stk=vec![root_entity];
 
-        // let is_root=parent.is_err();
+        while let Some(entity) = stk.pop() {
+            let parent=parent_query.get(entity).ok().map(|x|x.parent());
 
+            let (parent,parent_computed)=if root_entity==entity {
+                (None,Some(UiLayoutComputed {
+                    visible: true,
+                    unlocked : true,
+                    size:Vec2::new(root.width, root.height),
+                    ..Default::default()
+                }))
+            } else {
+                (parent,parent.and_then(|p|computed_query.get(p).ok()).cloned())
+            };
 
-        //necessary, as  newly added ui child entities seem to lack their ui components,
-        // but also necessary for child entities that lack any ui component
-        let Ok(mut computed) = computed_query.get_mut(entity) else {
-            continue;
-        };
+            let Some(parent_computed)=parent_computed else {
+                continue;
+            };
 
-        //
-        // computed.init();
-        // *computed=Default::default();
+            //
 
-        //
-        let hide = hide_query.get(entity).cloned().unwrap_or_default().hide;
-        let disable = disable_query.get(entity).cloned().unwrap_or_default().disable;
-        let lock = lock_query.get(entity).cloned().unwrap_or_default().lock;
+            //necessary, as  newly added ui child entities seem to lack their ui components,
+            // but also necessary for child entities that lack any ui component
+            let Ok(mut computed) = computed_query.get_mut(entity) else {
+                continue;
+            };
 
-        //
-        if disable {
-            continue;
-        }
+            //
+            // computed.init();
+            // *computed=Default::default();
 
-        //
-        stk.extend(children_query.get(entity).map(|c|c.iter().rev()).unwrap_or_default());
+            //
+            let hide = hide_query.get(entity).cloned().unwrap_or_default().hide;
+            let disable = disable_query.get(entity).cloned().unwrap_or_default().disable;
+            let lock = lock_query.get(entity).cloned().unwrap_or_default().lock;
 
-        //
-
-        computed.enabled=true;
-
-        // if hide {
-        //     continue;
-        // }
-
-        // computed.visible=true;
-
-        // if !hide {
-        //     // computed.visible=true;
-        //     computed.visible=parent_computed.visible;
-        // }
-
-        computed.visible=!hide && parent_computed.visible;
-        computed.unlocked=!lock && computed.visible && parent_computed.unlocked;
-
-        // computed.visible=true;
-        // println!("hide {hide:?}");
-
-        // computed.visible=!hide;
-        //calc depth
-        // computed.depth=cur_depth;
-        // cur_depth+=1;
-
-        computed.order=order;
-        order+=1;
-
-        computed.depth=0;
-
-        {
-            let mut p=parent.ok().map(|p|p.parent());
-
-            while let Some(pp)=p {
-                computed.depth+=1;
-                p=parent_query.get(pp).ok().map(|p|p.parent());
+            //
+            if disable {
+                continue;
             }
-        }
 
-        //
-        // if is_root {
-        //     //init root
-        //     computed.pos.x=0.0;
-        //     computed.pos.y=0.0;
-        //     computed.size.x=window_size.0;
-        //     computed.size.y=window_size.1;
-        //     // println!("{entity:?} {computed:?}");
-        // } else
-        {
+            //
+            if let Ok(children)=children_query.get(entity) {
+                stk.extend(children.iter().rev().filter(|&x|!root_query.contains(x)));
+            }
+
+            // let q=children_query.get(entity).map(|c|);
+            // stk.extend().unwrap_or_default());
+
+            //
+
+            computed.enabled=true;
+
+            // if hide {
+            //     continue;
+            // }
+
+            // computed.visible=true;
+
+            // if !hide {
+            //     // computed.visible=true;
+            //     computed.visible=parent_computed.visible;
+            // }
+
+            computed.visible=!hide && parent_computed.visible;
+            computed.unlocked=!lock && computed.visible && parent_computed.unlocked;
+
+            // computed.visible=true;
+            // println!("hide {hide:?}");
+
+            // computed.visible=!hide;
+            //calc depth
+            // computed.depth=cur_depth;
+            // cur_depth+=1;
+
+            computed.order=order;
+            order+=1;
+
+            computed.depth=0;
+
+            {
+                let mut p=parent;
+
+                while let Some(pp)=p {
+                    computed.depth+=1;
+                    p=parent_query.get(pp).ok().map(|p|p.parent());
+                }
+            }
+
+            //
             // if is_root {
             //     //init root
-            //     // computed.pos.x=0.0;
-            //     // computed.pos.y=0.0;
-            //     // computed.size.x=window_size.0;
-            //     // computed.size.y=window_size.1;
+            //     computed.pos.x=0.0;
+            //     computed.pos.y=0.0;
+            //     computed.size.x=window_size.0;
+            //     computed.size.y=window_size.1;
             //     // println!("{entity:?} {computed:?}");
-            // }
+            // } else
+            {
+                // if is_root {
+                //     //init root
+                //     // computed.pos.x=0.0;
+                //     // computed.pos.y=0.0;
+                //     // computed.size.x=window_size.0;
+                //     // computed.size.y=window_size.1;
+                //     // println!("{entity:?} {computed:?}");
+                // }
 
-            let size = size_query.get(entity).cloned().unwrap_or_default();
-            let edge = edge_query.get(entity).cloned().unwrap_or_default();
-            // let aspect = aspect_query.get(entity).cloned().unwrap_or_default();
+                let size = size_query.get(entity).cloned().unwrap_or_default();
+                let edge = edge_query.get(entity).cloned().unwrap_or_default();
+                // let aspect = aspect_query.get(entity).cloned().unwrap_or_default();
 
-            // // if is_root
-            // {
-            //     println!("wh1 {:?} {size:?} {entity} {is_root} {:?}",computed.size,size_query.get(entity));
-            // }
-            //calc computed wh's for pos px sizes (entity order not important, ie using df_entities for convience)
-            if let UiVal::Px(p) = size.width {
-                if p >= 0.0 {
-                    computed.size.x = p;
+                // // if is_root
+                // {
+                //     println!("wh1 {:?} {size:?} {entity} {is_root} {:?}",computed.size,size_query.get(entity));
+                // }
+                //calc computed wh's for pos px sizes (entity order not important, ie using df_entities for convience)
+                if let UiVal::Px(p) = size.width {
+                    if p >= 0.0 {
+                        computed.size.x = p;
+                    }
                 }
-            }
 
-            if let UiVal::Px(p) = size.height {
-                if p>=0.0 {
-                    computed.size.y = p;
+                if let UiVal::Px(p) = size.height {
+                    if p>=0.0 {
+                        computed.size.y = p;
+                    }
                 }
-            }
 
-            //calc ancestor sizes and store as negative in computed w,h for none/percent vals (ie just computed wh that are unset aka <0)
-            if computed.size.x < 0.0 { //is unset
-                computed.size.x = -parent_computed.size.x.abs();
-            }
-
-            if computed.size.y < 0.0 { //is unset
-                computed.size.y = -parent_computed.size.y.abs();
-            }
-
-
-            //calc wh for positive percent size
-            if let UiVal::Scale(s) = size.width {
-                if s>=0.0 {
-                    //make room for edges?
-                    // computed.size.x = s*computed.size.x.abs();
-
-                    //
-                    let w = (s*computed.size.x.abs()-edge.h_px()).max(0.0);
-                    computed.size.x = w/(edge.h_scale()+1.0);
-
-                    //todo nedge
-                    //computed.size.y*edge.h_transverse_scale();
-
+                //calc ancestor sizes and store as negative in computed w,h for none/percent vals (ie just computed wh that are unset aka <0)
+                if computed.size.x < 0.0 { //is unset
+                    computed.size.x = -parent_computed.size.x.abs();
                 }
-            }
 
-            if let UiVal::Scale(s) = size.height {
-                if s>=0.0 {
-                    //make room for edges?
-                    // computed.size.y = s*computed.size.y.abs();
-
-                    //
-                    let h = (s*computed.size.y.abs()-edge.v_px()).max(0.0);
-                    computed.size.y = h/(edge.v_scale()+1.0);
-
-                    //todo nedge
-                    //computed.size.x*edge.v_transverse_scale();
+                if computed.size.y < 0.0 { //is unset
+                    computed.size.y = -parent_computed.size.y.abs();
                 }
-            }
 
-            // if is_root {
-            //     println!("wh2 {:?} {size:?}",computed.size);
-            // }
+
+                //calc wh for positive percent size
+                if let UiVal::Scale(s) = size.width {
+                    if s>=0.0 {
+                        //make room for edges?
+                        // computed.size.x = s*computed.size.x.abs();
+
+                        //
+                        let w = (s*computed.size.x.abs()-edge.h_px()).max(0.0);
+                        computed.size.x = w/(edge.h_scale()+1.0);
+
+                        //todo nedge
+                        //computed.size.y*edge.h_transverse_scale();
+
+                    }
+                }
+
+                if let UiVal::Scale(s) = size.height {
+                    if s>=0.0 {
+                        //make room for edges?
+                        // computed.size.y = s*computed.size.y.abs();
+
+                        //
+                        let h = (s*computed.size.y.abs()-edge.v_px()).max(0.0);
+                        computed.size.y = h/(edge.v_scale()+1.0);
+
+                        //todo nedge
+                        //computed.size.x*edge.v_transverse_scale();
+                    }
+                }
+
+                // if is_root {
+                //     println!("wh2 {:?} {size:?}",computed.size);
+                // }
+            }
+            //
         }
+
     }
+
 
 }
 
@@ -309,7 +337,8 @@ pub fn ui_init_computeds(
 
 pub fn ui_calc_rows_cols(
     mut computed_query: Query<&mut UiLayoutComputed>,
-    root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
+    // root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
+    root_query: Query<Entity,(With<UiRoot>,With<UiLayoutComputed>)>,
     children_query: Query<&Children,With<UiLayoutComputed>>,
     span_query:Query<&UiSpan>,
     float_query: Query<&UiFloat>,
@@ -319,34 +348,62 @@ pub fn ui_calc_rows_cols(
     //calc row/cols
 
     //
-    let mut stk = root_query.iter().map(|x|(x,false)).collect::<Vec<_>>();
-    stk.reverse(); //not needed?
+    // let mut stk: Vec<(Entity, bool)> = root_query.iter().map(|x|(x,false)).collect::<Vec<_>>();
+    let mut stk = Vec::new();
+
+    stk.extend(root_query.iter()
+        .filter(|&entity|computed_query.get(entity).map(|computed|computed.enabled).unwrap_or_default())
+        .map(|entity|(entity,false))
+    );
+
+    // stk.reverse(); //not needed?
 
     while let Some((entity,b)) = stk.pop() {
+        let children=children_query.get(entity).map(|children|children.iter().rev()).unwrap_or_default();
+
+        let children=children.filter(|&child_entity|{
+            computed_query.get(child_entity).map(|child_computed|child_computed.enabled).unwrap_or_default() &&
+            !root_query.contains(child_entity)
+        });
+
+        let children=children.collect::<Vec<_>>();
+        let children=children.into_iter();
+
+
         //so that entities are visited in reverse
         if !b {
 
-            let Ok(computed) = computed_query.get(entity) else {
-                continue;
-            };
+            // let Ok(computed) = computed_query.get(entity) else {
+            //     continue;
+            // };
 
-            if !computed.enabled {
-                continue;
-            }
+            // if !computed.enabled {
+            //     continue;
+            // }
 
             stk.push((entity,true));
-            stk.extend(children_query.get(entity).map(|c|c.iter()).unwrap_or_default().map(|x|(x,false)));
+
+            // if let Ok(children)=children_query.get(entity) {
+            //     stk.extend(children.iter().filter(|&child_entity|!root_query.contains(child_entity)).map(|x|(x,false)));
+            // }
+
+            stk.extend(children.clone().map(|x|(x,false)));
+
+            // stk.extend(children_query.get(entity).map(|c|c.iter().filter(|x|!root_query.contains(x))).unwrap_or_default().map(|x|(x,false)));
+
             continue;
         }
 
         //
         let span = span_query.get(entity).cloned().unwrap_or_default().span;// as usize;
 
-        if let Ok(children)=children_query.get(entity) {
+        //hmm
+        // if let Ok(children)=children_query.get(entity)
+        {
             //get enabled, not float child count
             let mut child_count=0;
 
-            for child_entity in children.iter() {
+            for child_entity in children.clone() {
                 let child_float = float_query.get(child_entity).cloned().unwrap_or_default().float;
                 let mut child_computed = computed_query.get_mut(child_entity).unwrap();
 
@@ -366,6 +423,8 @@ pub fn ui_calc_rows_cols(
             let cols_num = if span == 0 {cells_num} else {span.min(cells_num)};
             let rows_num = if cells_num==0 {0} else { (cells_num+cols_num-1)/cols_num };
 
+            // println!("{entity}, c={child_count}, cols={cols_num}, rows={rows_num}, span={span}");
+
             let mut computed = computed_query.get_mut(entity).unwrap();
             computed.rows=rows_num;
             computed.cols = cols_num;
@@ -377,10 +436,11 @@ pub fn ui_calc_rows_cols(
 
 
 pub fn ui_calc_computeds2(
-    windows: Query<&Window>,
+    //windows: Query<&Window>,
 
     mut computed_query: Query<&mut UiLayoutComputed>,
-    root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
+    // root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
+    root_query: Query<(Entity,&UiRoot),With<UiLayoutComputed>>,
     children_query: Query<&Children,With<UiLayoutComputed>>,
 
     gap_query: Query<&UiGap>,
@@ -392,47 +452,88 @@ pub fn ui_calc_computeds2(
     congruent_query: Query<&UiCongruent,>,
 ) {
 
-    let window_size=windows.single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
+    // let window_size=windows.single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
     // let inv_scale_factor = 1. / scale_factor;
 
 
     //
-    let root_entities=root_query.iter().collect::<Vec<_>>();
-    let top_computed=UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(window_size.0,window_size.1),..default()};
+    // let root_entities=root_query.iter().map(|x|x.0).collect::<Vec<_>>();
+    // let top_computed=UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(window_size.0,window_size.1),..default()};
 
     //calc wh for none/negative sizes of non roots (todo: need to start with left leaves (does it?))
     //for non roots calc initial w,h (also edges,gaps, but not stored)
     //calc child w,h for congruent (aka perpendicular) sizes
+    // enum Bla {
+    //     Root(Entity),
+    //     Entity(Entity),
+    // }
+    //
+
+    let mut stk: Vec<(Entity, bool, bool)> = Vec::new(); //(entity,parent_of_root,not_extract_children)
+
+    stk.extend(root_query.iter()
+        .filter(|&(entity,_root)|computed_query.get(entity).map(|computed|computed.enabled).unwrap_or_default())
+        .map(|(entity,_root)|(entity,true,false))
+    );
+
+    // let mut stk: Vec<(Option<Entity>, bool)> = vec![(None,false)];
 
     //
-    let mut stk: Vec<(Option<Entity>, bool)> = vec![(None,false)];
+    while let Some((entity,parent_of_root,b)) = stk.pop() {
 
-    //
-    while let Some((entity,b)) = stk.pop() {
+        // let q=[entity].iter().copied().rev(); //because query iter is copied
+        let children=[entity];
+        let children=if parent_of_root {
+            children.iter().copied().rev() //because query iter is copied
+        } else {
+            children_query.get(entity).map(|children|children.iter().rev()).unwrap_or_default()
+        };
+
+        let children=children.filter(|&child_entity|{
+            // computed_query.contains(child_entity) &&
+            computed_query.get(child_entity).map(|child_computed|child_computed.enabled).unwrap_or_default() &&
+            (parent_of_root || !root_query.contains(child_entity))
+        });
+
+        let children=children.collect::<Vec<_>>();
+        let children=children.into_iter();
 
         if !b {
-            let children=entity
-                .map(|entity|children_query.get(entity).map(|children|children.iter().rev()).ok())
-                .unwrap_or(Some(root_entities.iter().copied().rev()));
 
-            if entity.map(|entity|computed_query.get(entity)
-                .map(|computed|!computed.enabled)
-                .unwrap_or(true)).unwrap_or(false)
-            {
-                continue;
-            }
+            // let children=entity
+            //     .map(|entity|children_query.get(entity).map(|children|children.iter().rev()).ok())
+            //     .unwrap_or(Some(root_entities.iter().copied().rev()));
 
-            stk.push((entity,true));
-            stk.extend(children.clone().unwrap_or_default().map(|child_entity|(Some(child_entity),false)));
+            // //not parent_of_root and (not computed.enabled, or no computed)
+            // if !parent_of_root && computed_query.get(entity).map(|computed|!computed.enabled).unwrap_or(true) {
+            //     continue;
+            // }
+
+            //if not root and (not computed.enabled, or no computed)
+            // if entity.map(|entity|computed_query.get(entity).map(|computed|!computed.enabled).unwrap_or(true))
+            //     .unwrap_or(false)
+            // {
+            //     continue;
+            // }
+
+            stk.push((entity,parent_of_root,true));
+            // stk.push((entity,true));
+
+            // computed_query.contains(child_entity)
+            stk.extend(children
+                // .filter(|&child_entity|parent_of_root || !root_query.contains(child_entity))
+                .map(|child_entity|(child_entity,false,false))
+            );
+            // stk.extend(children.clone().unwrap_or_default().map(|child_entity|(Some(child_entity),false)));
 
             // println!("xx {entity:?}");
             continue;
         }
 
         //
-        let children=entity
-            .map(|entity|children_query.get(entity).map(|children|children.iter()).ok())
-            .unwrap_or(Some(root_entities.iter().copied()));
+        // let children=entity
+        //     .map(|entity|children_query.get(entity).map(|children|children.iter()).ok())
+        //     .unwrap_or(Some(root_entities.iter().copied()));
 
         //
         // let span = span_query.get(entity).cloned().unwrap_or_default().span as usize;
@@ -440,13 +541,13 @@ pub fn ui_calc_computeds2(
 
         //
         // let span=entity.and_then(|entity|span_query.get(entity).ok().cloned()).unwrap_or_default().span as usize;
-        let gap=entity.and_then(|entity|gap_query.get(entity).ok().cloned()).unwrap_or_default();
-
+        // let gap=entity.and_then(|entity|gap_query.get(entity).ok().cloned()).unwrap_or_default();
+        let gap = if parent_of_root {None} else {gap_query.get(entity).ok().cloned()}.unwrap_or_default();
         //
         let mut max_space_w : f32 = 0.0;
         let mut max_space_h : f32 = 0.0;
 
-        if let Some(children)=&children //children_query.get(entity)
+        // if let Some(children)=&children //children_query.get(entity)
         // if children.is_some()
         {
             //get non hidden/float child count
@@ -463,14 +564,26 @@ pub fn ui_calc_computeds2(
             // let rows_num = if cells_num==0 {0} else { (cells_num+cols_num-1)/cols_num };
 
 
-            // let computed = *computed_query.get(entity).unwrap();
-            let computed = entity.map(|entity|*computed_query.get(entity).unwrap()).unwrap_or(top_computed);
+            // // let computed = *computed_query.get(entity).unwrap();
+            // let computed = entity.map(|entity|*computed_query.get(entity).unwrap()).unwrap_or(top_computed);
+
+            let computed=if parent_of_root {
+                let root=root_query.get(entity).unwrap().1;
+                &UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(root.width,root.height),..default()}
+            } else {
+                computed_query.get(entity).unwrap()
+            };
 
             let cols_num = computed.cols as usize;
             let rows_num = computed.rows as usize;
             // let cells_num = cols_num*rows_num;
 
-            let child_count=children.clone().filter(|&child_entity|computed_query.get(child_entity).is_ok()).count();
+            // let child_count=children.clone().filter(|&child_entity|computed_query.get(child_entity).is_ok()).count();
+            // let child_count=children.clone().count();
+            let child_count=children.clone().filter(|&child_entity|float_query.get(child_entity).map(|float|!float.float)
+                // .unwrap_or_default()
+                .unwrap_or(true)
+            ).count();
             // println!("ccount {entity:?} {child_count}");
 
             {
@@ -484,13 +597,19 @@ pub fn ui_calc_computeds2(
                     // println!("child_entity {child_entity:?}");
 
                     //println!("Dfdsf8 {entity:?}");
-                    let child_float = entity.is_none() || float_query.get(child_entity).cloned().unwrap_or_default().float;
+                    // let child_float = entity.is_none() || float_query.get(child_entity).cloned().unwrap_or_default().float;
+                    let child_float = parent_of_root || float_query.get(child_entity).cloned().unwrap_or_default().float;
                     // let child_size = size_query.get(child_entity).cloned().unwrap_or_default();
                     let child_computed=computed_query.get(child_entity).unwrap();
+                    // let Ok(child_computed)=computed_query.get(child_entity) else {continue;};
+
 
                     let child_congruent=congruent_query.get(child_entity).cloned().unwrap_or_default();
 
-                    if !child_computed.enabled || child_float { //|| is_root_children
+                    if
+                        // !child_computed.enabled || //not necessary
+                        child_float
+                    { //|| is_root_children
                         continue;
                     }
 
@@ -545,6 +664,7 @@ pub fn ui_calc_computeds2(
 
                         let mut child_computed=computed_query.get_mut(node_scale.entity).unwrap();
                         child_computed.size.y = node_scale.col_vscale*col_max_height;
+
                     }
                 }
 
@@ -599,6 +719,11 @@ pub fn ui_calc_computeds2(
             let mut col_widths = vec![0.0 as f32;cols_num];
             let mut row_heights = vec![0.0 as f32;rows_num];
 
+            // println!("hmm {entity}, cols_num={cols_num}, rows_num={rows_num}, c={}, cf={}, b={b},p={parent_of_root}",
+            //     children.clone().filter(|&child_entity|!float_query.contains(child_entity)).count(),
+            //     children.clone().filter(|&child_entity|float_query.contains(child_entity)).count(),
+            // );
+
             {
                 // let mut child_ind = 0;
 
@@ -607,13 +732,17 @@ pub fn ui_calc_computeds2(
                     //println!("Dfdsf7 {entity:?}");
                     //child entities without ui components are treated as visible (ie have a row/col)
                     let child_edge = edge_query.get(child_entity).cloned().unwrap_or_default();
-                    let child_float = entity.is_none() || float_query.get(child_entity).cloned().unwrap_or_default().float;
+                    // let child_float = entity.is_none() || float_query.get(child_entity).cloned().unwrap_or_default().float;
+                    let child_float =
+                        // parent_of_root || //not necessary?
+                        float_query.get(child_entity).cloned().unwrap_or_default().float;
 
                     let child_computed=computed_query.get(child_entity).unwrap();
+                    // let Ok(child_computed)=computed_query.get(child_entity) else {continue;};
 
-                    if !child_computed.enabled {
-                        continue;
-                    }
+                    // if !child_computed.enabled {
+                    //     continue;
+                    // }
 
                     //edge
                     // let child_hedge_scale= child_edge.l_scale.max(0.0)+child_edge.r_scale.max(0.0);
@@ -636,7 +765,7 @@ pub fn ui_calc_computeds2(
                         child_computed.size.x*child_edge.v_transverse_scale(); //child_vnedge_scale;
 
                     //
-                    if child_float { // || is_root_children
+                    if child_float || parent_of_root { // || is_root_children
                         max_space_w = max_space_w.max(child_w);
                         max_space_h = max_space_h.max(child_h);
                     } else {
@@ -702,15 +831,20 @@ pub fn ui_calc_computeds2(
         // !is_root_children
 
         //
-        // if let Ok(inner_size) = inner_size_query.get(entity)
-        if let Some(inner_size) = entity.and_then(|entity|inner_size_query.get(entity).ok())
+        // // if let Ok(inner_size) = inner_size_query.get(entity)
+        // if let Some(inner_size) = entity.and_then(|entity|inner_size_query.get(entity).ok())
+        if !parent_of_root
         {
-            max_space_w = max_space_w.max(inner_size.width);
-            max_space_h = max_space_h.max(inner_size.height);
+            if let Ok(inner_size) = inner_size_query.get(entity) {
+                max_space_w = max_space_w.max(inner_size.width);
+                max_space_h = max_space_h.max(inner_size.height);
+            }
         }
 
-        // if parent_query.get(entity).is_ok() //has parent
-        if let Some(entity)=entity {
+        // // if parent_query.get(entity).is_ok() //has parent
+        // if let Some(entity)=entity
+        if !parent_of_root
+        {
             let size = size_query.get(entity).cloned().unwrap_or_default();
             let mut computed = computed_query.get_mut(entity).unwrap();
 
@@ -754,10 +888,11 @@ pub fn ui_calc_computeds2(
 }
 
 pub fn ui_calc_computeds3(
-    windows: Query<&Window>,
+    //windows: Query<&Window>,
 
     mut computed_query: Query<&mut UiLayoutComputed>,
-    root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
+    // root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
+    root_query: Query<(Entity,&UiRoot),With<UiLayoutComputed>>,
     children_query: Query<&Children,With<UiLayoutComputed>>,
 
     gap_query: Query<&UiGap>,
@@ -770,14 +905,14 @@ pub fn ui_calc_computeds3(
     edge_query: Query<&UiEdge,>,
 ) {
 
-    let window_size=windows.single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
+    // let window_size=windows.single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
     // let inv_scale_factor = 1. / scale_factor;
 
 
 
 
-    let root_entities=root_query.iter().collect::<Vec<_>>();
-    let top_computed=UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(window_size.0,window_size.1),..default()};
+    // let root_entities=root_query.iter().collect::<Vec<_>>();
+    // let top_computed=UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(window_size.0,window_size.1),..default()};
 
 
     // //
@@ -795,46 +930,81 @@ pub fn ui_calc_computeds3(
     // //
     // while let Some(entity) = stk.pop()
     // // for &entity in df_entities.iter()
-    let mut stk: Vec<Option<Entity>> = vec![None];
+
+    let mut stk: Vec<(Entity, bool, )> = Vec::new(); //(entity,parent_of_root,)
+
+    stk.extend(root_query.iter()
+        .filter(|&(entity,_root)|computed_query.get(entity).map(|computed|computed.enabled).unwrap_or_default())
+        .map(|(entity,_root)|(entity,true,))
+    );
+    // let mut stk: Vec<Option<Entity>> = vec![None];
 
     //
-    while let Some(entity) = stk.pop()
+    while let Some((entity, parent_of_root)) = stk.pop() {
+        let children=[entity];
+        let children=if parent_of_root {
+            children.iter().copied().rev() //because query iter is copied
+        } else {
+            children_query.get(entity).map(|children|children.iter().rev()).unwrap_or_default()
+        };
 
-    {
+        let children=children.filter(|&child_entity|{
+            computed_query.get(child_entity).map(|child_computed|child_computed.enabled).unwrap_or_default() &&
+            (parent_of_root || !root_query.contains(child_entity))
+        });
 
+        let children=children.collect::<Vec<_>>();
+        let children=children.into_iter();
+
+        //
         {
-            let children=entity
-                .map(|entity|children_query.get(entity).map(|children|children.iter().rev()).ok())
-                .unwrap_or(Some(root_entities.iter().copied().rev()));
+            // let children=entity
+            //     .map(|entity|children_query.get(entity).map(|children|children.iter().rev()).ok())
+            //     .unwrap_or(Some(root_entities.iter().copied().rev()));
 
-            if entity.map(|entity|computed_query.get(entity).map(|computed|!computed.enabled).unwrap_or(true)).unwrap_or(false)
+            // if entity.map(|entity|computed_query.get(entity).map(|computed|!computed.enabled).unwrap_or(true)).unwrap_or(false)
 
-            {
-                continue;
-            }
+            // {
+            //     continue;
+            // }
 
-            stk.extend(children.clone().unwrap_or_default().map(|child_entity|Some(child_entity)));
+            // stk.extend(children.clone().unwrap_or_default().map(|child_entity|Some(child_entity)));
 
-            // stk.extend(children_query.get(entity).map(|c|c.iter().rev()).unwrap_or_default());
+            // // stk.extend(children_query.get(entity).map(|c|c.iter().rev()).unwrap_or_default());
+
+            stk.extend(children.clone().map(|child_entity|(child_entity,false)));
         }
 
         //
-        let children=entity
-            .map(|entity|children_query.get(entity).map(|children|children.iter()).ok())
-            .unwrap_or(Some(root_entities.iter().copied()));
+        // let children=entity
+        //     .map(|entity|children_query.get(entity).map(|children|children.iter()).ok())
+        //     .unwrap_or(Some(root_entities.iter().copied()));
 
         //
 
-        // let computed = *computed_query.get(entity).unwrap();
-        let computed = entity.map(|entity|computed_query.get(entity).unwrap().clone()).unwrap_or(top_computed);
+        // // let computed = *computed_query.get(entity).unwrap();
+        // let computed = entity.map(|entity|computed_query.get(entity).unwrap().clone()).unwrap_or(top_computed);
+
+        let computed=if parent_of_root {
+            let root=root_query.get(entity).unwrap().1;
+            UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(root.width,root.height),..default()}
+        } else {
+            computed_query.get(entity).unwrap().clone()
+        };
+
         // let span = span_query.get(entity).cloned().unwrap_or_default().span as usize;
         // let span = entity.and_then(|entity|span_query.get(entity).ok()).cloned().unwrap_or_default().span as usize;
-        // let gap = gap_query.get(entity).cloned().unwrap_or_default();
-        let gap = entity.and_then(|entity|gap_query.get(entity).ok()).cloned().unwrap_or_default();
+
+        // // let gap = gap_query.get(entity).cloned().unwrap_or_default();
+        // let gap = entity.and_then(|entity|gap_query.get(entity).ok()).cloned().unwrap_or_default();
+
+        let gap = if parent_of_root {None} else {gap_query.get(entity).ok().cloned()}.unwrap_or_default();
 
         //
-        // let size = size_query.get(entity).cloned().unwrap_or_default();
-        let size = entity.and_then(|entity|size_query.get(entity).ok()).cloned().unwrap_or_default();
+        // // let size = size_query.get(entity).cloned().unwrap_or_default();
+        // let size = entity.and_then(|entity|size_query.get(entity).ok()).cloned().unwrap_or_default();
+
+        let size = if parent_of_root {None} else {size_query.get(entity).ok().cloned()}.unwrap_or_default();
 
         let neg_width= match size.width {
             UiVal::Px(p) if p<0.0 => p.abs(),
@@ -851,8 +1021,8 @@ pub fn ui_calc_computeds3(
         let pos_width=(computed.size.x-neg_width).max(0.0); //max probably not necessary
         let pos_height=(computed.size.y-neg_height).max(0.0);
 
-        // if let Ok(children) = children_query.get(entity)
-        if let Some(children) = &children
+        // // if let Ok(children) = children_query.get(entity)
+        // if let Some(children) = &children
         {
             //get non hidden/float child count
 
@@ -890,14 +1060,22 @@ pub fn ui_calc_computeds3(
                 for child_entity in children.clone() //.iter()
                 {
                     //println!("Dfdsf6 {entity:?}");
-                    let child_computed = computed_query.get(child_entity).cloned().unwrap_or_default();
-                    let child_float = entity.is_none() || float_query.get(child_entity).cloned().unwrap_or_default().float;
+                    let child_computed = computed_query.get(child_entity).cloned()
+                        .unwrap_or_default() //just replce with unwrap? since children only includes ones with computeds
+                        ;
+
+                    let child_float =
+                        //entity.is_none() ||
+                        float_query.get(child_entity).cloned().unwrap_or_default().float;
+
+
                     // let child_fill = fill_query.get(child_entity).cloned().unwrap_or_default();
 
                     let child_edge = edge_query.get(child_entity).cloned().unwrap_or_default();
 
                     //don't need to do float since min size of parent already calculated earlier
-                    if child_computed.enabled && !child_float {
+                    if child_computed.enabled && !child_float && !parent_of_root
+                    {
                         // let col = child_ind % cols_num;
                         // let row = child_ind / cols_num;
 
@@ -973,11 +1151,16 @@ pub fn ui_calc_computeds3(
                     for child_entity in children.clone() //.iter()
                     { //children here!
                         //println!("Dfdsf5 {entity:?}");
-                        let child_computed = computed_query.get(child_entity).cloned().unwrap_or_default();
-                        let child_float = entity.is_none() || float_query.get(child_entity).cloned().unwrap_or_default().float;
+                        let child_computed = computed_query.get(child_entity).cloned()
+                            .unwrap_or_default() //todo replace with unwrap?
+                            ;
+                        let child_float =
+                            // entity.is_none() ||
+                            float_query.get(child_entity).cloned().unwrap_or_default().float;
+
                         let child_expand = expand_query.get(child_entity).cloned().unwrap_or_default();
 
-                        if child_computed.enabled && !child_float {
+                        if child_computed.enabled && !child_float && !parent_of_root{
                             // let col = child_ind % cols_num;
                             // let row = child_ind / cols_num;
 
@@ -1087,7 +1270,8 @@ pub fn ui_calc_computeds3(
             // computed.gap_h*((rows_num-1) as f32);
 
             //
-            if let Some(entity)=entity
+            // if let Some(entity)=entity
+            if !parent_of_root
             {
                 let mut computed2=computed_query.get_mut(entity).unwrap();
 
@@ -1106,11 +1290,13 @@ pub fn ui_calc_computeds3(
                 for child_entity in children.clone() //.iter()
                 {
                     //println!("Dfdsf4 {entity:?}");
-                    if let Ok(mut child_computed) = computed_query.get_mut(child_entity) {
+                    if let Ok(mut child_computed) = computed_query.get_mut(child_entity) { //todo replace with unwrap
                         // let child_edge = edge_query.get(child_entity).cloned().unwrap_or_default();
 
                         if child_computed.enabled {
-                            let child_float = entity.is_none() || float_query.get(child_entity).cloned().unwrap_or_default().float;
+                            let child_float =
+                                // entity.is_none() ||
+                                float_query.get(child_entity).cloned().unwrap_or_default().float;
                             let child_fill = fill_query.get(child_entity).cloned().unwrap_or_default();
 
                             let child_edge = edge_query.get(child_entity).cloned().unwrap_or_default();
@@ -1126,7 +1312,7 @@ pub fn ui_calc_computeds3(
                             let child_edge_v_nscale = child_edge.v_transverse_scale();//child_edge.t_neg_scale.max(0.0)+child_edge.b_neg_scale.max(0.0);
 
                             //
-                            let cell_w=if child_float {
+                            let cell_w=if child_float || parent_of_root {
                                 pos_width
                             } else {
                                 // let col = child_ind % cols_num;
@@ -1136,7 +1322,7 @@ pub fn ui_calc_computeds3(
                                 col_widths[col]
                             };
 
-                            let cell_h=if child_float {
+                            let cell_h=if child_float || parent_of_root {
                                 pos_height
                             } else {
                                 // let row = child_ind / cols_num;
@@ -1284,9 +1470,9 @@ pub fn ui_calc_computeds3(
                             //     }
                             // }
                             //
-                            if !child_float {
-                                // child_ind+=1;
-                            }
+                            // if !child_float {
+                            //     // child_ind+=1;
+                            // }
                         }
                     } else {
                         // child_ind+=1;
@@ -1305,7 +1491,9 @@ pub fn ui_calc_computeds3(
 
                     if let Ok(mut child_computed) = computed_query.get_mut(child_entity) {
                         if child_computed.enabled {
-                            let child_float = entity.is_none() || float_query.get(child_entity).cloned().unwrap_or_default().float;
+                            let child_float =
+                                // entity.is_none() ||
+                                float_query.get(child_entity).cloned().unwrap_or_default().float;
 
                             //edge
                             // let houter = child_computed.edge_l+child_computed.edge_r + child_computed.nedge_l+child_computed.nedge_r;
@@ -1321,7 +1509,7 @@ pub fn ui_calc_computeds3(
                                 child_computed.padding_size.top+child_computed.padding_size.bottom+
                                 child_computed.margin_size.top+child_computed.margin_size.bottom;
 
-                            if child_float {
+                            if child_float || parent_of_root {
                                 let hspace=(computed.size.x-child_computed.size.x - houter).max(0.0);
                                 let vspace=(computed.size.y-child_computed.size.y - vouter).max(0.0);
 
@@ -1424,10 +1612,11 @@ pub fn ui_calc_computeds3(
 }
 
 pub fn ui_calc_computed_pos(
-    windows: Query<&Window>,
+    //windows: Query<&Window>,
 
     mut computed_query: Query<&mut UiLayoutComputed>,
-    root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
+    // root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
+    root_query: Query<(Entity,&UiRoot),With<UiLayoutComputed>>,
     children_query: Query<&Children,With<UiLayoutComputed>>,
 
 
@@ -1435,13 +1624,13 @@ pub fn ui_calc_computed_pos(
     scroll_query: Query<&UiScroll,>,
 ) {
 
-    let window_size=windows.single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
+    // let window_size=windows.single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
     // let inv_scale_factor = 1. / scale_factor;
 
 
 
-    let root_entities=root_query.iter().collect::<Vec<_>>();
-    let top_computed=UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(window_size.0,window_size.1),..default()};
+    // let root_entities=root_query.iter().collect::<Vec<_>>();
+    // let top_computed=UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(window_size.0,window_size.1),..default()};
 
 
 
@@ -1456,41 +1645,76 @@ pub fn ui_calc_computed_pos(
     // while let Some(entity) = stk.pop()
     // // for &entity in df_entities.iter()
 
-    let mut stk: Vec<Option<Entity>> = vec![None];
+    // let mut stk: Vec<Option<Entity>> = vec![None];
+
+
+    let mut stk: Vec<(Entity, bool, )> = Vec::new(); //(entity,parent_of_root,)
+
+    stk.extend(root_query.iter()
+        .filter(|&(entity,_root)|computed_query.get(entity).map(|computed|computed.enabled).unwrap_or_default())
+        .map(|(entity,_root)|(entity,true,))
+    );
 
     //
-    while let Some(entity) = stk.pop()
-    {
+    while let Some((entity, parent_of_root)) = stk.pop() {
+        let children=[entity];
+        let children=if parent_of_root {
+            children.iter().copied().rev() //because query iter is copied
+        } else {
+            children_query.get(entity).map(|children|children.iter().rev()).unwrap_or_default()
+        };
+
+        let children=children.filter(|&child_entity|{
+            computed_query.get(child_entity).map(|child_computed|child_computed.enabled).unwrap_or_default() &&
+            (parent_of_root || !root_query.contains(child_entity))
+        });
+
+        let children=children.collect::<Vec<_>>();
+        let children=children.into_iter();
+
         {
-            let children=entity
-                .map(|entity|children_query.get(entity).map(|children|children.iter().rev()).ok())
-                .unwrap_or(Some(root_entities.iter().copied().rev()));
+            // let children=entity
+            //     .map(|entity|children_query.get(entity).map(|children|children.iter().rev()).ok())
+            //     .unwrap_or(Some(root_entities.iter().copied().rev()));
 
-            if entity.map(|entity|computed_query.get(entity).map(|computed|!computed.enabled).unwrap_or(true)).unwrap_or(false)
+            // if entity.map(|entity|computed_query.get(entity).map(|computed|!computed.enabled).unwrap_or(true)).unwrap_or(false)
 
-            {
-                continue;
-            }
+            // {
+            //     continue;
+            // }
 
-            stk.extend(children.clone().unwrap_or_default().map(|child_entity|Some(child_entity)));
+            // stk.extend(children.clone().unwrap_or_default().map(|child_entity|Some(child_entity)));
 
-            // stk.extend(children_query.get(entity).map(|c|c.iter().rev()).unwrap_or_default());
+            // // stk.extend(children_query.get(entity).map(|c|c.iter().rev()).unwrap_or_default());
+
+
+            stk.extend(children.clone().map(|child_entity|(child_entity,false)));
         }
 
         //
-        let children=entity
-            .map(|entity|children_query.get(entity).map(|children|children.iter()).ok())
-            .unwrap_or(Some(root_entities.iter().copied()));
+        // let children=entity
+        //     .map(|entity|children_query.get(entity).map(|children|children.iter()).ok())
+        //     .unwrap_or(Some(root_entities.iter().copied()));
 
         //
 
-        // let computed = *computed_query.get(entity).unwrap();
-        let computed = entity.and_then(|entity|computed_query.get(entity).ok()).cloned().unwrap_or(top_computed);
+        // // // let computed = *computed_query.get(entity).unwrap();
+        // // let computed = entity.and_then(|entity|computed_query.get(entity).ok()).cloned().unwrap_or(top_computed);
+
+        // let computed=computed_query.get(entity).cloned().unwrap();
+
+        let computed=if parent_of_root {
+            let root=root_query.get(entity).unwrap().1;
+            UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(root.width,root.height),..default()}
+        } else {
+            computed_query.get(entity).unwrap().clone()
+        };
+
         // // let span = span_query.get(entity).cloned().unwrap_or_default().span as usize;
         // let span = entity.and_then(|entity|span_query.get(entity).ok()).cloned().unwrap_or_default().span as usize;
 
-        // if let Ok(children) = children_query.get(entity)
-        if let Some(children) = &children
+        // // if let Ok(children) = children_query.get(entity)
+        // if let Some(children) = &children
         {
             //get non hidden/float child count
 
@@ -1521,11 +1745,13 @@ pub fn ui_calc_computed_pos(
                 for child_entity in children.clone() //.iter()
                 {
                     //println!("Dfdsf2 {entity:?}");
-                    let child_computed = computed_query.get(child_entity).cloned().unwrap_or_default();
-                    let child_float = entity.is_none() || float_query.get(child_entity).cloned().unwrap_or_default().float;
+                    let child_computed = computed_query.get(child_entity).cloned().unwrap_or_default(); //todo unwrap
+                    let child_float =
+                        // entity.is_none() ||
+                        float_query.get(child_entity).cloned().unwrap_or_default().float;
 
                     //don't need to do float since min size of parent already calculated earlier
-                    if child_computed.enabled && !child_float {
+                    if child_computed.enabled && !child_float && !parent_of_root{
                         // let col = child_ind % cols_num;
                         // let row = child_ind / cols_num;
 
@@ -1577,11 +1803,13 @@ pub fn ui_calc_computed_pos(
                 {
                     //println!("Dfdsf1 {entity:?}");
 
-                    if let Ok(mut child_computed) = computed_query.get_mut(child_entity) {
+                    if let Ok(mut child_computed) = computed_query.get_mut(child_entity) { //todo unwrap
                         if child_computed.enabled {
-                            let child_float = entity.is_none() || float_query.get(child_entity).cloned().unwrap_or_default().float;
+                            let child_float =
+                                // entity.is_none() ||
+                                float_query.get(child_entity).cloned().unwrap_or_default().float;
 
-                            if child_float {
+                            if child_float || parent_of_root {
                                 // child_computed.x=computed.x+child_computed.spc_l+child_computed.edge_l+child_computed.nedge_l;
 
                                 // // child_computed.y=computed.y+child_computed.spc_b+child_computed.edge_b+child_computed.nedge_b; //ydir
@@ -1674,8 +1902,11 @@ pub fn ui_calc_computed_pos(
 
             //recalc child xy's for scrolling
             //todo handle neg px scale vals as being size.x-scroll.x
-            if let Some(entity)=entity {
-                if let Ok(children)=children_query.get(entity) {
+            // if let Some(entity)=entity
+            if !parent_of_root
+            {
+                // if let Ok(children)=children_query.get(entity)
+                {
                     if let Ok(scroll) = scroll_query.get(entity)
                     {
                         let hscroll_space = (computed.children_size.x-computed.size.x).max(0.0);
@@ -1703,9 +1934,9 @@ pub fn ui_calc_computed_pos(
                             computed2.scroll_size.y=vscroll_space;
                         }
 
-                        for child_entity in children.iter()
+                        for child_entity in children.clone() //.iter()
                         {
-                            if let Ok(mut child_computed) = computed_query.get_mut(child_entity) {
+                            if let Ok(mut child_computed) = computed_query.get_mut(child_entity) { //todo use unwrap
                                 child_computed.pos.x-=scroll_x;
                                 // child_computed.y+=scroll_y; //ydir
                                 child_computed.pos.y-=scroll_y; //ydir2
@@ -1727,17 +1958,18 @@ pub fn ui_calc_computed_pos(
 }
 
 pub fn ui_calc_computed_clamp(
-    windows: Query<&Window>,
+    //windows: Query<&Window>,
 
     mut computed_query: Query<&mut UiLayoutComputed>,
-    root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
+    // root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
+    root_query: Query<(Entity,&UiRoot),With<UiLayoutComputed>>,
     children_query: Query<&Children,With<UiLayoutComputed>>,
     parent_query: Query<&ChildOf,With<UiLayoutComputed>>,
 
 
 ) {
 
-    let window_size=windows.single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
+    // let window_size=windows.single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
     // let inv_scale_factor = 1. / scale_factor;
 
 
@@ -1747,41 +1979,100 @@ pub fn ui_calc_computed_clamp(
     //clamp child computeds xywh within their parents', and round xywh's
 
     //
-    let mut stk = root_query.iter().collect::<Vec<_>>();
+    // let mut stk = root_query.iter().collect::<Vec<_>>();
+
+    let mut stk= Vec::new(); //(entity,parent_of_root,)
+
+    stk.extend(root_query.iter()
+        .filter(|&(entity,_root)|computed_query.get(entity).map(|computed|computed.enabled).unwrap_or_default())
+        .map(|(entity,_root)|entity)
+    );
+
+    // println!("roots {}",stk.iter().map(|(x,_)|format!("{x}")).collect::<Vec<_>>().join(" "));
 
     //
+    // while let Some((entity, parent_of_root)) = stk.pop()
     while let Some(entity) = stk.pop()
     // for &entity in df_entities.iter()
     {
-        {
-            let Ok(computed) = computed_query.get(entity) else {
-                continue;
-            };
 
-            if !computed.enabled {
-                continue;
-            }
-            // if entity.map(|entity|computed_query.get(entity).map(|computed|!computed.enabled).unwrap_or(true)).unwrap_or(false)
-            // {
+
+        // if parent_of_root {
+        //     println!("children of root({entity}): {}",children.clone().map(|x|format!("{x}")).collect::<Vec<_>>().join(" "));
+
+        // } else {
+        //     println!("children of {entity}: {}",children.clone().map(|x|{
+        //         let parent=parent_query.get(x).map(|y|y.parent()).map(|y|format!("{y}")).unwrap_or("_".to_string());
+        //         format!("{x}({parent})")
+        //     }).collect::<Vec<_>>().join(" "));
+
+        // }
+
+        {
+
+            let children= children_query.get(entity).map(|children|children.iter().rev()).unwrap_or_default();
+
+            let children=children.filter(|&child_entity|{
+                computed_query.get(child_entity).map(|child_computed|child_computed.enabled).unwrap_or_default() &&
+                !root_query.contains(child_entity)
+            });
+
+            let children=children.collect::<Vec<_>>();
+            let children=children.into_iter();
+
+            // let Ok(computed) = computed_query.get(entity) else {
+            //     continue;
+            // };
+
+            // if !computed.enabled {
             //     continue;
             // }
+            // // if entity.map(|entity|computed_query.get(entity).map(|computed|!computed.enabled).unwrap_or(true)).unwrap_or(false)
+            // // {
+            // //     continue;
+            // // }
 
-            stk.extend(children_query.get(entity).map(|c|c.iter().rev()).unwrap_or_default());
+            // stk.extend(children_query.get(entity).map(|c|c.iter().rev()).unwrap_or_default());
+
+
+            stk.extend(children.clone());
         }
 
+
         //
-        let parent_computed = if let Ok(parent) = parent_query.get(entity) {
-            *computed_query.get(parent.parent()).unwrap()
+
+        // let parent_computed = if let Ok(parent) = parent_query.get(entity) {
+        //     *computed_query.get(parent.parent()).unwrap()
+        // } else {
+        //     UiLayoutComputed {
+        //         clamped_rect:UiRect{
+        //             left:0.0,
+        //             top:0.0,
+        //             right:window_size.0,
+        //             bottom:window_size.1,
+        //         }, //y is down
+        //         ..Default::default()
+        //     }
+        // };
+        let parent_computed=if let Ok(parent_entity)=parent_query.get(entity).map(|x|x.parent()) {
+            // println!("hmp {entity}, {parent_entity:?}");
+            // let parent_entity=parent_entity.unwrap();
+            computed_query.get(parent_entity).unwrap().clone()
         } else {
-            UiLayoutComputed {clamped_rect:UiRect{
-                left:0.0,
-                top:0.0,
-                right:window_size.0,
-                bottom:window_size.1,
-            }, //y is down
-            ..Default::default()}
+            let root=root_query.get(entity).unwrap().1;
+            UiLayoutComputed{
+                // unlocked:true,visible:true,enabled:true,size:Vec2::new(root.width,root.height),
+                clamped_rect:UiRect{
+                    left:0.0,
+                    top:0.0,
+                    right:root.width,
+                    bottom:root.height,
+                }, //y is down
+                ..Default::default()
+            }
         };
 
+        //
         let mut computed = computed_query.get_mut(entity).unwrap();
 
         // println!("entity {entity:?}, vis {}",computed.visible);
@@ -1800,7 +2091,7 @@ pub fn ui_calc_computed_clamp(
             computed.clamped_rect = inner_rect.clamp(parent_computed.clamped_rect);
             computed.clamped_cell_rect = cell_rect.clamp(parent_computed.clamped_rect);
 
-            // println!("hmm {:?}",inner_rect);
+            // println!("hmm {entity} {:#?}",computed);
         }
     }
 

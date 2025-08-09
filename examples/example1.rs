@@ -60,6 +60,7 @@ fn main() {
         ))
         .add_systems(Update, (
             update_input,
+            update_ui_roots,
             show_fps.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(300))),
         ))
         ;
@@ -67,6 +68,20 @@ fn main() {
     app.run();
 }
 
+pub fn update_ui_roots(
+    windows: Query<&Window>,
+    mut root_query: Query<&mut UiRoot,>,
+) {
+
+    let window_size=windows.single()
+        .and_then(|window|Ok((window.width(),window.height())))
+        .unwrap_or_default();
+
+    for mut x in root_query.iter_mut() {
+        x.width=window_size.0;
+        x.height=window_size.1;
+    }
+}
 #[derive(Component)]
 pub struct MenuUiRoot;
 
@@ -84,8 +99,22 @@ pub fn setup_ui(
     //     },
     // ));
 
+    // commands.spawn((
+    //     MenuUiRoot,
+    //     UiRoot::default(),
+    //     UiLayoutComputed::default(),
+    //     UiColor{back:Color::srgb(0.2,0.4,0.6),..Default::default()},
+    //     UiSize{
+    //         width:UiVal::Px(200.0),
+    //         height:UiVal::Px(500.0),
+    //     },
+    //     // UiSpan{span:1},
+    //     // UiGap{hgap:UiVal::Px(30.0),vgap:UiVal::Px(30.0)},
+    // ));
+
     commands.spawn((
         MenuUiRoot,
+        UiRoot::default(),
         UiLayoutComputed::default(),
         UiColor{back:Color::srgb(0.2,0.4,0.6),..Default::default()},
         UiSize{

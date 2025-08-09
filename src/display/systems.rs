@@ -13,7 +13,8 @@ use bevy::math::Vec2;
 // use bevy::render::texture::Image;
 // use bevy::sprite::TextureAtlasLayout;
 use bevy::text::{ComputedTextBlock, CosmicFontSystem, Font, FontAtlasSets, FontSmoothing, JustifyText, LineBreak, LineHeight, SwashCache, TextBounds, TextError, TextFont, TextLayout, TextLayoutInfo, TextPipeline, YAxisOrientation};
-use bevy::window::Window;
+// use bevy::window::Window;
+
 
 use super::super::layout::components::{UiLayoutComputed, UiInnerSize};
 
@@ -24,7 +25,7 @@ use super::values::*;
 
 pub fn update_text_image(
     // mut commands: Commands,
-    windows: Query<&Window>,
+    // windows: Query<&Window>,
 
     asset_server: Res<AssetServer>,
     fonts: Res<Assets<Font>>,
@@ -50,10 +51,10 @@ pub fn update_text_image(
 ) {
     // let window_size=windows.get_single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
     //todo need to get window for camera?
-    let scale_factor = windows.single().and_then(|window|Ok(window.scale_factor() as f64)).unwrap_or(1.0);
+    // let scale_factor = windows.single().and_then(|window|Ok(window.scale_factor() as f64)).unwrap_or(1.0);
     // println!("scale_factor={scale_factor}");
     //only on visible, updated?
-
+    let scale_factor: f32 = 1.0;
 
     for (entity,
         &layout_computed,
@@ -87,20 +88,20 @@ pub fn update_text_image(
         //image here
         if let Some(image) = image {
             if let Some(texture) = textures.get(&image.handle) {
-                let size = texture.size().as_vec2();
+                let image_size = texture.size().as_vec2();
 
                 //todo keep aspect ratio
 
                 if image.width_scale>0.0 {
-                    inner_size.width = inner_size.width.max(image.width_scale*size.x);
+                    inner_size.width = inner_size.width.max(image.width_scale*image_size.x)*scale_factor;
                 } else if inner_size.width == 0.0 {
-                    inner_size.width = inner_size.width.max(size.x);
+                    inner_size.width = inner_size.width.max(image_size.x)*scale_factor;
                 }
 
                 if image.height_scale>0.0 {
-                    inner_size.height = inner_size.height.max(image.height_scale*size.y);
+                    inner_size.height = inner_size.height.max(image.height_scale*image_size.y)*scale_factor;
                 } else if inner_size.height == 0.0 {
-                    inner_size.height = inner_size.height.max(size.y);
+                    inner_size.height = inner_size.height.max(image_size.y)*scale_factor;
                 }
             }
         }
@@ -156,7 +157,7 @@ pub fn update_text_image(
                         &mut temp_text_layout_info,
                         &fonts,
                         text_spans.into_iter(),
-                        scale_factor,
+                        scale_factor as f64,
                         &TextLayout {justify: text_alignment,linebreak: LineBreak::NoWrap,},
                         TextBounds{width:None,height:None},
                         &mut font_atlas_sets,
@@ -190,7 +191,7 @@ pub fn update_text_image(
                     &mut text_layout_info,
                     &fonts,
                     text_spans.into_iter(),
-                    scale_factor,
+                    scale_factor as f64,
                     &TextLayout {justify: text_alignment,linebreak: LineBreak::WordBoundary,},
                     TextBounds{width:bound_width,height:bound_height},
                     &mut font_atlas_sets,

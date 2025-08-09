@@ -22,7 +22,7 @@ use super::values::*;
 // }
 
 
-//should it just resize the cell size instead ? 
+//should it just resize the cell size instead ?
 #[derive(Reflect,Component, Default, Debug, Copy, Clone)]
 pub struct UiCongruent { //congruence, congruent, congruous, consonant, coincide,  adjacent_size
     pub row_width_scale : f32,
@@ -136,7 +136,7 @@ pub struct UiAlign {
 pub struct UiSize {
     pub width : UiVal,
     pub height : UiVal,
-    
+
     // pub inner_width : f32, //px
     // pub inner_height : f32, //px
 }
@@ -147,6 +147,22 @@ pub struct UiInnerSize { //used for external things like text and images
     pub height : f32,
 }
 
+#[derive(Reflect,Component, Debug, Copy, Clone)]
+
+pub struct UiRoot {
+    pub width:f32,
+    pub height:f32,
+    pub scaling:f32,
+    pub order:i32,
+}
+
+impl Default for UiRoot {
+    fn default() -> Self {
+        Self {
+            width: 0.0, height: 0.0, scaling: 1.0, order: 0,
+        }
+    }
+}
 
 //have bool for calcd ?
 #[derive(Reflect,Component, Debug, Copy, Clone)]
@@ -180,11 +196,11 @@ pub struct UiLayoutComputed {
 
 impl UiLayoutComputed {
     pub fn inner_rect(&self) -> UiRect {
-        UiRect { 
-            left: self.pos.x, 
-            top: self.pos.y, 
-            right: self.pos.x+self.size.x, 
-            bottom: self.pos.y+self.size.y, 
+        UiRect {
+            left: self.pos.x,
+            top: self.pos.y,
+            right: self.pos.x+self.size.x,
+            bottom: self.pos.y+self.size.y,
         }
     }
     pub fn padding_rect(&self) -> UiRect {
@@ -210,9 +226,9 @@ impl UiLayoutComputed {
     }
 }
 impl Default for UiLayoutComputed {
-    fn default() -> Self { 
-        Self { 
-            // x: 0.0, y: 0.0, w: 0.0, h: 0.0, 
+    fn default() -> Self {
+        Self {
+            // x: 0.0, y: 0.0, w: 0.0, h: 0.0,
             pos:Vec2::ZERO,
             size:Vec2::NEG_ONE,
 
@@ -225,7 +241,7 @@ impl Default for UiLayoutComputed {
             cell_size:UiRect::default(),
 
             // gap_w:0.0,gap_h:0.0,
-            // scroll_x:0.0,scroll_y:0.0, 
+            // scroll_x:0.0,scroll_y:0.0,
             // children_w:0.0,children_h:0.0,
 
             gap_size:Vec2::ZERO,

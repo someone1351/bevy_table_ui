@@ -2017,8 +2017,6 @@ pub fn ui_calc_computed_clamp(
                 !root_query.contains(child_entity)
             });
 
-            let children=children.collect::<Vec<_>>();
-            let children=children.into_iter();
 
             // let Ok(computed) = computed_query.get(entity) else {
             //     continue;
@@ -2035,7 +2033,7 @@ pub fn ui_calc_computed_clamp(
             // stk.extend(children_query.get(entity).map(|c|c.iter().rev()).unwrap_or_default());
 
 
-            stk.extend(children.clone());
+            stk.extend(children);
         }
 
 
@@ -2054,12 +2052,7 @@ pub fn ui_calc_computed_clamp(
         //         ..Default::default()
         //     }
         // };
-        let parent_computed=if let Ok(parent_entity)=parent_query.get(entity).map(|x|x.parent()) {
-            // println!("hmp {entity}, {parent_entity:?}");
-            // let parent_entity=parent_entity.unwrap();
-            computed_query.get(parent_entity).unwrap().clone()
-        } else {
-            let root=root_query.get(entity).unwrap().1;
+        let parent_computed=if let Ok((_,root))=root_query.get(entity){
             UiLayoutComputed{
                 // unlocked:true,visible:true,enabled:true,size:Vec2::new(root.width,root.height),
                 clamped_rect:UiRect{
@@ -2070,7 +2063,18 @@ pub fn ui_calc_computed_clamp(
                 }, //y is down
                 ..Default::default()
             }
+        } else {
+            let parent_entity=parent_query.get(entity).unwrap().parent();
+            computed_query.get(parent_entity).unwrap().clone()
         };
+
+        // let parent_computed=if let Ok(parent_entity)=parent_query.get(entity).map(|x|x.parent()) {
+        //     // println!("hmp {entity}, {parent_entity:?}");
+        //     // let parent_entity=parent_entity.unwrap();
+        // } else {
+        //     let root=root_query.get(entity).unwrap().1;
+
+        // };
 
         //
         let mut computed = computed_query.get_mut(entity).unwrap();

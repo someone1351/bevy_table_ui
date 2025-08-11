@@ -6,7 +6,7 @@ use bevy::ecs::prelude::*;
 use bevy::math::Vec2;
 
 
-use super::super::super::layout::components::UiLayoutComputed;
+use super::super::super::layout::components::{UiLayoutComputed,UiRoot};
 
 use super::super::components::*;
 // use super::super::resources::*;
@@ -30,6 +30,7 @@ pub fn update_hover_events(
 
     parent_query : Query<&ChildOf,With<UiLayoutComputed>>,
     hoverable_query: Query<(Entity,&UiLayoutComputed,&UiHoverable)>,
+    root_query: Query<(Entity,&UiLayoutComputed), With<UiRoot>>,
 
     mut input_event_reader: EventReader<UiInteractInputEvent>,
     mut ui_event_writer: EventWriter<UiInteractEvent>,
@@ -40,15 +41,24 @@ pub fn update_hover_events(
     //un hover inactive/disabled/invisible, and cursor no longer inside due to node pos/size change
     //remove inactive root nodes
 
-    cur_hover_entities.retain(|(_root_entity,device),(entity,cursor)|{
-        if let Ok((_,layout_computed,hoverable)) = hoverable_query.get(*entity) {
-            if hoverable.enable && layout_computed.unlocked && layout_computed.clamped_border_rect().contains_point(*cursor) {
-                return true;
-            }
-        }
+    cur_hover_entities.retain(|&(root_entity,device),&mut (entity,cursor)|{
+        let root_alive = root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default();
+        let hoverable_alive = hoverable_query.get(entity).map(|(_,layout_computed,hoverable)|{
+            hoverable.enable && layout_computed.unlocked && layout_computed.clamped_border_rect().contains_point(cursor)
+        }).unwrap_or_default();
 
-        ui_event_writer.write(UiInteractEvent{entity:*entity,event_type:UiInteractEventType::HoverEnd{device:*device}}); //what if entity removed? ok to return a dead one?
-        false
+        // if let Ok((_,layout_computed,hoverable)) = hoverable_query.get(*entity) {
+        //     if hoverable.enable && layout_computed.unlocked && layout_computed.clamped_border_rect().contains_point(*cursor) {
+        //         return true;
+        //     }
+        // }
+
+        if root_alive && hoverable_alive {
+            true
+        } else {
+            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::HoverEnd{device}}); //what if entity removed? ok to return a dead one?
+            false
+        }
     });
 
     //
@@ -64,8 +74,11 @@ pub fn update_hover_events(
             continue;
         }
 
+        // let root_entity=parent_query.iter_ancestors(entity).last().unwrap_or(entity);
 
-        let root_entity=parent_query.iter_ancestors(entity).last().unwrap_or(entity);
+        let Some(root_entity)=parent_query.iter_ancestors(entity).find(|&ancestor_entity|root_query.contains(ancestor_entity)) else {
+            continue;
+        };
 
         hover_root_entities.entry(root_entity).or_default().push((entity,layout_computed.order,layout_computed.clamped_border_rect()));
     }
@@ -77,9 +90,14 @@ pub fn update_hover_events(
 
     //
     for ev in input_event_reader.read() {
+        if !root_query.get(ev.get_root_entity()).map(|(_,computed)|computed.unlocked).unwrap_or_default() {
+            continue;
+        }
+
         let &UiInteractInputEvent::CursorMoveTo{root_entity,device,cursor:Some(cursor)} = ev else {
             continue;
         };
+
 
         let Some(entities)=hover_root_entities.get(&root_entity) else {
             continue;

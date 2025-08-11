@@ -27,7 +27,7 @@ use super::super::events::*;
 // use super::super::utils::*;
 // use super::super::values::*;
 
-use super::super::super::layout::components::UiLayoutComputed;
+use super::super::super::layout::components::{UiLayoutComputed,UiRoot};
 
 fn is_no_entity_pressed(
     entity_presseds:&HashSet<Option<(i32,bool)>>,
@@ -75,7 +75,9 @@ fn is_no_entity_pressed(
 
 
 pub fn update_press_events(
-    root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
+    // root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
+    root_query: Query<(Entity,&UiLayoutComputed), With<UiRoot>>,
+
     parent_query : Query<&ChildOf,With<UiLayoutComputed>>,
     layout_computed_query: Query<&UiLayoutComputed>, //,With<UiPressable>
     mut pressable_query: Query<(Entity,&mut UiPressable)>,
@@ -99,19 +101,31 @@ pub fn update_press_events(
     //remove dead roots/pressed entities
 
     device_cursors.retain(|&(root_entity,_device),_|{
-        root_query.contains(root_entity)
+        // root_query.contains(root_entity)
+        root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default()
     });
 
     entities_presseds.retain(|&(root_entity,pressed_entity),_|{
-        root_query.contains(root_entity) && pressable_query.contains(pressed_entity)
+        // root_query.contains(root_entity) && pressable_query.contains(pressed_entity)
+
+        let root_alive= root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default();
+        let is_pressable=pressable_query.get(pressed_entity).map(|(_,pressable)|pressable.enable).unwrap_or_default();
+        root_alive && is_pressable
     });
 
-    press_states.device_presseds.retain(|&(root_entity,device,is_cursor),(pressed_entity,_pressed)|{
-        root_query.contains(root_entity) &&
-            entities_presseds.get(&(root_entity,*pressed_entity))
-                .map(|x|x.contains(&Some((device,is_cursor))))
-                .unwrap_or_default()
-        // && pressable_query.contains(*pressed_entity)
+    press_states.device_presseds.retain(|&(root_entity,device,is_cursor),&mut (pressed_entity,_pressed)|{
+        // root_query.contains(root_entity) &&
+        //     entities_presseds.get(&(root_entity,*pressed_entity))
+        //         .map(|x|x.contains(&Some((device,is_cursor))))
+        //         .unwrap_or_default()
+        // // && pressable_query.contains(*pressed_entity)
+
+
+        let root_alive= root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default();
+        let is_pressable=pressable_query.get(pressed_entity).map(|(_,pressable)|pressable.enable).unwrap_or_default();
+        let q=entities_presseds.get(&(root_entity,pressed_entity)).map(|x|x.contains(&Some((device,is_cursor)))).unwrap_or_default();
+
+        root_alive && is_pressable && q
     });
 
     //unpress
@@ -134,7 +148,9 @@ pub fn update_press_events(
         //  ... removed
 
         //inactive/disabled/invisible/no_devices/
-        let root_entity_alive=layout_computed_query.get(root_entity).is_ok();
+        // let root_entity_alive=layout_computed_query.get(root_entity).is_ok();
+        let root_entity_alive=root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default();
+
         let unlocked=layout_computed_query.get(pressed_entity).map(|x|x.unlocked).unwrap_or_default();
 
         let pressable_enable=pressable.as_ref().map(|x|x.enable).unwrap_or_default();
@@ -199,9 +215,9 @@ pub fn update_press_events(
             continue;
         }
 
-        if !parent_query.contains(entity) { //roots can't be pressable
-            continue;
-        }
+        // if !parent_query.contains(entity) { //roots can't be pressable
+        //     continue;
+        // }
 
         let Ok(computed) = layout_computed_query.get(entity) else {
             continue;
@@ -278,6 +294,11 @@ pub fn update_press_events(
 
     //
     for ev in input_event_reader.read() {
+
+        if !root_query.get(ev.get_root_entity()).map(|(_,computed)|computed.unlocked).unwrap_or_default() {
+            continue;
+        }
+
         match ev.clone() {
             UiInteractInputEvent::CursorMoveTo{root_entity,device,cursor} => {
                 if let Some(cursor)=cursor {

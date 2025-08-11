@@ -21,13 +21,14 @@ use std::collections::{HashMap, HashSet};
 use bevy::ecs::prelude::*;
 // use bevy::hierarchy::prelude::*;
 
+
 use super::super::components::*;
 use super::super::resources::*;
 use super::super::events::*;
 // use super::super::utils::*;
 // use super::super::values::*;
 
-use super::super::super::layout::components::{UiLayoutComputed, UiFloat};
+use super::super::super::layout::components::{UiLayoutComputed, UiFloat,UiRoot};
 // use crate::table_ui::{UiComputed, UiFloat};
 
 
@@ -83,6 +84,9 @@ pub fn update_focus_events(
 
     focus_query : Query<Entity, (With<UiFocusable>,)>,
     // root_query: Query<Entity,(Without<Parent>,With<UiLayoutComputed>)>,
+
+    root_query: Query<(Entity,&UiLayoutComputed), With<UiRoot>>,
+
     children_query: Query<&Children,(With<UiLayoutComputed>,)>,
 
     mut ui_event_writer: EventWriter<UiInteractEvent>,
@@ -119,7 +123,8 @@ pub fn update_focus_events(
 
     //in cur_focus_entity, focus_entity_stk, unfocus removed entities, disabled/invisible entities, disabled focusables, focusables changed groups
     for (&root_entity,groups) in focus_states.cur_focuses.iter_mut() {
-        let root_entity_alive=computed_query.get(root_entity).is_ok();
+        // let root_entity_alive=computed_query.get(root_entity).is_ok();
+        let root_entity_alive= root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default();
 
         for (&cur_group,(cur_focus_entity,focus_entity_stk,hist)) in groups.iter_mut() {
             // //init prev_focused_stk
@@ -196,7 +201,8 @@ pub fn update_focus_events(
 
     //remove dead roots
     for root_entity in focus_states.cur_focuses.keys().cloned().collect::<Vec<_>>() {
-        let root_entity_alive=computed_query.get(root_entity).is_ok();
+        // let root_entity_alive=computed_query.get(root_entity).is_ok();
+        let root_entity_alive= root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default();
 
         if !root_entity_alive {
             focus_states.cur_focuses.remove(&root_entity);
@@ -206,16 +212,22 @@ pub fn update_focus_events(
     //handle focused==true, but not in focus_entity_stk/cur_focus_entity
     {
         for entity in focus_query.iter() {
+
             let Ok(computed) = computed_query.get(entity) else { continue; };
             let focusable=focusable_query.get(entity).unwrap();
 
+            //don't need to check if focusable entity has ancestor with ui_root, as its computed.unlocked will be false if it doesn't
             if !computed.unlocked || !focusable.enable ||!focusable.focused {
                 continue;
             }
 
             //
             let cur_group=focusable.group;
-            let root_entity=parent_query.iter_ancestors(entity).last().unwrap_or(entity);
+            // let root_entity=parent_query.iter_ancestors(entity).last().unwrap_or(entity);
+
+            let Some(root_entity)=parent_query.iter_ancestors(entity).find(|&ancestor_entity|root_query.contains(ancestor_entity)) else {
+                continue;
+            };
 
             //
             let (cur_focus_entity,focus_entity_stk,hist)=focus_states.cur_focuses
@@ -228,11 +240,29 @@ pub fn update_focus_events(
             }
 
             //
-            let mut focus_ancestor_entities = parent_query.iter_ancestors(entity).filter_map(|ancestor_entity|{
-                focusable_query.get(ancestor_entity).ok().and_then(|ancestor_focusable|{
-                    (ancestor_focusable.enable&&ancestor_focusable.group==cur_group).then_some(ancestor_entity)
-                })
-            }).collect::<Vec<_>>();
+            // let mut focus_ancestor_entities: Vec<Entity> = parent_query.iter_ancestors(entity).filter_map(|ancestor_entity|{
+            //     focusable_query.get(ancestor_entity).ok().and_then(|ancestor_focusable|{
+            //         (ancestor_focusable.enable&&ancestor_focusable.group==cur_group).then_some(ancestor_entity)
+            //     })
+            // }).collect::<Vec<_>>();
+
+            let mut focus_ancestor_entities: Vec<Entity> = Vec::new();
+
+            for ancestor_entity in parent_query.iter_ancestors(entity) {
+                let is_focusable = focusable_query.get(ancestor_entity).ok().map(|ancestor_focusable|{
+                    ancestor_focusable.enable&&ancestor_focusable.group==cur_group
+                }).unwrap_or_default();
+
+                if is_focusable {
+                    focus_ancestor_entities.push(ancestor_entity);
+                }
+
+                if root_query.contains(entity) {
+                    break;
+                }
+            }
+
+            //
 
             focus_ancestor_entities.reverse();
 
@@ -319,7 +349,10 @@ pub fn update_focus_events(
             continue;
         }
 
-        let root_entity = parent_query.iter_ancestors(entity).last().unwrap_or(entity);
+        // let root_entity = parent_query.iter_ancestors(entity).last().unwrap_or(entity);
+        let Some(root_entity)=parent_query.iter_ancestors(entity).find(|&ancestor_entity|root_query.contains(ancestor_entity)) else {
+            continue;
+        };
 
         let (_cur_focus_entity,_focus_entity_stk,hist)=focus_states.cur_focuses
             .entry(root_entity).or_default()
@@ -350,12 +383,27 @@ pub fn update_focus_events(
         if cur_focus_entity.is_none() && focus_entity_stk.is_empty() {
 
             //
-            let mut focus_ancestor_entities = parent_query.iter_ancestors(entity).filter_map(|ancestor_entity|{
-                focusable_query.get(ancestor_entity).ok().and_then(|ancestor_focusable|{
-                    (ancestor_focusable.enable&&ancestor_focusable.group==focus_group).then_some(ancestor_entity)
-                })
-            }).collect::<Vec<_>>();
+            // let mut focus_ancestor_entities = parent_query.iter_ancestors(entity).filter_map(|ancestor_entity|{
+            //     focusable_query.get(ancestor_entity).ok().and_then(|ancestor_focusable|{
+            //         (ancestor_focusable.enable&&ancestor_focusable.group==focus_group).then_some(ancestor_entity)
+            //     })
+            // }).collect::<Vec<_>>();
 
+            let mut focus_ancestor_entities: Vec<Entity> = Vec::new();
+
+            for ancestor_entity in parent_query.iter_ancestors(entity) {
+                let is_focusable = focusable_query.get(ancestor_entity).ok().map(|ancestor_focusable|{
+                    ancestor_focusable.enable&&ancestor_focusable.group==focus_group
+                }).unwrap_or_default();
+
+                if is_focusable {
+                    focus_ancestor_entities.push(ancestor_entity);
+                }
+
+                if root_query.contains(entity) {
+                    break;
+                }
+            }
             focus_ancestor_entities.reverse();
 
             //fill focus_entity_stk with focus_ancestor_entities
@@ -397,6 +445,12 @@ pub fn update_focus_events(
 
     //
     while let Some(ev)=ev_stk.pop() {
+
+        if !root_query.get(ev.get_root_entity()).map(|(_,computed)|computed.unlocked).unwrap_or_default() {
+            continue;
+        }
+
+
         match ev.clone() {
             UiInteractInputEvent::FocusEnter{root_entity,group} => {
                 if let Some(groups)=focus_states.cur_focuses.get_mut(&root_entity) {

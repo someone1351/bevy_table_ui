@@ -5,7 +5,7 @@ use std::collections::HashSet;
 use bevy::ecs::prelude::*;
 // use bevy::hierarchy::prelude::*;
 
-use super::super::super::layout::components::UiLayoutComputed;
+use super::super::super::layout::components::{UiLayoutComputed,UiRoot};
 
 use super::super::components::*;
 // use super::super::resources::*;
@@ -17,6 +17,7 @@ use super::super::events::*;
 pub fn update_select_events(
     // mut active_nodes: ResMut<UiActiveNodes>,
     // root_query: Query<Entity,(Without<Parent>,With<UiLayoutComputed>)>,
+    root_query: Query<(Entity,&UiLayoutComputed), With<UiRoot>>,
     parent_query : Query<&ChildOf,With<UiLayoutComputed>>,
     computed_query: Query<&UiLayoutComputed>, //,With<UiPressable>
     mut selectable_query: Query<(Entity,&mut UiSelectable)>,

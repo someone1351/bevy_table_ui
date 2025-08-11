@@ -6,14 +6,14 @@ use bevy::ecs::prelude::*;
 pub enum UiInteractInputEvent {
     FocusInit{root_entity:Entity, group:i32},
     FocusLeft{root_entity:Entity, group:i32},
-    FocusRight{root_entity:Entity, group:i32}, 
-    FocusUp{root_entity:Entity, group:i32}, 
-    FocusDown{root_entity:Entity, group:i32}, 
-    FocusPrev{root_entity:Entity, group:i32}, 
+    FocusRight{root_entity:Entity, group:i32},
+    FocusUp{root_entity:Entity, group:i32},
+    FocusDown{root_entity:Entity, group:i32},
+    FocusPrev{root_entity:Entity, group:i32},
     FocusNext{root_entity:Entity, group:i32},
-    FocusEnter{root_entity:Entity, group:i32}, 
+    FocusEnter{root_entity:Entity, group:i32},
     FocusExit{root_entity:Entity, group:i32},
-    
+
     FocusPressBegin{root_entity:Entity,group:i32,device:i32},
     FocusPressEnd{root_entity:Entity,device:i32}, //why does this lack group?
     FocusPressCancel{root_entity:Entity,device:i32}, //why does this lack group?
@@ -33,43 +33,70 @@ pub enum UiInteractInputEvent {
     // },
 }
 
+impl UiInteractInputEvent {
+    pub fn get_root_entity(&self) -> Entity {
+        match & self {
+            Self::FocusInit{root_entity,..}|
+            Self::FocusLeft{root_entity,..}|
+            Self::FocusRight{root_entity,..}|
+            Self::FocusUp{root_entity,..}|
+            Self::FocusDown{root_entity,..}|
+            Self::FocusPrev{root_entity,..}|
+            Self::FocusNext{root_entity,..}|
+            Self::FocusEnter{root_entity,..}|
+            Self::FocusExit{root_entity,..}|
+
+            Self::FocusPressBegin{root_entity,..}|
+            Self::FocusPressEnd{root_entity,..}|
+            Self::FocusPressCancel{root_entity,..}|
+
+            Self::CursorPressBegin{root_entity,..}|
+            Self::CursorPressEnd{root_entity,..}|
+            Self::CursorPressCancel{root_entity,..}|
+            Self::CursorMoveTo{root_entity,..}
+            => {
+                *root_entity
+            }
+        }
+    }
+}
 // impl Clone for UiInteractInputEvent {
 //     fn clone(&self) -> Self {
 //         match self {
 //             Self::FocusInit(root_entity,focus_group) => Self::FocusInit(*root_entity,*focus_group),
-//             Self::FocusLeft(root_entity,focus_group) => Self::FocusLeft(*root_entity,*focus_group), 
-//             Self::FocusRight(root_entity,focus_group) => Self::FocusRight(*root_entity,*focus_group), 
-//             Self::FocusUp(root_entity,focus_group) => Self::FocusUp(*root_entity,*focus_group), 
-//             Self::FocusDown(root_entity,focus_group) => Self::FocusDown(*root_entity,*focus_group), 
-//             Self::FocusPrev(root_entity,focus_group) => Self::FocusPrev(*root_entity,*focus_group), 
+//             Self::FocusLeft(root_entity,focus_group) => Self::FocusLeft(*root_entity,*focus_group),
+//             Self::FocusRight(root_entity,focus_group) => Self::FocusRight(*root_entity,*focus_group),
+//             Self::FocusUp(root_entity,focus_group) => Self::FocusUp(*root_entity,*focus_group),
+//             Self::FocusDown(root_entity,focus_group) => Self::FocusDown(*root_entity,*focus_group),
+//             Self::FocusPrev(root_entity,focus_group) => Self::FocusPrev(*root_entity,*focus_group),
 //             Self::FocusNext(root_entity,focus_group) => Self::FocusNext(*root_entity,*focus_group),
-//             Self::FocusEnter(root_entity,focus_group) => Self::FocusEnter(*root_entity,*focus_group), 
+//             Self::FocusEnter(root_entity,focus_group) => Self::FocusEnter(*root_entity,*focus_group),
 //             Self::FocusExit(root_entity,focus_group) => Self::FocusExit(*root_entity,*focus_group),
-            
+
 //             Self::FocusPressBegin(root_entity, focus_group, device) => Self::FocusPressBegin(*root_entity, *focus_group, *device),
 //             Self::FocusPressEnd(root_entity,focus_group) => Self::FocusPressEnd(*root_entity,*focus_group),
-//             Self::FocusPressCancel(root_entity,focus_group) => Self::FocusPressCancel(*root_entity,*focus_group), 
-        
-//             Self::CursorPressBegin(root_entity,focus_group) => Self::CursorPressBegin(*root_entity,*focus_group), 
+//             Self::FocusPressCancel(root_entity,focus_group) => Self::FocusPressCancel(*root_entity,*focus_group),
+
+//             Self::CursorPressBegin(root_entity,focus_group) => Self::CursorPressBegin(*root_entity,*focus_group),
 //             Self::CursorPressEnd(root_entity,focus_group) => Self::CursorPressEnd(*root_entity,*focus_group),
-//             Self::CursorPressCancel(root_entity,focus_group) => Self::CursorPressCancel(*root_entity,*focus_group), 
+//             Self::CursorPressCancel(root_entity,focus_group) => Self::CursorPressCancel(*root_entity,*focus_group),
 //             Self::CursorMoveTo(root_entity,focus_group,cursor) => Self::CursorMoveTo(*root_entity,*focus_group,*cursor),
-        
+
 //             // // Self::Custom(root_entity,name,params) => Self::Custom(
 //             // //     *root_entity,
 //             // //     name.clone(),
 //             // //     params.iter().map(|x|x.clone_as_is()).collect::<Vec<_>>(),
-//             // // ), 
+//             // // ),
 
-//             // Self::Custom2 { name, root_entity, entity, 
-//             //     // unlocked, 
-//             //     params, 
-//             // } => Self::Custom2 { 
-//             //     name:name.clone(), root_entity:*root_entity, entity:*entity, 
-//             //     //unlocked:*unlocked, 
+//             // Self::Custom2 { name, root_entity, entity,
+//             //     // unlocked,
+//             //     params,
+//             // } => Self::Custom2 {
+//             //     name:name.clone(), root_entity:*root_entity, entity:*entity,
+//             //     //unlocked:*unlocked,
 //             //     params: params.iter().map(|x|x.clone_as_is()).collect::<Vec<_>>(), //used clone_as_is instead of clone_root, so if user incorrectly doesn't use the clone_as_root elsewhere, then the error wont be hidden when passed through here
 //             // },
-//         } 
+//         }
 //     }
 // }
 
@@ -79,7 +106,7 @@ pub enum UiInteractEventType {
     HoverEnd{device:i32,},
     PressBegin, //{device:i32,is_cursor:bool}, //might need hashset of devices?
     PressEnd, //{device:i32,is_cursor:bool},
-    Click,   
+    Click,
     // DragBegin,
     // DragEnd,
     // DragMove{ h_px:i32,v_px:i32, h_scale:f32,v_scale:f32, },
@@ -114,20 +141,20 @@ pub enum UiInteractEventType {
 //             Self::HoverEnd => Self::HoverEnd,
 //             Self::PressBegin => Self::PressBegin,
 //             Self::PressEnd => Self::PressEnd,
-//             Self::Click => Self::Click,   
+//             Self::Click => Self::Click,
 //             Self::DragBegin => Self::DragBegin,
 //             Self::DragEnd => Self::DragEnd,
-//             Self::DragMove{ h_px,v_px, h_scale,v_scale, } => Self::DragMove{ 
+//             Self::DragMove{ h_px,v_px, h_scale,v_scale, } => Self::DragMove{
 //                 h_px:*h_px,
-//                 v_px:*v_px, 
+//                 v_px:*v_px,
 //                 h_scale : *h_scale,
-//                 v_scale:*v_scale, 
+//                 v_scale:*v_scale,
 //             },
 //             Self::SelectBegin => Self::SelectBegin,
 //             Self::SelectEnd => Self::SelectEnd,
 //             Self::FocusBegin{group} => Self::FocusBegin{group:*group},
 //             Self::FocusEnd{group} => Self::FocusEnd{group:*group},
-        
+
 //         }
 //     }
 // }
@@ -156,7 +183,7 @@ impl UiInteractEventType {
             // Self::FocusDown{..} => "focus_down",
             // Self::FocusPrev{..} => "focus_prev",
             // Self::FocusNext{..} => "focus_next",
-            
+
             // Self::Custom { .. } => "custom",
             // Self::Update => "update",
             // Self::Char(_) => "char",

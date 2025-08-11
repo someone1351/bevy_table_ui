@@ -15,7 +15,7 @@ use bevy::math::Vec2;
 
 // use crate::input_map::{self, InputMapEvent};
 // use crate::table_ui::UiComputed;
-use super::super::super::layout::components::UiLayoutComputed;
+use super::super::super::layout::components::{UiLayoutComputed,UiRoot};
 use super::super::super::layout::values::UiRect;
 
 
@@ -38,6 +38,9 @@ pub fn update_drag_events(
     draggable_query: Query<(Entity,&UiLayoutComputed,&UiDraggable)>,
     parent_query : Query<&ChildOf,With<UiLayoutComputed>>,
 
+    // root_query: Query<(Entity,&UiLayoutComputed), (With<UiRoot>, With<UiLayoutComputed> )>,
+    root_query: Query<(Entity,&UiLayoutComputed), With<UiRoot>>,
+
 
     mut input_event_reader: EventReader<UiInteractInputEvent>,
     mut ui_output_event_writer: EventWriter<UiInteractEvent>,
@@ -45,29 +48,41 @@ pub fn update_drag_events(
     // children_query: Query<&Children,(With<UiLayoutComputed>,)>,
 
 ) {
+    //
+
+    device_cursors.retain(|&(root_entity,_device,),_cursor|{
+        root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default()
+    });
+
+    device_drags.retain(|&(root_entity,_device,),( _dragged_entity,_size,_offset,_cursor,)|{
+        root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default()
+    });
+
     //remove disabled or without drag component
     device_drags.retain(|(_root_entity,_device,),( dragged_entity,_size,_offset,_cursor,)|{
-        draggable_query.get(*dragged_entity).map(|(_e,c,d)|c.unlocked&&d.enable).unwrap_or_default()
+        draggable_query.get(*dragged_entity).map(|(_,computed,draggable)|computed.unlocked&&draggable.enable).unwrap_or_default()
     });
 
     //
     let mut roots_pressable_entities: HashMap<Entity, BTreeMap<u32,(Entity,Vec2,UiRect)>> = HashMap::new(); //[root_entity][order]=draggable_entity
 
     //get root entities with their pressable descendants
-    for (entity,computed,dragable) in draggable_query.iter() {
-        if !dragable.enable {
+    for (entity,computed,draggable) in draggable_query.iter() {
+        if !draggable.enable || !computed.unlocked {
             continue;
         }
 
-        if !parent_query.contains(entity) { //roots can't be pressable
-            continue;
-        }
+        // if !parent_query.contains(entity) { //roots can't be dragable //why not?
+        //     continue;
+        // }
 
-        if !computed.unlocked {
-            continue;
-        }
 
-        let root_entity=parent_query.iter_ancestors(entity).last().unwrap();
+        let Some(root_entity)=parent_query.iter_ancestors(entity).find(|&ancestor_entity|root_query.contains(ancestor_entity)) else {
+            continue;
+        };
+
+        // let root_entity=parent_query.iter_ancestors(entity).last().unwrap();
+
         roots_pressable_entities.entry(root_entity).or_default().insert(computed.order,(entity,computed.cell_size.sum(),computed.clamped_border_rect()));
     }
 
@@ -76,18 +91,23 @@ pub fn update_drag_events(
 
     //
     for ev in input_event_reader.read() {
+
+        if !root_query.get(ev.get_root_entity()).map(|(_,computed)|computed.unlocked).unwrap_or_default() {
+            continue;
+        }
         match ev.clone() {
             UiInteractInputEvent::CursorMoveTo{root_entity,device,cursor} => {
                 // println!("cursor {cursor:?}");
-                if let Some(cursor)=cursor {
-                    device_cursors.insert((root_entity,device),cursor);
-                } else {
-                    device_cursors.remove(&(root_entity,device));
-                }
-
                 let Some(cursor)=cursor else {
+                    device_cursors.remove(&(root_entity,device));
                     continue;
                 };
+
+                // if !root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default() {
+                //     continue;
+                // }
+
+                device_cursors.insert((root_entity,device),cursor);
 
                 let Some((entity,size,offset,start_cursor)) = device_drags.get_mut(&(root_entity,device)) else {
                     continue;
@@ -116,6 +136,12 @@ pub fn update_drag_events(
             UiInteractInputEvent::CursorPressBegin{root_entity,device} => {
                 //remove any prev (not normally needed)
                 device_drags.remove(&(root_entity,device));
+
+                //
+
+                // if !root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default() {
+                //     continue;
+                // }
 
                 //
                 let Some(draggable_entities)=roots_pressable_entities.get(&root_entity) else {

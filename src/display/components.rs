@@ -1,18 +1,20 @@
 use bevy::{asset::Handle, color::Color, ecs::prelude::*, math::Vec2, prelude::Image, reflect::Reflect, text::{ComputedTextBlock, Font, TextLayoutInfo}};
-use crate::UiInnerSize;
 
+
+use super::super::layout::components::{UiInnerSize,UiLayoutComputed};
 // use bevy::prelude::*;
 use super::values::*;
 
 #[derive(Reflect,Component, Debug, Clone,Copy)]
+#[require(UiLayoutComputed)]
 // pub struct UiColor(pub Color);
 
-pub struct UiColor { 
+pub struct UiColor {
     pub back : Color,
     pub padding : Color,
-    pub border : Color, 
-    pub margin : Color, 
-    pub cell : Color, 
+    pub border : Color,
+    pub margin : Color,
+    pub cell : Color,
 }
 
 impl Default for UiColor {
@@ -23,7 +25,8 @@ impl Default for UiColor {
 
 
 #[derive(Reflect,Component, Default, Debug, Clone)]
-#[require(UiInnerSize)]
+#[require(UiInnerSize,UiLayoutComputed)]
+
 
 pub struct UiImage {
     pub handle : Handle<Image>,
@@ -36,6 +39,7 @@ pub struct UiImage {
 }
 
 #[derive(Component, Clone, Default, Debug)]
+#[require(UiLayoutComputed)]
 pub struct UiTextComputed{
     pub max_size: Vec2,
     pub bounds: Vec2, //box size that text sits in including empty space, unlike text_layout.logical_size which is only for text itself
@@ -48,7 +52,7 @@ pub struct UiTextComputed{
 // }
 
 #[derive(Component, Debug,  Clone,  )]
-#[require(UiInnerSize,UiTextComputed,TextLayoutInfo,ComputedTextBlock)]
+#[require(UiLayoutComputed,UiInnerSize,UiTextComputed,TextLayoutInfo,ComputedTextBlock)]
 pub struct UiText {
     // pub sections: Vec<UiTextSection>,
     // pub section : TextSection,
@@ -57,14 +61,14 @@ pub struct UiText {
     pub font: Handle<Font>,
     pub font_size: f32,
     pub color: Color,
-    
+
     pub hlen : u32,
     pub vlen : u32,
-    
+
     // pub alignment: TextAlignment,
     pub halign : UiTextHAlign,
     pub valign : UiTextVAlign,
-    
+
     pub update : bool,
 }
 
@@ -89,10 +93,10 @@ impl Default for UiText {
 
             hlen : 0,
             vlen : 0,
-            
+
             halign : Default::default(),
             valign : Default::default(),
-            
+
             update : false,
         }
     }

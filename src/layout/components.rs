@@ -24,6 +24,7 @@ use super::values::*;
 
 //should it just resize the cell size instead ?
 #[derive(Reflect,Component, Default, Debug, Copy, Clone)]
+#[require(UiLayoutComputed)]
 pub struct UiCongruent { //congruence, congruent, congruous, consonant, coincide,  adjacent_size
     pub row_width_scale : f32,
     pub col_height_scale : f32,
@@ -35,6 +36,7 @@ width sharing horizontal, where percent adding up less than eq 100% means the wi
 but if over 100%, can normalise, or come up with size that is 100%, and make each of them the percent of that? no?
 */
 #[derive(Reflect,Component, Default, Debug, Clone, Copy)]
+#[require(UiLayoutComputed)]
 pub struct UiEdge { //neg scale used for using size w/h to calc edge h/w size aka (transverse)
     pub padding : UiRectVal,
     pub border : UiRectVal,
@@ -70,57 +72,67 @@ impl UiEdge {
 }
 
 #[derive(Reflect,Component, Default, Debug, Clone, Copy)]
+#[require(UiLayoutComputed)]
 pub struct UiGap {
     pub hgap : UiVal,
     pub vgap : UiVal,
 }
 
 #[derive(Reflect,Component, Default, Debug, Clone, Copy)]
+#[require(UiLayoutComputed)]
 pub struct UiExpand {
     pub hexpand : UiVal,
     pub vexpand : UiVal,
 }
 
 #[derive(Reflect,Component, Default, Debug, Clone, Copy)]
+#[require(UiLayoutComputed)]
 pub struct UiFill {
     pub hfill : UiVal,
     pub vfill : UiVal,
 }
 
 #[derive(Reflect,Component, Default, Debug, Clone, Copy)]
+#[require(UiLayoutComputed)]
 pub struct UiScroll {
     pub hscroll : UiVal,
     pub vscroll : UiVal,
 }
 
 #[derive(Reflect,Component, Default, Debug, Clone,Copy)]
+#[require(UiLayoutComputed)]
 pub struct UiFloat {
     pub float : bool,
 }
 
 #[derive(Reflect,Component, Default, Debug, Clone, Copy)]
+#[require(UiLayoutComputed)]
 pub struct UiDisable {
     pub disable : bool,
 }
 
 
 #[derive(Reflect,Component, Default, Debug, Clone, Copy)]
+#[require(UiLayoutComputed)]
 pub struct UiHide {
     pub hide : bool,
 }
 
 
 #[derive(Reflect,Component, Default, Debug, Clone,Copy)]
+#[require(UiLayoutComputed)]
 pub struct UiLock {
     pub lock : bool,
 }
 
 #[derive(Reflect,Component, Default, Debug, Clone, Copy)]
+#[require(UiLayoutComputed)]
 pub struct UiSpan {
     pub span : u32,
 }
 
 #[derive(Reflect,Component, Default, Debug, Clone, Copy)]
+#[require(UiLayoutComputed)]
 pub struct UiAlign {
     pub halign : UiVal,
     pub valign : UiVal,
@@ -133,6 +145,7 @@ pub struct UiAlign {
 // }
 
 #[derive(Reflect,Component, Default, Debug, Copy, Clone)]
+#[require(UiLayoutComputed)]
 pub struct UiSize {
     pub width : UiVal,
     pub height : UiVal,
@@ -142,13 +155,14 @@ pub struct UiSize {
 }
 
 #[derive(Reflect,Component, Default, Debug, Copy, Clone)]
+#[require(UiLayoutComputed)]
 pub struct UiInnerSize { //used for external things like text and images
     pub width : f32,
     pub height : f32,
 }
 
 #[derive(Reflect,Component, Debug, Copy, Clone)]
-
+#[require(UiLayoutComputed)]
 pub struct UiRoot {
     pub width:f32,
     pub height:f32,
@@ -166,6 +180,7 @@ impl Default for UiRoot {
 
 //have bool for calcd ?
 #[derive(Reflect,Component, Debug, Copy, Clone)]
+
 pub struct UiLayoutComputed {
 
     pub pos : Vec2,

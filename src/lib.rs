@@ -21,7 +21,7 @@ pub use display::render_core::core_my::CameraUi; //mesh
 pub use display::TestRenderComponent;
 
 /*
-TODO
+DONE
 
 * remove window from lib
 ** make root nodes size None, and have user manually set them
@@ -35,17 +35,26 @@ TODO
 *** dont need to add extra value entry
 *** can require computed on it
 **** for children, can auto add computed?
+
+* auto add computed to nodes that use ui component,
+** if entity used as child, but has no ui component, could add temp computed, stored in temp hashmap?
+*** what about later if only recomputing based on modification
+*** or if missing ui component, then don't use as child, any descendents thast do have uicomputed, ignore
+
+
+TODO
+
 * handling scaling, for px, font size, scale (no but resize window size when used)?
 ** multiply val::px by scaling
 ** font handled by scaling input var
 ** what about images? yes?
 ** have scaling component
+
 * handle render layers
+
 * instead of positioning camera at 0,0,far-1, set near to -1000, and far to 0/1, then can position things closer to camera at neg/less
-* auto add computed to nodes that use ui component,
-** if entity used as child, but has no ui component, could add temp computed, stored in temp hashmap?
-*** what about later if only recomputing based on modification
-*** or if missing ui component, then don't use as child, any descendents thast do have uicomputed, ignore
+
+
 * probably want to allow different ui's on dif monitors, where cursor can move across and click on them?
 
 */

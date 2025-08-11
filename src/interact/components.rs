@@ -1,12 +1,15 @@
 
 use bevy::ecs::prelude::*;
+use super::super::layout::components::UiLayoutComputed;
 
 #[derive(Component,Default,Clone,Debug)]
+#[require(UiLayoutComputed)]
 pub struct UiHoverable {
     pub enable : bool,
 }
 
 #[derive(Component,Default,Clone,Debug)]
+#[require(UiLayoutComputed)]
 pub struct UiPressable {
     pub enable : bool,
     pub always : bool, // doesn't temporarily release if cursor is moved off while still pressing
@@ -17,6 +20,7 @@ pub struct UiPressable {
 }
 
 #[derive(Component,Default,Clone,Debug)]
+#[require(UiLayoutComputed)]
 pub struct UiDraggable {
     pub enable : bool,
 }
@@ -28,6 +32,7 @@ pub struct UiDraggable {
 // }
 
 #[derive(Component,Default,Clone,Debug)]
+#[require(UiLayoutComputed)]
 pub struct UiSelectable {
     pub enable : bool,
     pub selected : bool, //set by both user and interact system
@@ -35,6 +40,7 @@ pub struct UiSelectable {
 }
 
 #[derive(Component,Default,Clone,Debug)]
+#[require(UiLayoutComputed)]
 pub struct UiFocusable {
     pub enable : bool,
     pub focused : bool, //set by both user and interact system

@@ -91,7 +91,7 @@ pub fn setup_ui(
 ) {
     // commands.spawn((
     //     MenuUiRoot,
-    //     UiLayoutComputed::default(),
+    //
     //     UiColor{back:Color::srgb(0.2,0.4,0.9),..Default::default()},
     //     UiSize{
     //          width:UiVal::Px(200.0),
@@ -102,7 +102,7 @@ pub fn setup_ui(
     // commands.spawn((
     //     MenuUiRoot,
     //     UiRoot::default(),
-    //     UiLayoutComputed::default(),
+    //
     //     UiColor{back:Color::srgb(0.2,0.4,0.6),..Default::default()},
     //     UiSize{
     //         width:UiVal::Px(200.0),
@@ -115,7 +115,7 @@ pub fn setup_ui(
     commands.spawn((
         MenuUiRoot,
         UiRoot::default(),
-        UiLayoutComputed::default(),
+
         UiColor{back:Color::srgb(0.2,0.4,0.6),..Default::default()},
         UiSize{
             // width:UiVal::Px(200.0),
@@ -129,7 +129,7 @@ pub fn setup_ui(
 
         //0
         parent.spawn((
-            UiLayoutComputed::default(),
+
             // UiInnerSize::default(),
             UiColor{
                 back:Color::BLACK,
@@ -150,7 +150,7 @@ pub fn setup_ui(
 
         //1
         parent.spawn((
-            UiLayoutComputed::default(),
+
             UiColor{
                 back:Color::srgb(1.0,0.3,0.1),
                 cell:Color::srgb(1.0,0.5,0.1),
@@ -186,7 +186,7 @@ pub fn setup_ui(
 
         //2
         parent.spawn((
-            UiLayoutComputed::default(),
+
             UiColor{
                 back:Color::srgb(1.0,0.3,0.1),
                 cell:Color::srgb(1.0,0.5,0.1),
@@ -211,7 +211,7 @@ pub fn setup_ui(
 
         //3
         parent.spawn((
-            UiLayoutComputed::default(),
+
             UiColor{
                 back:Color::srgb(1.0,0.3,0.1),
                 cell:Color::srgb(1.0,0.5,0.1),
@@ -236,7 +236,7 @@ pub fn setup_ui(
 
         //4
         parent.spawn((
-            UiLayoutComputed::default(),
+
             UiColor{
                 back:Color::srgb(1.0,0.3,0.1),
                 cell:Color::srgb(1.0,0.5,0.1),
@@ -301,33 +301,33 @@ fn setup_camera(mut commands: Commands) {
         // Transform::from_xyz( 0.0, 0.0, 999.0, ),
     ));
 
-    commands.spawn((
-        TestRenderComponent{
-            col: Color::srgb(1.0,0.0,0.0),
-            // col: Color::srgb(0.0,0.0,1.0),
-            // col:Color::WHITE.into(),
-            x: 0.0, y: 0.0, w: 50.0, h: 50.0,
-            // handle:Some(asset_server.load("bevy_logo_dark_big.png")),
-            handle:None,
-        },
-        // // RenderLayers::layer(1),
-        // RenderLayers::from_layers(&[0]),
-        // Transform::from_xyz( 0.0, 0.0, 0.0, ),
-    ));
-    commands.spawn((
-        TestRenderComponent{
-            col: Color::srgb(0.0,1.0,0.0),
-            x: 50.0, y: 50.0, w: 50.0, h: 50.0,
-            handle:None,
-        },
-    ));
-    commands.spawn((
-        TestRenderComponent{
-            col: Color::srgb(0.0,0.0,1.0),
-            x: 100.0, y: 100.0, w: 50.0, h: 50.0,
-            handle:None,
-        },
-    ));
+    // commands.spawn((
+    //     TestRenderComponent{
+    //         col: Color::srgb(1.0,0.0,0.0),
+    //         // col: Color::srgb(0.0,0.0,1.0),
+    //         // col:Color::WHITE.into(),
+    //         x: 0.0, y: 0.0, w: 50.0, h: 50.0,
+    //         // handle:Some(asset_server.load("bevy_logo_dark_big.png")),
+    //         handle:None,
+    //     },
+    //     // // RenderLayers::layer(1),
+    //     // RenderLayers::from_layers(&[0]),
+    //     // Transform::from_xyz( 0.0, 0.0, 0.0, ),
+    // ));
+    // commands.spawn((
+    //     TestRenderComponent{
+    //         col: Color::srgb(0.0,1.0,0.0),
+    //         x: 50.0, y: 50.0, w: 50.0, h: 50.0,
+    //         handle:None,
+    //     },
+    // ));
+    // commands.spawn((
+    //     TestRenderComponent{
+    //         col: Color::srgb(0.0,0.0,1.0),
+    //         x: 100.0, y: 100.0, w: 50.0, h: 50.0,
+    //         handle:None,
+    //     },
+    // ));
 }
 
 fn update_input(

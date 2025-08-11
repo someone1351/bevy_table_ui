@@ -3,6 +3,8 @@ use std::collections::{BTreeSet, HashMap};
 
 use bevy::{color::Color, ecs::prelude::*, };
 
+use super::super::layout::components::UiLayoutComputed;
+
 
 #[derive(Debug,Hash,PartialEq,Eq,Copy,Clone,PartialOrd, Ord)]
 pub enum UiAffectState {
@@ -41,13 +43,14 @@ pub enum UiAffectState {
 // }
 
 #[derive(Component,Default,Debug)]
+#[require(UiLayoutComputed)]
 pub struct UiAffect {
     pub states : BTreeSet<UiAffectState>,
     pub remove_states : BTreeSet<UiAffectState>,
     pub back_color : HashMap<Option<UiAffectState>,Color>,
     pub border_color : HashMap<Option<UiAffectState>,Color>,
     pub text_color: HashMap<Option<UiAffectState>,Color>,
-    
+
     pub padding_color : HashMap<Option<UiAffectState>,Color>,
     pub margin_color : HashMap<Option<UiAffectState>,Color>,
     pub cell_color : HashMap<Option<UiAffectState>,Color>,

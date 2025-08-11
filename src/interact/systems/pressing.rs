@@ -227,7 +227,12 @@ pub fn update_press_events(
             continue;
         }
 
-        let root_entity=parent_query.iter_ancestors(entity).last().unwrap();
+        // let root_entity=parent_query.iter_ancestors(entity).last().unwrap();
+
+        let Some(root_entity)=[entity].into_iter().chain(parent_query.iter_ancestors(entity)).find(|&ancestor_entity|root_query.contains(ancestor_entity)) else {
+            continue;
+        };
+
         roots_pressable_entities.entry(root_entity).or_default().push(entity);
     }
 

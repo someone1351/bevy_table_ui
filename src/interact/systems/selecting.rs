@@ -114,12 +114,17 @@ pub fn update_select_events(
             continue;
         }
 
-        if let Some(root_entity)=parent_query.iter_ancestors(entity).last() {
-            select_root_entities.entry(root_entity).or_default().push(entity);
-        } else {
-            select_root_entities.entry(entity).or_default().push(entity);
-        }
+        // if let Some(root_entity)=parent_query.iter_ancestors(entity).last() {
+        //     select_root_entities.entry(root_entity).or_default().push(entity);
+        // } else {
+        //     select_root_entities.entry(entity).or_default().push(entity);
+        // }
 
+        let Some(root_entity)=[entity].into_iter().chain(parent_query.iter_ancestors(entity)).find(|&ancestor_entity|root_query.contains(ancestor_entity)) else {
+            continue;
+        };
+
+        select_root_entities.entry(root_entity).or_default().push(entity);
     }
 
     //sort select_root_entities by computed.order

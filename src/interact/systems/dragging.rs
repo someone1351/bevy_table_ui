@@ -77,7 +77,7 @@ pub fn update_drag_events(
         // }
 
 
-        let Some(root_entity)=parent_query.iter_ancestors(entity).find(|&ancestor_entity|root_query.contains(ancestor_entity)) else {
+        let Some(root_entity)=[entity].into_iter().chain(parent_query.iter_ancestors(entity)).find(|&ancestor_entity|root_query.contains(ancestor_entity)) else {
             continue;
         };
 

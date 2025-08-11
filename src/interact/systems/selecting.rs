@@ -28,7 +28,8 @@ pub fn update_select_events(
 
     //unselect removed entities, selecteds with changed group names, removed/disabled selectable
     for root_entity in root_group_selecteds.keys().cloned().collect::<Vec<_>>() {
-        let root_entity_alive=computed_query.get(root_entity).is_ok();
+        // let root_entity_alive=computed_query.get(root_entity).is_ok();
+        let root_entity_alive= root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default();
 
         //
         let group_selecteds=root_group_selecteds.get_mut(&root_entity).unwrap();
@@ -63,7 +64,8 @@ pub fn update_select_events(
 
     //single selecteds
     for root_entity in root_single_selecteds.keys().cloned().collect::<Vec<_>>() {
-        let root_entity_alive=computed_query.get(root_entity).is_ok();
+        // let root_entity_alive=computed_query.get(root_entity).is_ok();
+        let root_entity_alive= root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default();
 
         //
         let single_selecteds=root_single_selecteds.get_mut(&root_entity).unwrap();

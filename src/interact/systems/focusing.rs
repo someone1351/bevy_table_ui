@@ -225,13 +225,13 @@ pub fn update_focus_events(
             let cur_group=focusable.group;
             // let root_entity=parent_query.iter_ancestors(entity).last().unwrap_or(entity);
 
-            let Some(root_entity)=[entity].into_iter().chain(parent_query.iter_ancestors(entity)).find(|&ancestor_entity|root_query.contains(ancestor_entity)) else {
-                continue;
-            };
+            // let Some(root_entity)=[entity].into_iter().chain(parent_query.iter_ancestors(entity)).find(|&ancestor_entity|root_query.contains(ancestor_entity)) else {
+            //     continue;
+            // };
 
             //
             let (cur_focus_entity,focus_entity_stk,hist)=focus_states.cur_focuses
-                .entry(root_entity).or_default()
+                .entry(computed.root_entity).or_default()
                 .entry(cur_group).or_default();
 
             //
@@ -257,7 +257,9 @@ pub fn update_focus_events(
                     focus_ancestor_entities.push(ancestor_entity);
                 }
 
-                if root_query.contains(entity) {
+                if root_query.contains(entity)
+                // if computed.root_entity==ancestor_entity
+                {
                     break;
                 }
             }
@@ -350,19 +352,19 @@ pub fn update_focus_events(
         }
 
         // let root_entity = parent_query.iter_ancestors(entity).last().unwrap_or(entity);
-        let Some(root_entity)=[entity].into_iter().chain(parent_query.iter_ancestors(entity)).find(|&ancestor_entity|root_query.contains(ancestor_entity)) else {
-            continue;
-        };
+        // let Some(root_entity)=[entity].into_iter().chain(parent_query.iter_ancestors(entity)).find(|&ancestor_entity|root_query.contains(ancestor_entity)) else {
+        //     continue;
+        // };
 
         let (_cur_focus_entity,_focus_entity_stk,hist)=focus_states.cur_focuses
-            .entry(root_entity).or_default()
+            .entry(computed.root_entity).or_default()
             .entry(focusable.group).or_default()
             ;
 
 
         focusable_entity_roots.insert(entity);
 
-        let prev=root_focus_group_focuses.entry((root_entity,focusable.group)).or_insert((entity,computed.order));
+        let prev=root_focus_group_focuses.entry((computed.root_entity,focusable.group)).or_insert((entity,computed.order));
 
 
         let cur_hist=hist.get(&entity).cloned().unwrap_or_default();
@@ -400,7 +402,9 @@ pub fn update_focus_events(
                     focus_ancestor_entities.push(ancestor_entity);
                 }
 
-                if root_query.contains(entity) {
+                if root_query.contains(entity)
+                // if computed.root_entity==ancestor_entity
+                {
                     break;
                 }
             }

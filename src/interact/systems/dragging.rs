@@ -36,7 +36,7 @@ pub fn update_drag_events(
 
     // press_states:Res<UiPressStates>,
     draggable_query: Query<(Entity,&UiLayoutComputed,&UiDraggable)>,
-    parent_query : Query<&ChildOf,With<UiLayoutComputed>>,
+    // parent_query : Query<&ChildOf,With<UiLayoutComputed>>,
 
     // root_query: Query<(Entity,&UiLayoutComputed), (With<UiRoot>, With<UiLayoutComputed> )>,
     root_query: Query<(Entity,&UiLayoutComputed), With<UiRoot>>,
@@ -77,13 +77,13 @@ pub fn update_drag_events(
         // }
 
 
-        let Some(root_entity)=[entity].into_iter().chain(parent_query.iter_ancestors(entity)).find(|&ancestor_entity|root_query.contains(ancestor_entity)) else {
-            continue;
-        };
+        // let Some(root_entity)=[entity].into_iter().chain(parent_query.iter_ancestors(entity)).find(|&ancestor_entity|root_query.contains(ancestor_entity)) else {
+        //     continue;
+        // };
 
         // let root_entity=parent_query.iter_ancestors(entity).last().unwrap();
 
-        roots_pressable_entities.entry(root_entity).or_default().insert(computed.order,(entity,computed.cell_size.sum(),computed.clamped_border_rect()));
+        roots_pressable_entities.entry(computed.root_entity).or_default().insert(computed.order,(entity,computed.cell_size.sum(),computed.clamped_border_rect()));
     }
 
 

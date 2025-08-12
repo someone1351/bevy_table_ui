@@ -10,7 +10,7 @@ use bevy::ecs::entity::Entity;
 use bevy::ecs::query::With;
 use bevy::image::{Image, TextureAtlasLayout};
 use bevy::math::{FloatOrd, Vec2};
-use bevy::prelude::{ChildOf, EventReader, Msaa};
+use bevy::prelude::{Camera, ChildOf, EventReader, Msaa};
 use bevy::render::render_asset::RenderAssets;
 use bevy::render::texture::GpuImage;
 use bevy::render::{render_phase::*, Extract};
@@ -258,6 +258,10 @@ pub fn extract_uinodes2(
     textures: Extract<Res<Assets<Image>>>,
     texture_atlases: Extract<Res<Assets<TextureAtlasLayout>>>,
 
+    camera_query : Extract<Query<(Entity,&RenderLayers),With<Camera>>>,
+
+    // uinode_render_layer_query: Extract<Query<&RenderLayers, With<UiLayoutComputed>> >,
+    uinode_render_layer_query: Extract<Query<&RenderLayers, (With<UiLayoutComputed>,With<UiRoot>)> >,
     uinode_query: Extract<Query<(
         Entity,
         &UiLayoutComputed,

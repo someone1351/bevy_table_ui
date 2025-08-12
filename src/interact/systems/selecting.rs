@@ -18,7 +18,7 @@ pub fn update_select_events(
     // mut active_nodes: ResMut<UiActiveNodes>,
     // root_query: Query<Entity,(Without<Parent>,With<UiLayoutComputed>)>,
     root_query: Query<(Entity,&UiLayoutComputed), With<UiRoot>>,
-    parent_query : Query<&ChildOf,With<UiLayoutComputed>>,
+    // parent_query : Query<&ChildOf,With<UiLayoutComputed>>,
     computed_query: Query<&UiLayoutComputed>, //,With<UiPressable>
     mut selectable_query: Query<(Entity,&mut UiSelectable)>,
     mut root_group_selecteds : Local<HashMap<Entity,HashMap<String,Entity>>>, //[root_entity][select_group]=node
@@ -114,17 +114,17 @@ pub fn update_select_events(
             continue;
         }
 
-        // if let Some(root_entity)=parent_query.iter_ancestors(entity).last() {
-        //     select_root_entities.entry(root_entity).or_default().push(entity);
-        // } else {
-        //     select_root_entities.entry(entity).or_default().push(entity);
-        // }
+        // // if let Some(root_entity)=parent_query.iter_ancestors(entity).last() {
+        // //     select_root_entities.entry(root_entity).or_default().push(entity);
+        // // } else {
+        // //     select_root_entities.entry(entity).or_default().push(entity);
+        // // }
 
-        let Some(root_entity)=[entity].into_iter().chain(parent_query.iter_ancestors(entity)).find(|&ancestor_entity|root_query.contains(ancestor_entity)) else {
-            continue;
-        };
+        // let Some(root_entity)=[entity].into_iter().chain(parent_query.iter_ancestors(entity)).find(|&ancestor_entity|root_query.contains(ancestor_entity)) else {
+        //     continue;
+        // };
 
-        select_root_entities.entry(root_entity).or_default().push(entity);
+        select_root_entities.entry(computed.root_entity).or_default().push(entity);
     }
 
     //sort select_root_entities by computed.order

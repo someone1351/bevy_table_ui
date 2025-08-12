@@ -202,6 +202,7 @@ pub fn ui_init_computeds(
             //
 
             computed.enabled=true;
+            computed.root_entity=root_entity;
 
             // if hide {
             //     continue;

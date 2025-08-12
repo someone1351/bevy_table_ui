@@ -78,7 +78,7 @@ pub fn update_press_events(
     // root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
     root_query: Query<(Entity,&UiLayoutComputed), With<UiRoot>>,
 
-    parent_query : Query<&ChildOf,With<UiLayoutComputed>>,
+    // parent_query : Query<&ChildOf,With<UiLayoutComputed>>,
     layout_computed_query: Query<&UiLayoutComputed>, //,With<UiPressable>
     mut pressable_query: Query<(Entity,&mut UiPressable)>,
 
@@ -227,13 +227,13 @@ pub fn update_press_events(
             continue;
         }
 
-        // let root_entity=parent_query.iter_ancestors(entity).last().unwrap();
+        // // let root_entity=parent_query.iter_ancestors(entity).last().unwrap();
 
-        let Some(root_entity)=[entity].into_iter().chain(parent_query.iter_ancestors(entity)).find(|&ancestor_entity|root_query.contains(ancestor_entity)) else {
-            continue;
-        };
+        // let Some(root_entity)=[entity].into_iter().chain(parent_query.iter_ancestors(entity)).find(|&ancestor_entity|root_query.contains(ancestor_entity)) else {
+        //     continue;
+        // };
 
-        roots_pressable_entities.entry(root_entity).or_default().push(entity);
+        roots_pressable_entities.entry(computed.root_entity).or_default().push(entity);
     }
 
     //sort press_root_entities by computed.order

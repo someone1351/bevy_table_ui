@@ -1,6 +1,6 @@
 
 use bevy::ecs::component::Component;
-use bevy::prelude::Vec2;
+use bevy::prelude::{Entity, Vec2};
 use bevy::reflect::Reflect;
 
 use super::values::*;
@@ -207,6 +207,7 @@ pub struct UiLayoutComputed {
     pub enabled : bool,
     pub unlocked : bool,
 
+    pub root_entity : Entity,
 }
 
 impl UiLayoutComputed {
@@ -270,6 +271,7 @@ impl Default for UiLayoutComputed {
             visible: false,
             enabled: false,
             unlocked: false,
+            root_entity: Entity::PLACEHOLDER,
         }
     }
 }

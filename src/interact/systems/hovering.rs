@@ -28,7 +28,7 @@ use super::super::events::*;
 
 pub fn update_hover_events(
 
-    parent_query : Query<&ChildOf,With<UiLayoutComputed>>,
+    // parent_query : Query<&ChildOf,With<UiLayoutComputed>>,
     hoverable_query: Query<(Entity,&UiLayoutComputed,&UiHoverable)>,
     root_query: Query<(Entity,&UiLayoutComputed), With<UiRoot>>,
 
@@ -74,13 +74,13 @@ pub fn update_hover_events(
             continue;
         }
 
-        // let root_entity=parent_query.iter_ancestors(entity).last().unwrap_or(entity);
+        // // let root_entity=parent_query.iter_ancestors(entity).last().unwrap_or(entity);
 
-        let Some(root_entity)=[entity].into_iter().chain(parent_query.iter_ancestors(entity)).find(|&ancestor_entity|root_query.contains(ancestor_entity)) else {
-            continue;
-        };
+        // let Some(root_entity)=[entity].into_iter().chain(parent_query.iter_ancestors(entity)).find(|&ancestor_entity|root_query.contains(ancestor_entity)) else {
+        //     continue;
+        // };
 
-        hover_root_entities.entry(root_entity).or_default().push((entity,layout_computed.order,layout_computed.clamped_border_rect()));
+        hover_root_entities.entry(layout_computed.root_entity).or_default().push((entity,layout_computed.order,layout_computed.clamped_border_rect()));
     }
 
     //sort hover_root_entities by computed.order

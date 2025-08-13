@@ -10,7 +10,8 @@ use bevy::ecs::entity::Entity;
 use bevy::ecs::query::With;
 use bevy::image::{Image, TextureAtlasLayout};
 use bevy::math::{FloatOrd, Vec2};
-use bevy::prelude::{Camera, ChildOf, EventReader, Msaa};
+// use bevy::platform::collections::HashSet;
+use bevy::prelude::{ChildOf, EventReader, Msaa};
 use bevy::render::render_asset::RenderAssets;
 use bevy::render::texture::GpuImage;
 use bevy::render::{render_phase::*, Extract};
@@ -228,6 +229,8 @@ pub fn extract_uinodes(
         let x2= test.x+test.w;
         let y2= test.y+test.h;
 
+        let render_layers=render_layers.cloned().unwrap_or_else(||RenderLayers::layer(0));
+
         extracted_elements.elements.push(MyUiExtractedElement{
             entity:commands.spawn((TemporaryRenderEntity,)).id(), //is this needed? instead spawn entity later?
             main_entity:entity.into(),
@@ -238,7 +241,7 @@ pub fn extract_uinodes(
             // y2: test.y+test.h,
             color: test.col,
             depth: 0,
-            render_layers: render_layers.cloned(),
+            render_layers,
             image: test.handle.clone(),
             bl: Vec2::new(x, y2),
             br: Vec2::new(x2, y2),
@@ -258,10 +261,10 @@ pub fn extract_uinodes2(
     textures: Extract<Res<Assets<Image>>>,
     texture_atlases: Extract<Res<Assets<TextureAtlasLayout>>>,
 
-    camera_query : Extract<Query<(Entity,&RenderLayers),With<Camera>>>,
+    // camera_query : Extract<Query<(Entity,Option<&RenderLayers>),With<Camera>>>,
 
     // uinode_render_layer_query: Extract<Query<&RenderLayers, With<UiLayoutComputed>> >,
-    uinode_render_layer_query: Extract<Query<&RenderLayers, (With<UiLayoutComputed>,With<UiRoot>)> >,
+    root_render_layer_query: Extract<Query<&RenderLayers, (With<UiLayoutComputed>,With<UiRoot>)> >,
     uinode_query: Extract<Query<(
         Entity,
         &UiLayoutComputed,
@@ -303,6 +306,7 @@ pub fn extract_uinodes2(
     //     });
     // }
 
+    let default_render_layers = RenderLayers::layer(0);
 
     for (entity,
         layout_computed,
@@ -318,6 +322,22 @@ pub fn extract_uinodes2(
         if !layout_computed.visible {
             continue;
         }
+
+        // let mut used_cameras = HashSet::new();
+        let node_render_layers=root_render_layer_query.get(layout_computed.root_entity).unwrap_or(&default_render_layers);
+
+        // for (camera_entity,camera_render_layers) in camera_query.iter() {
+        //     let camera_render_layers=camera_render_layers.unwrap_or(&default_render_layers);
+
+        //     if camera_render_layers.intersects(node_render_layers) {
+        //         used_cameras.insert(camera_entity);
+        //     }
+        // }
+
+        // if used_cameras.is_empty() {
+        //     continue;
+        // }
+
 
         let depth = layout_computed.order*3;
         let image_depth=depth+1;
@@ -350,6 +370,7 @@ pub fn extract_uinodes2(
             let tr=Vec2::new(clamped_inner_rect2.right, clamped_inner_rect2.top);
 
             extracted_elements.elements.push(MyUiExtractedElement{
+                render_layers: node_render_layers.clone(),
                 bl,br,tl,tr,
                 // z,
                 color: back_color.clone(),
@@ -362,7 +383,6 @@ pub fn extract_uinodes2(
                 entity:commands.spawn((TemporaryRenderEntity,)).id(),
 
                 main_entity: entity.into(),
-                // render_layers: todo!(),
                 // camera_entity,
 
                 ..Default::default()
@@ -406,6 +426,7 @@ pub fn extract_uinodes2(
                     for j in 0..4 {
                         if sizes[j]>0.0 && thicknesses[j]>0.0 {
                             extracted_elements.elements.push(MyUiExtractedElement{
+                                render_layers: node_render_layers.clone(),
                                 bl:bls[j],br:brs[j],tl:tls[j],tr:trs[j],
                                 // z,
                                 color : cols[i].clone(),
@@ -474,6 +495,7 @@ pub fn extract_uinodes2(
                 let tr_uv=Vec2::new(dx, 0.0);
 
                 extracted_elements.elements.push(MyUiExtractedElement{
+                    render_layers: node_render_layers.clone(),
                     bl,br,tl,tr,
                     // z:image_z,
                     color : image.color.clone(),
@@ -484,7 +506,6 @@ pub fn extract_uinodes2(
                     entity:commands.spawn((TemporaryRenderEntity,)).id(),
                     // camera_entity,
                     main_entity: entity.into(),
-                    render_layers: None,
                     // ..Default::default()
                 });
             }
@@ -561,6 +582,7 @@ pub fn extract_uinodes2(
                     let texture=text_glyph.atlas_info.texture.clone();
 
                     extracted_elements.elements.push(MyUiExtractedElement{
+                        render_layers: node_render_layers.clone(),
                         bl,br,tl,tr,
                         // z:text_z,
                         bl_uv,br_uv,tl_uv,tr_uv,
@@ -570,7 +592,6 @@ pub fn extract_uinodes2(
                         entity:commands.spawn((TemporaryRenderEntity,)).id(),
                         // camera_entity,
                         main_entity: entity.into(),
-                        render_layers: None,
                     });
                 }
             }
@@ -594,7 +615,7 @@ pub fn queue_uinodes(
         &MainEntity,
         &ExtractedView,
         &Msaa,
-        Option<&RenderLayers>,
+        Option<&RenderLayers>, //
     )>,
 
     // // render_camera_query: Query<(Entity, &MyCameraView),  >,
@@ -640,9 +661,9 @@ pub fn queue_uinodes(
 
         for element in extracted_elements.elements.iter() {
 
-            let element_render_layers=element.render_layers.as_ref().unwrap_or(&default_render_layers);
+            // let element_render_layers=element.render_layers;//.unwrap_or(&default_render_layers);
 
-            if element_render_layers.intersection(view_render_layers).iter().count()==0 {
+            if element.render_layers.intersection(view_render_layers).iter().count()==0 {
                 continue;
             }
 

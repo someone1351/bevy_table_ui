@@ -14,6 +14,8 @@ use bevy::render::view::RenderLayers;
 
 
 //render resources
+
+
 #[derive(Clone,Debug)]
 pub struct MyUiExtractedElement{
     // pub x:f32,
@@ -29,7 +31,8 @@ pub struct MyUiExtractedElement{
     pub entity:Entity,
     pub main_entity:MainEntity,
     // pub camera_entity:Entity,
-    pub render_layers:Option<RenderLayers>,
+    // pub render_layers:Option<RenderLayers>,
+    pub render_layers:RenderLayers,
 
     pub image : Option<Handle<Image>>,
 }
@@ -49,7 +52,7 @@ impl Default for MyUiExtractedElement {
             color: Color::WHITE,
             entity: Entity::PLACEHOLDER,
             main_entity: Entity::PLACEHOLDER.into(),
-            render_layers: None,
+            render_layers: RenderLayers::none(),
             image: None,
         }
     }
@@ -57,6 +60,8 @@ impl Default for MyUiExtractedElement {
 #[derive(Resource,Default,Debug)]
 pub struct MyUiExtractedElements {
     pub elements : Vec<MyUiExtractedElement>,
+    // pub cameras : HashMap<MainEntity>,
+
 }
 
 

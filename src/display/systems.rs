@@ -79,7 +79,7 @@ pub fn update_text_image(
             continue;
         }
 
-        let scale_factor=root_query.get(layout_computed.root_entity).unwrap().scaling;
+        let scale_factor=root_query.get(layout_computed.root_entity).unwrap().scaling.max(0.0);
 
         inner_size.width = 0.0;
         inner_size.height = 0.0;
@@ -95,17 +95,17 @@ pub fn update_text_image(
 
                 //todo keep aspect ratio
 
-                if image.width_scale>0.0 {
-                    inner_size.width = inner_size.width.max(image.width_scale*image_size.x*scale_factor);
-                } else if inner_size.width == 0.0 {
-                    inner_size.width = inner_size.width.max(image_size.x*scale_factor);
-                }
+                // if image.width_scale>0.0 {
+                    inner_size.width = inner_size.width.max(image.width_scale.max(0.0)*image_size.x*scale_factor);
+                // } else if inner_size.width == 0.0 {
+                //     inner_size.width = inner_size.width.max(image_size.x*scale_factor);
+                // }
 
-                if image.height_scale>0.0 {
-                    inner_size.height = inner_size.height.max(image.height_scale*image_size.y*scale_factor);
-                } else if inner_size.height == 0.0 {
-                    inner_size.height = inner_size.height.max(image_size.y*scale_factor);
-                }
+                // if image.height_scale>0.0 {
+                    inner_size.height = inner_size.height.max(image.height_scale.max(0.0)*image_size.y*scale_factor);
+                // } else if inner_size.height == 0.0 {
+                //     inner_size.height = inner_size.height.max(image_size.y*scale_factor);
+                // }
             }
         }
 
@@ -124,8 +124,12 @@ pub fn update_text_image(
                 fonts_loaded=false;
             }
 
+            let font_size=text.font_size;//*scale_factor*10.0;
+
+            let tex_updated= text.update || text_computed.scaling!=scale_factor;
+
             //
-            if text.update && fonts_loaded {
+            if tex_updated && fonts_loaded {
                 let mut bound_width=(layout_computed.size.x>=0.0).then_some(layout_computed.size.x);
                 let mut bound_height=(layout_computed.size.y>=0.0).then_some(layout_computed.size.y);
 
@@ -150,7 +154,7 @@ pub fn update_text_image(
                     }
 
                     let text_spans=[(entity, 0 /*depth*/, " ", &TextFont{
-                        font: text.font.clone(), font_size: text.font_size, font_smoothing: FontSmoothing::None,
+                        font: text.font.clone(), font_size, font_smoothing: FontSmoothing::None,
                         line_height: LineHeight::RelativeToFont(1.2),
                     },text.color)];
 
@@ -161,6 +165,7 @@ pub fn update_text_image(
                         &fonts,
                         text_spans.into_iter(),
                         scale_factor as f64,
+                        // 1.0,
                         &TextLayout {justify: text_alignment,linebreak: LineBreak::NoWrap,},
                         TextBounds{width:None,height:None},
                         &mut font_atlas_sets,
@@ -185,7 +190,7 @@ pub fn update_text_image(
 
                 //
                 let text_spans=[(entity, 0 /*depth*/, text.value.as_str(), &TextFont{
-                    font: text.font.clone(), font_size: text.font_size, font_smoothing: FontSmoothing::AntiAliased,
+                    font: text.font.clone(), font_size, font_smoothing: FontSmoothing::AntiAliased,
                     line_height: LineHeight::RelativeToFont(1.2),
                 },text.color)];
 
@@ -195,6 +200,7 @@ pub fn update_text_image(
                     &fonts,
                     text_spans.into_iter(),
                     scale_factor as f64,
+                    // 1.0,
                     &TextLayout {justify: text_alignment,linebreak: LineBreak::WordBoundary,},
                     TextBounds{width:bound_width,height:bound_height},
                     &mut font_atlas_sets,
@@ -231,6 +237,7 @@ pub fn update_text_image(
 
                 //
                 text.update=false;
+                text_computed.scaling=scale_factor;
             } else { //whats this for again? because inner_size is cleared at top, need to reset it when not updated? what about for image?
                 inner_size.width = inner_size.width.max(text_computed.max_size.x); //size
                 inner_size.height = inner_size.height.max(text_computed.max_size.y); //size

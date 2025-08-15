@@ -258,7 +258,7 @@ pub fn extract_uinodes2(
     // windows: Extract<Query<&Window, With<PrimaryWindow>>>,
     mut commands: Commands,
 
-    textures: Extract<Res<Assets<Image>>>,
+    // textures: Extract<Res<Assets<Image>>>,
     texture_atlases: Extract<Res<Assets<TextureAtlasLayout>>>,
 
     // camera_query : Extract<Query<(Entity,Option<&RenderLayers>),With<Camera>>>,
@@ -351,6 +351,8 @@ pub fn extract_uinodes2(
 
         let clamped_inner_width = layout_computed.clamped_rect.width();
         let clamped_inner_height = layout_computed.clamped_rect.height();
+
+        let inner_rect=layout_computed.inner_rect();
 
         //
         let padding_color = color.map(|c|c.padding).unwrap_or(Color::NONE);
@@ -452,47 +454,69 @@ pub fn extract_uinodes2(
         //image
         if let Some(image) = image {
             if clamped_inner_width > 0.0 && clamped_inner_height > 0.0 {
-                let texture = textures.get(&image.handle);
-                let size = if let Some(texture)=texture{texture.size().as_vec2()}else{Vec2::ZERO};
+                // let texture = textures.get(&image.handle);
+                // let tex_size = if let Some(texture)=texture{texture.size().as_vec2()}else{Vec2::ZERO};
 
                 //todo keep aspect ratio
 
-                if image.keep_aspect_ratio && image.width_scale <= 0.0 && image.height_scale > 0.0 {
+                // if image.keep_aspect_ratio && image.width_scale <= 0.0 && image.height_scale > 0.0 {
 
-                }
+                // }
 
-                if image.keep_aspect_ratio && image.width_scale > 0.0 && image.height_scale <= 0.0 {
+                // if image.keep_aspect_ratio && image.width_scale > 0.0 && image.height_scale <= 0.0 {
 
-                }
+                // }
 
-                if image.keep_aspect_ratio && image.width_scale <= 0.0 && image.height_scale <= 0.0 {
+                // if image.keep_aspect_ratio && image.width_scale <= 0.0 && image.height_scale <= 0.0 {
 
-                }
+                // }
 
-                let w = if image.width_scale > 0.0 {
-                    image.width_scale*size.x
-                } else {
-                    layout_computed.size.x
-                };
+                // let w = if image.width_scale > 0.0 {
+                //     image.width_scale*tex_size.x
+                // } else {
+                //     layout_computed.size.x
+                // };
 
-                let h = if image.height_scale > 0.0 {
-                    image.height_scale*size.y
-                } else {
-                    layout_computed.size.y
-                };
+                // let h = if image.height_scale > 0.0 {
+                //     image.height_scale*tex_size.y
+                // } else {
+                //     layout_computed.size.y
+                // };
 
-                let dx=clamped_inner_width/w;
-                let dy=clamped_inner_height/h;
+                // let w=image.width_scale.max(0.0)*tex_size.x;
+                // let h=image.height_scale.max(0.0)*tex_size.y;
+
+                // let dx=clamped_inner_width/w;
+                // let dy=clamped_inner_height/h;
 
                 let bl=Vec2::new(clamped_inner_rect.left, clamped_inner_rect.bottom);
                 let br=Vec2::new(clamped_inner_rect.right, clamped_inner_rect.bottom);
                 let tl=Vec2::new(clamped_inner_rect.left, clamped_inner_rect.top);
                 let tr=Vec2::new(clamped_inner_rect.right, clamped_inner_rect.top);
 
-                let bl_uv=Vec2::new(0.0, dy);
-                let br_uv=Vec2::new(dx, dy);
-                let tl_uv=Vec2::new(0.0, 0.0);
-                let tr_uv=Vec2::new(dx, 0.0);
+                let inner_width=inner_rect.width();
+                let inner_height=inner_rect.height();
+                // let tex_x=(clamped_inner_rect.left-inner_rect.left);
+                // let tex_x2=inner_rect.right-clamped_inner_rect.right;
+
+                // let tex_y=clamped_inner_rect.top-inner_rect.top;
+                // let tex_y2=inner_rect.bottom-clamped_inner_rect.bottom;
+                let tex_x=(clamped_inner_rect.left-inner_rect.left)/inner_width;
+                let tex_x2=(clamped_inner_rect.right-inner_rect.left)/inner_width;
+
+                let tex_y=(clamped_inner_rect.top-inner_rect.top)/inner_height;
+                let tex_y2=(clamped_inner_rect.bottom-inner_rect.top)/inner_height;
+
+
+
+                let bl_uv=Vec2::new(tex_x, tex_y2);
+                let br_uv=Vec2::new(tex_x2, tex_y2);
+                let tl_uv=Vec2::new(tex_x, tex_y);
+                let tr_uv=Vec2::new(tex_x2, tex_y);
+                // let bl_uv=Vec2::new(0.0, dy);
+                // let br_uv=Vec2::new(dx, dy);
+                // let tl_uv=Vec2::new(0.0, 0.0);
+                // let tr_uv=Vec2::new(dx, 0.0);
 
                 extracted_elements.elements.push(MyUiExtractedElement{
                     render_layers: node_render_layers.clone(),

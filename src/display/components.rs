@@ -24,18 +24,32 @@ impl Default for UiColor {
 }
 
 
-#[derive(Reflect,Component, Default, Debug, Clone)]
+#[derive(Reflect,Component,  Debug, Clone)]
 #[require(UiInnerSize,UiLayoutComputed)]
 
 
 pub struct UiImage {
     pub handle : Handle<Image>,
-    pub keep_aspect_ratio : bool,
+    // pub keep_aspect_ratio : bool,
     pub width_scale : f32,//Val,
     pub height_scale : f32,//Val,
     pub color : Color,
     //h/v repeat/clamp : float, 0 none,
     //h/v align
+    //stretch h/v
+    //flip h/v
+    //rot 90, 180, 270
+}
+
+impl Default for UiImage {
+    fn default() -> Self {
+        Self {
+            handle: Default::default(),
+            width_scale: 1.0,
+            height_scale: 1.0,
+            color: Color::WHITE,
+        }
+    }
 }
 
 #[derive(Component, Clone, Default, Debug)]
@@ -43,6 +57,7 @@ pub struct UiImage {
 pub struct UiTextComputed{
     pub max_size: Vec2,
     pub bounds: Vec2, //box size that text sits in including empty space, unlike text_layout.logical_size which is only for text itself
+    pub scaling:f32,
 }
 
 // #[derive(Debug,  Clone, Default)]

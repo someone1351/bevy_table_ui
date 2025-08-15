@@ -372,7 +372,26 @@ fn update_input(
                             x.scaling-=0.25;
                             x.scaling=x.scaling.max(0.0);
                         }
-
+                    }
+                    KeyCode::ArrowLeft => {
+                        for mut x in root_query.iter_mut() {
+                            x.x-=100.0;
+                        }
+                    }
+                    KeyCode::ArrowRight => {
+                        for mut x in root_query.iter_mut() {
+                            x.x+=100.0;
+                        }
+                    }
+                    KeyCode::ArrowUp => {
+                        for mut x in root_query.iter_mut() {
+                            x.y-=100.0;
+                        }
+                    }
+                    KeyCode::ArrowDown => {
+                        for mut x in root_query.iter_mut() {
+                            x.y+=100.0;
+                        }
                     }
                     _ => {
 

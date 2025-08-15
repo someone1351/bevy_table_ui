@@ -1718,7 +1718,12 @@ pub fn ui_calc_computed_pos(
         let (computed,root)=if parent_of_root {
             let root=root_query.get(entity).unwrap().1;
             (
-                UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(root.width,root.height),..default()},
+                UiLayoutComputed{
+                    unlocked:true,visible:true,enabled:true,
+                    size:Vec2::new(root.width,root.height),
+                    pos:Vec2::new(root.x, root.y),
+                    ..Default::default()
+                },
                 root,
             )
         } else {
@@ -2074,10 +2079,10 @@ pub fn ui_calc_computed_clamp(
             UiLayoutComputed{
                 // unlocked:true,visible:true,enabled:true,size:Vec2::new(root.width,root.height),
                 clamped_rect:UiRect{
-                    left:0.0,
-                    top:0.0,
-                    right:root.width,
-                    bottom:root.height,
+                    left:root.x,
+                    top:root.y,
+                    right:root.x+root.width,
+                    bottom:root.y+root.height,
                 }, //y is down
                 ..Default::default()
             }

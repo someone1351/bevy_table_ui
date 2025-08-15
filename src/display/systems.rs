@@ -16,7 +16,7 @@ use bevy::text::{ComputedTextBlock, CosmicFontSystem, Font, FontAtlasSets, FontS
 // use bevy::window::Window;
 
 
-use super::super::layout::components::{UiLayoutComputed, UiInnerSize};
+use super::super::layout::components::{UiLayoutComputed, UiInnerSize,UiRoot};
 
 use super::components::*;
 // use super::super::resources::*;
@@ -46,6 +46,7 @@ pub fn update_text_image(
         Option<&mut ComputedTextBlock>,
         Option<&UiImage>,
     )>,
+    root_query: Query<&UiRoot,With<UiLayoutComputed>>,
     mut font_system: ResMut<CosmicFontSystem>,
     mut swash_cache: ResMut<SwashCache>,
 ) {
@@ -54,7 +55,7 @@ pub fn update_text_image(
     // let scale_factor = windows.single().and_then(|window|Ok(window.scale_factor() as f64)).unwrap_or(1.0);
     // println!("scale_factor={scale_factor}");
     //only on visible, updated?
-    let scale_factor: f32 = 1.0;
+    // let scale_factor: f32 = 1.0;
 
     for (entity,
         &layout_computed,
@@ -78,6 +79,8 @@ pub fn update_text_image(
             continue;
         }
 
+        let scale_factor=root_query.get(layout_computed.root_entity).unwrap().scaling;
+
         inner_size.width = 0.0;
         inner_size.height = 0.0;
 
@@ -93,15 +96,15 @@ pub fn update_text_image(
                 //todo keep aspect ratio
 
                 if image.width_scale>0.0 {
-                    inner_size.width = inner_size.width.max(image.width_scale*image_size.x)*scale_factor;
+                    inner_size.width = inner_size.width.max(image.width_scale*image_size.x*scale_factor);
                 } else if inner_size.width == 0.0 {
-                    inner_size.width = inner_size.width.max(image_size.x)*scale_factor;
+                    inner_size.width = inner_size.width.max(image_size.x*scale_factor);
                 }
 
                 if image.height_scale>0.0 {
-                    inner_size.height = inner_size.height.max(image.height_scale*image_size.y)*scale_factor;
+                    inner_size.height = inner_size.height.max(image.height_scale*image_size.y*scale_factor);
                 } else if inner_size.height == 0.0 {
-                    inner_size.height = inner_size.height.max(image_size.y)*scale_factor;
+                    inner_size.height = inner_size.height.max(image_size.y*scale_factor);
                 }
             }
         }

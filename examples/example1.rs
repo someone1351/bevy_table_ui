@@ -71,6 +71,7 @@ fn main() {
 pub fn update_ui_roots(
     windows: Query<&Window>,
     mut root_query: Query<&mut UiRoot,>,
+    mut key_events: EventReader<bevy::input::keyboard::KeyboardInput>,
 ) {
 
     let window_size=windows.single()
@@ -338,7 +339,7 @@ fn update_input(
     mut last_pressed:Local<HashSet<KeyCode>>,
     mut commands: Commands,
 
-
+    mut root_query: Query<&mut UiRoot,>,
 ) {
     // let Ok(window_entity) = main_window.get_single() else {return;};
 
@@ -346,14 +347,37 @@ fn update_input(
         if ev.state==bevy::input::ButtonState::Pressed && !last_pressed.contains(&ev.key_code) {
             if ev.key_code==KeyCode::Escape || ev.key_code==KeyCode::F4 {
                 exit.write(AppExit::Success);
-            } else if ev.key_code==KeyCode::F12 {
-                if let Some(path) = generate_screenshot_path("./screenshots","screenshot_","png") {
-                    // if screenshot_manager.save_screenshot_to_disk(window_entity, &path).is_err() {
-                    //     eprintln!("Failed to take screenshot at {path:?}.");
-                    // }
-                    commands
-                        .spawn(bevy::render::view::screenshot::Screenshot::primary_window())
-                        .observe(bevy::render::view::screenshot::save_to_disk(path));
+            } else {
+                match ev.key_code {
+                    KeyCode::F12 => {
+                        if let Some(path) = generate_screenshot_path("./screenshots","screenshot_","png") {
+                            // if screenshot_manager.save_screenshot_to_disk(window_entity, &path).is_err() {
+                            //     eprintln!("Failed to take screenshot at {path:?}.");
+                            // }
+                            commands
+                                .spawn(bevy::render::view::screenshot::Screenshot::primary_window())
+                                .observe(bevy::render::view::screenshot::save_to_disk(path));
+                        }
+                    }
+                    KeyCode::Equal => {
+                        println!("plus");
+
+                        for mut x in root_query.iter_mut() {
+                            x.scaling+=0.25;
+                        }
+                    }
+                    KeyCode::Minus => {
+                        println!("minus");
+                        for mut x in root_query.iter_mut() {
+                            x.scaling-=0.25;
+                            x.scaling=x.scaling.max(0.0);
+                        }
+
+                    }
+                    _ => {
+
+                        println!("key {ev:?}");
+                    }
                 }
             }
         }

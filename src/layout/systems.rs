@@ -270,13 +270,13 @@ pub fn ui_init_computeds(
                 //calc computed wh's for pos px sizes (entity order not important, ie using df_entities for convience)
                 if let UiVal::Px(p) = size.width {
                     if p >= 0.0 {
-                        computed.size.x = p;
+                        computed.size.x = p*root.scaling.abs();
                     }
                 }
 
                 if let UiVal::Px(p) = size.height {
                     if p>=0.0 {
-                        computed.size.y = p;
+                        computed.size.y = p*root.scaling.abs();
                     }
                 }
 
@@ -544,6 +544,12 @@ pub fn ui_calc_computeds2(
         // let span=entity.and_then(|entity|span_query.get(entity).ok().cloned()).unwrap_or_default().span as usize;
         // let gap=entity.and_then(|entity|gap_query.get(entity).ok().cloned()).unwrap_or_default();
         let gap = if parent_of_root {None} else {gap_query.get(entity).ok().cloned()}.unwrap_or_default();
+
+        let root={
+            let computed=computed_query.get(entity).unwrap();
+            root_query.get(computed.root_entity).unwrap().1
+        };
+
         //
         let mut max_space_w : f32 = 0.0;
         let mut max_space_h : f32 = 0.0;
@@ -800,7 +806,7 @@ pub fn ui_calc_computeds2(
                     // Val::Scale(p) => p.max(0.0)*(total_col_width/(cols_num as f32)),
                     UiVal::Scale(p) if p>=0.0 => p*(total_col_width/(cols_num as f32)),
                     UiVal::Scale(p) if p<0.0 => p.abs()*(total_row_height/(rows_num as f32)),
-                    UiVal::Px(p) => p.max(0.0),
+                    UiVal::Px(p) => p.max(0.0)*root.scaling.abs(),
                     _ => 0.0
                 };
 
@@ -808,7 +814,7 @@ pub fn ui_calc_computeds2(
                     // Val::Scale(p) => p.max(0.0)*(total_row_height/(rows_num as f32)),
                     UiVal::Scale(p) if p>=0.0 => p*(total_row_height/(rows_num as f32)),
                     UiVal::Scale(p) if p<0.0 => p.abs()*(total_col_width/(cols_num as f32)),
-                    UiVal::Px(p) => p.max(0.0),
+                    UiVal::Px(p) => p.max(0.0)*root.scaling.abs(),
                     _ => 0.0
                 };
 
@@ -854,7 +860,7 @@ pub fn ui_calc_computeds2(
 
             match size.width {
                 UiVal::Px(p) if p<0.0 => {
-                    computed.size.x = max_space_w+p.abs();
+                    computed.size.x = max_space_w+p.abs()*root.scaling.abs();
                 }
                 UiVal::Scale(p) if p<0.0 => {
                     computed.size.x = max_space_w+max_space_w*p.abs();
@@ -867,7 +873,7 @@ pub fn ui_calc_computeds2(
 
             match size.height {
                 UiVal::Px(p) if p<0.0 => {
-                    computed.size.y = max_space_h+p.abs();
+                    computed.size.y = max_space_h+p.abs()*root.scaling.abs();
                 }
                 UiVal::Scale(p) if p<0.0 => {
                     computed.size.y = max_space_h+max_space_h*p.abs();
@@ -986,13 +992,18 @@ pub fn ui_calc_computeds3(
         // // let computed = *computed_query.get(entity).unwrap();
         // let computed = entity.map(|entity|computed_query.get(entity).unwrap().clone()).unwrap_or(top_computed);
 
-        let computed=if parent_of_root {
+        let (computed,root)=if parent_of_root {
             let root=root_query.get(entity).unwrap().1;
-            UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(root.width,root.height),..default()}
+            (
+                UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(root.width,root.height),..default()},
+                root,
+            )
         } else {
-            computed_query.get(entity).unwrap().clone()
+            let computed=computed_query.get(entity).unwrap().clone();
+            let root=root_query.get(computed.root_entity).unwrap().1;
+            (computed,root)
         };
-
+        // let root=root_query.get(computed.root_entity).unwrap().1;
         // let span = span_query.get(entity).cloned().unwrap_or_default().span as usize;
         // let span = entity.and_then(|entity|span_query.get(entity).ok()).cloned().unwrap_or_default().span as usize;
 
@@ -1008,13 +1019,13 @@ pub fn ui_calc_computeds3(
         let size = if parent_of_root {None} else {size_query.get(entity).ok().cloned()}.unwrap_or_default();
 
         let neg_width= match size.width {
-            UiVal::Px(p) if p<0.0 => p.abs(),
+            UiVal::Px(p) if p<0.0 => p.abs()*root.scaling.abs(),
             UiVal::Scale(p) if p<0.0 => computed.size.x*(p.abs()/(p.abs()+1.0)), //computed.w*(1.0-1.0/(p.abs()+1.0)),
             _ => 0.0,
         };
 
         let neg_height= match size.height {
-            UiVal::Px(p) if p<0.0 => p.abs(),
+            UiVal::Px(p) if p<0.0 => p.abs()*root.scaling.abs(),
             UiVal::Scale(p) if p<0.0 => computed.size.y*(p.abs()/(p.abs()+1.0)), //computed.h*(1.0-1.0/(p.abs()+1.0)),
             _ => 0.0,
         };
@@ -1124,7 +1135,7 @@ pub fn ui_calc_computeds3(
                 // Val::Scale(p) => p.max(0.0)*(total_col_width/(cols_num as f32)),
                 UiVal::Scale(p) if p>=0.0 => p*(total_col_width/(cols_num as f32)),
                 UiVal::Scale(p) if p<0.0 => p.abs()*(total_row_height/(rows_num as f32)),
-                UiVal::Px(p) => p.max(0.0),
+                UiVal::Px(p) => p.max(0.0)*root.scaling.abs(),
                 _ => 0.0
             };
 
@@ -1132,7 +1143,7 @@ pub fn ui_calc_computeds3(
                 // Val::Scale(p) => p.max(0.0)*(total_row_height/(rows_num as f32)),
                 UiVal::Scale(p) if p>=0.0 => p*(total_row_height/(rows_num as f32)),
                 UiVal::Scale(p) if p<0.0 => p.abs()*(total_col_width/(cols_num as f32)),
-                UiVal::Px(p) => p.max(0.0),
+                UiVal::Px(p) => p.max(0.0)*root.scaling.abs(),
                 _ => 0.0
             };
 
@@ -1227,7 +1238,7 @@ pub fn ui_calc_computeds3(
                         // Val::Scale(p) => p.max(0.0)*(total_col_width/(cols_num as f32)),
                         UiVal::Scale(p) if p>=0.0 => p*(total_col_width/(cols_num as f32)),
                         UiVal::Scale(p) if p<0.0 => p.abs()*(total_row_height/(rows_num as f32)),
-                        UiVal::Px(p) => p.max(0.0),
+                        UiVal::Px(p) => p.max(0.0)*root.scaling.abs(),
                         _ => 0.0
                     };
 
@@ -1235,7 +1246,7 @@ pub fn ui_calc_computeds3(
                         // Val::Scale(p) => p.max(0.0)*(total_row_height/(rows_num as f32)),
                         UiVal::Scale(p) if p>=0.0 => p*(total_row_height/(rows_num as f32)),
                         UiVal::Scale(p) if p<0.0 => p.abs()*(total_col_width/(cols_num as f32)),
-                        UiVal::Px(p) => p.max(0.0),
+                        UiVal::Px(p) => p.max(0.0)*root.scaling.abs(),
                         _ => 0.0
                     };
 
@@ -1336,13 +1347,13 @@ pub fn ui_calc_computeds3(
                             //
                             let fill_w=match child_fill.hfill {
                                 UiVal::Scale(p)=>{cell_w*p.max(0.0)},
-                                UiVal::Px(p)=>{p.max(0.0)},
+                                UiVal::Px(p)=>{p.max(0.0)*root.scaling.abs()},
                                 _=>{0.0}
                             };
 
                             let fill_h=match child_fill.vfill {
                                 UiVal::Scale(p)=>{cell_h*p.max(0.0)},
-                                UiVal::Px(p)=>{p.max(0.0)},
+                                UiVal::Px(p)=>{p.max(0.0)*root.scaling.abs()},
                                 _=>{0.0}
                             };
 
@@ -1516,7 +1527,7 @@ pub fn ui_calc_computeds3(
 
                                 let left_space=match align.halign {
                                     UiVal::Scale(p)=>{hspace*p.clamp(0.0,1.0)},
-                                    UiVal::Px(p)=>{p.clamp(0.0,hspace)},
+                                    UiVal::Px(p)=>{(p*root.scaling.abs()).clamp(0.0,hspace)},
                                     _=>{hspace* 0.5},
                                 };
 
@@ -1528,7 +1539,7 @@ pub fn ui_calc_computeds3(
 
                                 let top_space=match align.valign {
                                     UiVal::Scale(p)=>{vspace*p.clamp(0.0,1.0)},
-                                    UiVal::Px(p)=>{p.clamp(0.0,vspace)},
+                                    UiVal::Px(p)=>{(p*root.scaling.abs()).clamp(0.0,vspace)},
                                     _=>{vspace*0.5},
                                 }; //ydir2
 
@@ -1566,7 +1577,7 @@ pub fn ui_calc_computeds3(
 
                                 let left_space=match align.halign {
                                     UiVal::Scale(p)=>{hspace*p.clamp(0.0,1.0)},
-                                    UiVal::Px(p)=>{p.clamp(0.0,hspace)},
+                                    UiVal::Px(p)=>{(p*root.scaling.abs()).clamp(0.0,hspace)},
                                     _=>{hspace* 0.5},
                                 };
 
@@ -1578,7 +1589,7 @@ pub fn ui_calc_computeds3(
 
                                 let top_space=match align.valign {
                                     UiVal::Scale(p)=>{vspace*p.clamp(0.0,1.0)},
-                                    UiVal::Px(p)=>{p.clamp(0.0,vspace)},
+                                    UiVal::Px(p)=>{(p*root.scaling.abs()).clamp(0.0,vspace)},
                                     _=>{vspace*0.5},
                                 }; //ydir2
 
@@ -1704,11 +1715,17 @@ pub fn ui_calc_computed_pos(
 
         // let computed=computed_query.get(entity).cloned().unwrap();
 
-        let computed=if parent_of_root {
+        let (computed,root)=if parent_of_root {
             let root=root_query.get(entity).unwrap().1;
-            UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(root.width,root.height),..default()}
+            (
+                UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(root.width,root.height),..default()},
+                root,
+            )
         } else {
-            computed_query.get(entity).unwrap().clone()
+            let computed=computed_query.get(entity).unwrap().clone();
+            let root=root_query.get(computed.root_entity).unwrap().1;
+
+            (computed,root)
         };
 
         // // let span = span_query.get(entity).cloned().unwrap_or_default().span as usize;
@@ -1915,15 +1932,15 @@ pub fn ui_calc_computed_pos(
 
                         let scroll_x=match scroll.hscroll {
                             UiVal::Scale(p)=>{hscroll_space*p.clamp(0.0,1.0)}
-                            UiVal::Px(p) if p>=0.0 =>{p.clamp(0.0,hscroll_space)}
-                            UiVal::Px(p)=>{hscroll_space-p.clamp(0.0,hscroll_space)}
+                            UiVal::Px(p) if p>=0.0 =>{(p*root.scaling.abs()).clamp(0.0,hscroll_space)}
+                            UiVal::Px(p)=>{hscroll_space-(p*root.scaling.abs()).clamp(0.0,hscroll_space)}
                             _=>{0.0}
                         };
 
                         let scroll_y=match scroll.vscroll {
                             UiVal::Scale(p)=>{vscroll_space*p.clamp(0.0,1.0)}
-                            UiVal::Px(p) if p>=0.0 =>{p.clamp(0.0,vscroll_space)}
-                            UiVal::Px(p) =>{vscroll_space-p.clamp(0.0,vscroll_space)}
+                            UiVal::Px(p) if p>=0.0 =>{(p*root.scaling.abs()).clamp(0.0,vscroll_space)}
+                            UiVal::Px(p) =>{vscroll_space-(p*root.scaling.abs()).clamp(0.0,vscroll_space)}
                             _=>{0.0}
                         };
 

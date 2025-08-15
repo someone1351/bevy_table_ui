@@ -14,8 +14,8 @@ use bevy::transform::prelude::Transform;
 
 use super::graph::CoreMy;
 
-const UI_CAMERA_TRANSFORM_OFFSET: f32 = -0.1;
-const UI_CAMERA_FAR: f32 = 1000.0;
+// const UI_CAMERA_TRANSFORM_OFFSET: f32 = -0.1;
+// const UI_CAMERA_FAR: f32 = 1000.0;
 // GlobalTransform::from_xyz(0.0, 0.0, UI_CAMERA_FAR + UI_CAMERA_TRANSFORM_OFFSET,)
 
 /// A 2D camera component. Enables the 2D render graph for a [`Camera`].
@@ -31,7 +31,7 @@ const UI_CAMERA_FAR: f32 = 1000.0;
     // Frustum = OrthographicProjection::default_2d().compute_frustum(&GlobalTransform::from(Transform::default())),
     // // Tonemapping::None,
 
-    Transform::from_xyz( 0.0, 0.0, UI_CAMERA_FAR + UI_CAMERA_TRANSFORM_OFFSET, ),
+    // Transform::from_xyz( 0.0, 0.0, UI_CAMERA_FAR + UI_CAMERA_TRANSFORM_OFFSET, ),
 )]
 pub struct CameraUi;
 // struct Aa(Frustum);
@@ -227,12 +227,13 @@ impl MyOrthographicProjection {
     pub fn default_2d() -> Self {
         MyOrthographicProjection {
             scale: 1.0,
-            far: UI_CAMERA_FAR,//1000.0,
+            // far: UI_CAMERA_FAR,//1000.0,
             viewport_origin: Vec2::new(0.0, 0.0),
             scaling_mode: ScalingMode::WindowSize,
             area: Rect::new(-1.0, -1.0, 1.0, 1.0),
 
             near: 0.0,
+            far:1.0,
             // ..OrthographicProjection2::default_3d()
         }
     }

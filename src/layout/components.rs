@@ -164,6 +164,8 @@ pub struct UiInnerSize { //used for external things like text and images
 #[derive(Reflect,Component, Debug, Copy, Clone)]
 #[require(UiLayoutComputed)]
 pub struct UiRoot {
+    pub x:f32,
+    pub y:f32,
     pub width:f32,
     pub height:f32,
     pub scaling:f32,
@@ -173,7 +175,7 @@ pub struct UiRoot {
 impl Default for UiRoot {
     fn default() -> Self {
         Self {
-            width: 0.0, height: 0.0, scaling: 1.0, order: 0,
+            x: 0.0, y: 0.0, width: 0.0, height: 0.0, scaling: 1.0, order: 0,
         }
     }
 }

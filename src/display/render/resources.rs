@@ -61,6 +61,7 @@ impl Default for MyUiExtractedElement {
 pub struct MyUiExtractedElements {
     pub elements : Vec<MyUiExtractedElement>,
     // pub cameras : HashMap<MainEntity>,
+    // pub max_depth:u32,
 
 }
 

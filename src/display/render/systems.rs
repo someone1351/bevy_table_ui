@@ -11,7 +11,7 @@ use bevy::ecs::query::With;
 use bevy::image::{Image, TextureAtlasLayout};
 use bevy::math::{FloatOrd, Vec2};
 // use bevy::platform::collections::HashSet;
-use bevy::prelude::{ChildOf, EventReader, Msaa};
+use bevy::prelude::{ EventReader, Msaa};
 use bevy::render::render_asset::RenderAssets;
 use bevy::render::texture::GpuImage;
 use bevy::render::{render_phase::*, Extract};
@@ -272,9 +272,9 @@ pub fn extract_uinodes2(
         Option<&UiText>,
         Option<&UiTextComputed>,
         Option<&TextLayoutInfo>,
-        Option<&ChildOf>,
-        Option<&UiFloat>,
-        Option<&UiEdge>,
+        // Option<&ChildOf>,
+        // Option<&UiFloat>,
+        // Option<&UiEdge>,
         Option<&UiColor>,
         // Option<&MyTargetCamera>,
     )> >,
@@ -314,9 +314,9 @@ pub fn extract_uinodes2(
         text,
         text_computed,
         text_layout_info,
-        _parent,
-        _float,
-        _edge,
+        // _parent,
+        // _float,
+        // _edge,
         color,
     ) in uinode_query.iter() {
         if !layout_computed.visible {
@@ -598,6 +598,8 @@ pub fn extract_uinodes2(
         }
     }
 
+    // extracted_elements.max_depth=depth;
+
 }
 
 //MainTransparentPass2dNode
@@ -712,6 +714,12 @@ pub fn prepare_uinodes(
     mut ui_meta: ResMut<MyUiMeta>,
 ) {
 
+    let mut max_depth=0;
+
+
+    for element in extracted_elements.elements.iter() {
+        max_depth=max_depth.max(element.depth);
+    }
 
     //
     ui_meta.vertices.clear();
@@ -732,8 +740,9 @@ pub fn prepare_uinodes(
         //     [0.0,1.0],[1.0,1.0],[0.0,0.0],
         //     [0.0,0.0],[1.0,1.0],[1.0,0.0],
         // ];
-        let z= element.depth as f32; // let z= z*-1.0;
-
+        let z= ((element.depth+1) as f32)/((max_depth+2) as f32) -1.0; // let z= z*-1.0;
+        // let z=z+0.01;
+        // println!("z is {z},  d={} f={}", element.depth,(element.depth as f32)/(max_depth as f32));
         let pos = vec![
             [element.bl.x,element.bl.y,z], [element.br.x,element.br.y,z], [element.tl.x,element.tl.y,z],
             [element.tl.x,element.tl.y,z], [element.br.x,element.br.y,z], [element.tr.x,element.tr.y,z],

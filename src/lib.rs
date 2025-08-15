@@ -41,6 +41,9 @@ DONE
 *** what about later if only recomputing based on modification
 *** or if missing ui component, then don't use as child, any descendents thast do have uicomputed, ignore
 
+* handle render layers
+
+* instead of positioning camera at 0,0,far-1, set near to -1000, and far to 0/1, then can position things closer to camera at neg/less
 
 TODO
 
@@ -50,9 +53,8 @@ TODO
 ** what about images? yes?
 ** have scaling component
 
-* handle render layers
 
-* instead of positioning camera at 0,0,far-1, set near to -1000, and far to 0/1, then can position things closer to camera at neg/less
+* for root, add offset for position?
 
 
 * probably want to allow different ui's on dif monitors, where cursor can move across and click on them?

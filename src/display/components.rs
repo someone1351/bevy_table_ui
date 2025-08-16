@@ -39,6 +39,7 @@ pub struct UiImage {
     //stretch h/v
     //flip h/v
     //rot 90, 180, 270
+    pub use_scaling:bool,
 }
 
 impl Default for UiImage {
@@ -48,6 +49,7 @@ impl Default for UiImage {
             width_scale: 1.0,
             height_scale: 1.0,
             color: Color::WHITE,
+            use_scaling: false,
         }
     }
 }

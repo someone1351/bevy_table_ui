@@ -94,7 +94,7 @@ pub fn update_text_image(
                 let image_size = texture.size().as_vec2();
 
                 //todo keep aspect ratio
-
+                let scale_factor=if image.use_scaling {scale_factor}else{1.0};
                 // if image.width_scale>0.0 {
                     inner_size.width = inner_size.width.max(image.width_scale.max(0.0)*image_size.x*scale_factor);
                 // } else if inner_size.width == 0.0 {

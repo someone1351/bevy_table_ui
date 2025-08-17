@@ -1,6 +1,7 @@
 
 #![allow(unused_mut)]
 #![allow(unused_variables)]
+#![allow(unreachable_code)]
 
 use std::collections::HashSet;
 
@@ -112,6 +113,33 @@ pub fn setup_ui(
     //     // UiSpan{span:1},
     //     // UiGap{hgap:UiVal::Px(30.0),vgap:UiVal::Px(30.0)},
     // ));
+
+    commands.spawn((
+        MenuUiRoot,
+        UiRoot::default(),
+
+
+        UiColor{back:Color::srgb(0.5,0.5,0.5),..Default::default()},
+
+        // UiSpan{span:1},
+        UiGap{hgap:UiVal::Px(30.0),vgap:UiVal::Px(30.0)},
+    )).with_children(|parent|{
+        let cols=[
+            Color::linear_rgb(1.0, 0.0, 0.0),
+            Color::linear_rgb(0.0, 1.0, 0.0),
+            Color::linear_rgb(0.0, 0.0, 1.0),
+        ];
+
+        for i in 0..3 {
+
+            parent.spawn((
+                UiColor{back:cols[i],..Default::default()},
+                UiSize{ width:UiVal::Px(50.0), height:UiVal::Px(50.0), },
+            ));
+        }
+    });
+
+    return;
 
     commands.spawn((
         MenuUiRoot,

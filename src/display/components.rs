@@ -49,7 +49,7 @@ impl Default for UiImage {
             width_scale: 1.0,
             height_scale: 1.0,
             color: Color::WHITE,
-            use_scaling: false,
+            use_scaling: true,
         }
     }
 }

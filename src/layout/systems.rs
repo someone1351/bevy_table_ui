@@ -360,7 +360,7 @@ pub fn ui_calc_rows_cols(
     // stk.reverse(); //not needed?
 
     while let Some((entity,b)) = stk.pop() {
-        let children=children_query.get(entity).map(|children|children.iter().rev()).unwrap_or_default();
+        let children=children_query.get(entity).map(|children|children.iter()).unwrap_or_default();
 
         let children=children.filter(|&child_entity|{
             computed_query.get(child_entity).map(|child_computed|child_computed.enabled).unwrap_or_default() &&
@@ -388,7 +388,7 @@ pub fn ui_calc_rows_cols(
             //     stk.extend(children.iter().filter(|&child_entity|!root_query.contains(child_entity)).map(|x|(x,false)));
             // }
 
-            stk.extend(children.clone().map(|x|(x,false)));
+            stk.extend(children.clone().rev().map(|x|(x,false)));
 
             // stk.extend(children_query.get(entity).map(|c|c.iter().filter(|x|!root_query.contains(x))).unwrap_or_default().map(|x|(x,false)));
 
@@ -485,9 +485,9 @@ pub fn ui_calc_computeds2(
         // let q=[entity].iter().copied().rev(); //because query iter is copied
         let children=[entity];
         let children=if parent_of_root {
-            children.iter().copied().rev() //because query iter is copied
+            children.iter().copied() //because query iter is copied
         } else {
-            children_query.get(entity).map(|children|children.iter().rev()).unwrap_or_default()
+            children_query.get(entity).map(|children|children.iter()).unwrap_or_default()
         };
 
         let children=children.filter(|&child_entity|{
@@ -521,7 +521,7 @@ pub fn ui_calc_computeds2(
             // stk.push((entity,true));
 
             // computed_query.contains(child_entity)
-            stk.extend(children
+            stk.extend(children.rev()
                 // .filter(|&child_entity|parent_of_root || !root_query.contains(child_entity))
                 .map(|child_entity|(child_entity,false,false))
             );
@@ -950,9 +950,9 @@ pub fn ui_calc_computeds3(
     while let Some((entity, parent_of_root)) = stk.pop() {
         let children=[entity];
         let children=if parent_of_root {
-            children.iter().copied().rev() //because query iter is copied
+            children.iter().copied() //because query iter is copied
         } else {
-            children_query.get(entity).map(|children|children.iter().rev()).unwrap_or_default()
+            children_query.get(entity).map(|children|children.iter()).unwrap_or_default()
         };
 
         let children=children.filter(|&child_entity|{
@@ -979,7 +979,7 @@ pub fn ui_calc_computeds3(
 
             // // stk.extend(children_query.get(entity).map(|c|c.iter().rev()).unwrap_or_default());
 
-            stk.extend(children.clone().map(|child_entity|(child_entity,false)));
+            stk.extend(children.clone().rev().map(|child_entity|(child_entity,false)));
         }
 
         //
@@ -1671,9 +1671,9 @@ pub fn ui_calc_computed_pos(
     while let Some((entity, parent_of_root)) = stk.pop() {
         let children=[entity];
         let children=if parent_of_root {
-            children.iter().copied().rev() //because query iter is copied
+            children.iter().copied() //because query iter is copied
         } else {
-            children_query.get(entity).map(|children|children.iter().rev()).unwrap_or_default()
+            children_query.get(entity).map(|children|children.iter()).unwrap_or_default()
         };
 
         let children=children.filter(|&child_entity|{
@@ -1700,7 +1700,7 @@ pub fn ui_calc_computed_pos(
             // // stk.extend(children_query.get(entity).map(|c|c.iter().rev()).unwrap_or_default());
 
 
-            stk.extend(children.clone().map(|child_entity|(child_entity,false)));
+            stk.extend(children.clone().rev().map(|child_entity|(child_entity,false)));
         }
 
         //
@@ -2033,7 +2033,7 @@ pub fn ui_calc_computed_clamp(
 
         {
 
-            let children= children_query.get(entity).map(|children|children.iter().rev()).unwrap_or_default();
+            let children= children_query.get(entity).map(|children|children.iter()).unwrap_or_default();
 
             let children=children.filter(|&child_entity|{
                 computed_query.get(child_entity).map(|child_computed|child_computed.enabled).unwrap_or_default() &&
@@ -2056,7 +2056,7 @@ pub fn ui_calc_computed_clamp(
             // stk.extend(children_query.get(entity).map(|c|c.iter().rev()).unwrap_or_default());
 
 
-            stk.extend(children);
+            stk.extend(children.rev());
         }
 
 

@@ -29,6 +29,8 @@ struct VertexOutput {
 fn vertex(vertex: Vertex) -> VertexOutput {
     var out: VertexOutput;
     out.clip_position = view.view_proj * vec4<f32>(vertex.position, 1.0);
+    //out.clip_position = view.view_proj * vec4<f32>(round(vertex.position), 1.0);
+
     out.color = vertex.color;
     out.uv = vertex.uv; //added
     return out;

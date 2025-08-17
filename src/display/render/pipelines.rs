@@ -63,6 +63,7 @@ impl SpecializedRenderPipeline for MyUiPipeline {
                 targets: vec![Some(ColorTargetState {
                     format: TextureFormat::bevy_default(),
                     blend: Some(BlendState::ALPHA_BLENDING),
+                    // blend:None,
                     write_mask: ColorWrites::ALL,
                 })],
             }),
@@ -71,10 +72,10 @@ impl SpecializedRenderPipeline for MyUiPipeline {
                 self.image_layout.clone(), //added
             ],
             primitive: PrimitiveState {
-                // front_face: FrontFace::Ccw,
-                front_face: FrontFace::Cw,
-                // cull_mode: Some(Face::Back),
-                cull_mode: None,
+                front_face: FrontFace::Ccw,
+                // front_face: FrontFace::Cw,
+                cull_mode: Some(Face::Back),
+                // cull_mode: None,
                 unclipped_depth: false,
                 polygon_mode: PolygonMode::Fill,
                 conservative: false,
@@ -85,7 +86,9 @@ impl SpecializedRenderPipeline for MyUiPipeline {
             depth_stencil: Some(DepthStencilState {
                 format: CORE_2D_DEPTH_FORMAT,
                 depth_write_enabled: false,
+                // depth_write_enabled: true,
                 depth_compare: CompareFunction::GreaterEqual,
+                // depth_compare: CompareFunction::Greater,
                 stencil: StencilState {
                     front: StencilFaceState::IGNORE,
                     back: StencilFaceState::IGNORE,

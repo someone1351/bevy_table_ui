@@ -26,6 +26,8 @@ use bevy::render::{
 use super::{phases::*, CORE_2D_DEPTH_FORMAT};
 use super::camera::*;
 
+// const RENDER_SCALE:u32=2;
+
 pub fn extract_core_2d_camera_phases(
     mut transparent_2d_phases: ResMut<ViewSortedRenderPhases<TransparentMy>>,
     // mut my_render_phases: ResMut<ViewSortedRenderPhases<MyTransparentUi>>,
@@ -89,8 +91,8 @@ pub fn prepare_core_2d_depth_textures(
                 // The size of the depth texture
                 let size = Extent3d {
                     depth_or_array_layers: 1,
-                    width: physical_target_size.x,
-                    height: physical_target_size.y,
+                    width: physical_target_size.x, //*RENDER_SCALE,
+                    height: physical_target_size.y, //*RENDER_SCALE,
                 };
 
                 let descriptor = TextureDescriptor {

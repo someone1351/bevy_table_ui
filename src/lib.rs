@@ -57,7 +57,9 @@ DONE
 
 TODO
 
+* only use transparent pipeline for colours with alpha != 1, fonts, images with transparent flag = true, need to add opaque and alpha key pipelines
 
+* fix colour bleeding on edges
 
 * probably want to allow different ui's on dif monitors, where cursor can move across and click on them?
 

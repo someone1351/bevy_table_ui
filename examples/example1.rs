@@ -15,7 +15,7 @@ use bevy::text::*;
 // use bevy::ui::{AlignSelf, JustifySelf, Node};
 use bevy::window::*;
 use bevy::DefaultPlugins;
-use bevy::prelude::{KeyCode, PluginGroup };
+use bevy::prelude::{KeyCode, Msaa, PluginGroup };
 
 
 use bevy_table_ui as table_ui;
@@ -312,6 +312,8 @@ fn setup_camera(mut commands: Commands) {
     // commands.spawn((CameraMy::default(),));
     commands.spawn((
         CameraUi::default(),
+        Msaa::Sample8,
+        // Msaa::Off,
         // Projection::Orthographic(OrthographicProjection::default_2d()),
 
         // Camera {

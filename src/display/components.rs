@@ -23,7 +23,10 @@ impl Default for UiColor {
     }
 }
 
-
+// pub enum ImageAlpha {
+//     Transparent,
+//     AlphaTest(Color),
+// }
 #[derive(Reflect,Component,  Debug, Clone)]
 #[require(UiInnerSize,UiLayoutComputed)]
 
@@ -40,6 +43,8 @@ pub struct UiImage {
     //flip h/v
     //rot 90, 180, 270
     pub use_scaling:bool,
+    pub transparency : bool,
+    pub alpha_test : Option<Color>,
 }
 
 impl Default for UiImage {
@@ -50,6 +55,8 @@ impl Default for UiImage {
             height_scale: 1.0,
             color: Color::WHITE,
             use_scaling: true,
+            transparency: false,
+            alpha_test: None,
         }
     }
 }

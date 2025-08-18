@@ -388,7 +388,9 @@ pub fn ui_calc_rows_cols(
             //     stk.extend(children.iter().filter(|&child_entity|!root_query.contains(child_entity)).map(|x|(x,false)));
             // }
 
-            stk.extend(children.clone().rev().map(|x|(x,false)));
+            stk.extend(children.clone()
+                // .rev() //don't want?
+                .map(|x|(x,false)));
 
             // stk.extend(children_query.get(entity).map(|c|c.iter().filter(|x|!root_query.contains(x))).unwrap_or_default().map(|x|(x,false)));
 
@@ -521,7 +523,8 @@ pub fn ui_calc_computeds2(
             // stk.push((entity,true));
 
             // computed_query.contains(child_entity)
-            stk.extend(children.rev()
+            stk.extend(children
+                .rev() //do or don't want?
                 // .filter(|&child_entity|parent_of_root || !root_query.contains(child_entity))
                 .map(|child_entity|(child_entity,false,false))
             );

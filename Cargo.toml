@@ -21,7 +21,9 @@ radsort = "0.1"
 bevy = { version = "0.16", default-features = false, features = [
 
     "serialize","multi_threaded","bevy_window","x11",
-    "file_watcher","png","dynamic_linking" #,"bevy_ui"
+    "file_watcher","png",
+    #"dynamic_linking"
+    #,"bevy_ui"
 ] }
 
 [lib]

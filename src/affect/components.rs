@@ -42,7 +42,7 @@ pub enum UiAffectState {
 //     }
 // }
 
-#[derive(Component,Default,Debug)]
+#[derive(Component,Default,Debug,Clone)]
 #[require(UiLayoutComputed)]
 pub struct UiAffect {
     pub states : BTreeSet<UiAffectState>,

@@ -1,4 +1,6 @@
 
+#![allow(dead_code)]
+
 use bevy::asset::{AssetId, Handle};
 use bevy::color::Color;
 use bevy::ecs::resource::Resource;
@@ -64,7 +66,6 @@ pub struct MyUiExtractedElements {
     // pub max_depth:u32,
 
 }
-
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]

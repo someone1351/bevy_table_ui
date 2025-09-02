@@ -23,7 +23,6 @@ use bevy_table_ui as table_ui;
 // use render_core::core_my::CameraMy;
 use table_ui::*;
 
-
 fn main() {
     let mut app = App::new();
 

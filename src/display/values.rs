@@ -21,22 +21,34 @@ pub enum UiTextVAlign {
     Top,
     Bottom,
 }
-impl ToString for UiTextHAlign {
-    fn to_string(&self) -> String {
+
+impl UiTextHAlign {
+    pub fn as_str(&self) -> &str {
         match self {
             Self::Center => "center",
             Self::Left => "left",
             Self::Right => "right",
-        }.to_string()
+        }
     }
 }
-impl ToString for UiTextVAlign {
-    fn to_string(&self) -> String {
+
+impl UiTextVAlign {
+    pub fn as_str(&self) -> &str {
         match self {
             Self::Center => "center",
             Self::Top => "top",
             Self::Bottom => "bottom",
-        }.to_string()
+        }
+    }
+}
+impl ToString for UiTextHAlign {
+    fn to_string(&self) -> String {
+        self.as_str().to_string()
+    }
+}
+impl ToString for UiTextVAlign {
+    fn to_string(&self) -> String {
+        self.as_str().to_string()
     }
 }
 impl std::str::FromStr for UiTextHAlign {

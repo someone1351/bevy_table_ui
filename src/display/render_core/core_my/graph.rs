@@ -21,7 +21,7 @@ pub struct CoreMy;
 pub enum NodeMy {
     // MsaaWriteback,
     StartMainPass,
-    // MainOpaquePass,
+    MainOpaquePass,
     MainTransparentPass,
     EndMainPass,
     Upscaling,
@@ -33,7 +33,7 @@ pub fn setup_graph(render_app:&mut SubApp) {
     render_app
         .add_render_sub_graph(CoreMy)
         .add_render_graph_node::<EmptyNode>(CoreMy, NodeMy::StartMainPass)
-        // // .add_render_graph_node::<ViewNodeRunner<MainOpaquePass2dNode>>(Core2d,Node2d::MainOpaquePass,)
+        .add_render_graph_node::<ViewNodeRunner<MainOpaquePassMyNode>>(CoreMy,NodeMy::MainOpaquePass,)
         .add_render_graph_node::<ViewNodeRunner<MainTransparentPassMyNode>>(CoreMy,NodeMy::MainTransparentPass,)
         // .add_render_graph_node::<ViewNodeRunner<MyMainTransparentPass2dNode>>(Core2d,Node2d::MyMainTransparentPass)
         .add_render_graph_node::<EmptyNode>(CoreMy, NodeMy::EndMainPass)
@@ -44,7 +44,7 @@ pub fn setup_graph(render_app:&mut SubApp) {
             CoreMy,
             (
                 NodeMy::StartMainPass,
-                // // Node2d::MainOpaquePass,
+                NodeMy::MainOpaquePass,
                 NodeMy::MainTransparentPass,
                 // Node2d::MyMainTransparentPass,
                 NodeMy::EndMainPass,

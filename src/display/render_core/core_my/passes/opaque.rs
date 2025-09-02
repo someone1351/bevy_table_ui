@@ -1,4 +1,4 @@
-
+//#[allow(dead_code)]
 // use crate::core_2d::Opaque2d;
 use bevy::ecs::{prelude::World, query::QueryItem};
 use bevy::math::UVec2;

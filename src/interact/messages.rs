@@ -2,8 +2,8 @@
 use bevy::ecs::prelude::*;
 
 
-#[derive(Debug,Event,Clone)]
-pub enum UiInteractInputEvent {
+#[derive(Debug,Message,Clone)]
+pub enum UiInteractInputMessage {
     FocusInit{root_entity:Entity, group:i32},
     FocusLeft{root_entity:Entity, group:i32},
     FocusRight{root_entity:Entity, group:i32},
@@ -33,7 +33,7 @@ pub enum UiInteractInputEvent {
     // },
 }
 
-impl UiInteractInputEvent {
+impl UiInteractInputMessage {
     pub fn get_root_entity(&self) -> Entity {
         match & self {
             Self::FocusInit{root_entity,..}|
@@ -101,7 +101,7 @@ impl UiInteractInputEvent {
 // }
 
 #[derive(Debug,Clone)] //
-pub enum UiInteractEventType {
+pub enum UiInteractMessageType {
     HoverBegin{device:i32,}, //don't really need device? like press?
     HoverEnd{device:i32,},
     PressBegin, //{device:i32,is_cursor:bool}, //might need hashset of devices?
@@ -159,7 +159,7 @@ pub enum UiInteractEventType {
 //     }
 // }
 
-impl UiInteractEventType {
+impl UiInteractMessageType {
     pub fn name(&self) -> &'static str {
         match self {
             Self::HoverBegin{..} => "hover_begin",
@@ -198,11 +198,11 @@ impl UiInteractEventType {
 //     Entity(Entity),
 // }
 
-#[derive(Debug,Event,Clone)]
+#[derive(Debug,Message,Clone)]
 pub struct UiInteractEvent {
     pub entity : Entity,
     // pub node : UiNode,
-    pub event_type : UiInteractEventType,
+    pub event_type : UiInteractMessageType,
     // pub ids : Vec<String>,
 }
 

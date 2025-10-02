@@ -14,7 +14,7 @@ pub struct UiAffectPlugin;
 impl bevy::app::Plugin for UiAffectPlugin {
     fn build(&self, app: &mut bevy::app::App) {
         app
-            // .add_event::<UiInteractEvent>()
+            // .add_message::<UiInteractEvent>()
             // .init_resource::<UiFocusState>()
           
             .add_systems(bevy::app::PostUpdate, (

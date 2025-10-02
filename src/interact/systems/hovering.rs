@@ -10,7 +10,7 @@ use super::super::super::layout::components::{UiLayoutComputed,UiRoot};
 
 use super::super::components::*;
 // use super::super::resources::*;
-use super::super::events::*;
+use super::super::messages::*;
 // use super::super::utils::*;
 // use super::super::values::*;
 
@@ -32,8 +32,8 @@ pub fn update_hover_events(
     hoverable_query: Query<(Entity,&UiLayoutComputed,&UiHoverable)>,
     root_query: Query<(Entity,&UiLayoutComputed), With<UiRoot>>,
 
-    mut input_event_reader: EventReader<UiInteractInputEvent>,
-    mut ui_event_writer: EventWriter<UiInteractEvent>,
+    mut input_event_reader: MessageReader<UiInteractInputMessage>,
+    mut ui_event_writer: MessageWriter<UiInteractEvent>,
 
     mut cur_hover_entities : Local<HashMap<(Entity,i32),(Entity,Vec2)>>, //[(root_entity,device)]=cur_hover_entity
 ) {
@@ -56,7 +56,7 @@ pub fn update_hover_events(
         if root_alive && hoverable_alive {
             true
         } else {
-            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::HoverEnd{device}}); //what if entity removed? ok to return a dead one?
+            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::HoverEnd{device}}); //what if entity removed? ok to return a dead one?
             false
         }
     });
@@ -94,7 +94,7 @@ pub fn update_hover_events(
             continue;
         }
 
-        let &UiInteractInputEvent::CursorMoveTo{root_entity,device,cursor:Some(cursor)} = ev else {
+        let &UiInteractInputMessage::CursorMoveTo{root_entity,device,cursor:Some(cursor)} = ev else {
             continue;
         };
 
@@ -112,16 +112,16 @@ pub fn update_hover_events(
             if is_inside {
                 if cur_hover_entity != Some(entity) {
                     if let Some(other_entity) = cur_hover_entity {
-                        ui_event_writer.write(UiInteractEvent{entity:other_entity,event_type:UiInteractEventType::HoverEnd{device}});
+                        ui_event_writer.write(UiInteractEvent{entity:other_entity,event_type:UiInteractMessageType::HoverEnd{device}});
                     }
 
-                    ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::HoverBegin{device}});
+                    ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::HoverBegin{device}});
                     cur_hover_entities.insert((root_entity,device), (entity,cursor));
                 }
 
                 break;
             } else if cur_hover_entity == Some(entity) { //not inside
-                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::HoverEnd{device}});
+                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::HoverEnd{device}});
                 cur_hover_entities.remove(&(root_entity,device)).unwrap();
             }
         }

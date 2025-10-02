@@ -2,7 +2,8 @@
 
 use bevy::ecs::resource::Resource;
 use bevy::ecs::world::{FromWorld, World};
-use bevy::render::mesh::PrimitiveTopology;
+use bevy::mesh::VertexBufferLayout;
+// use bevy::render::mesh::PrimitiveTopology;
 use bevy::render::renderer::RenderDevice;
 use bevy::render::view::ViewUniform;
 
@@ -52,14 +53,14 @@ impl SpecializedRenderPipeline for MyUiPipeline {
         RenderPipelineDescriptor {
             vertex: VertexState {
                 shader: MY_COLORED_MESH2D_SHADER_HANDLE,
-                entry_point: "vertex".into(),
+                entry_point: Some("vertex".into()),
                 shader_defs: Vec::new(),
                 buffers: vec![vertex_buffer_layout],
             },
             fragment: Some(FragmentState {
                 shader: MY_COLORED_MESH2D_SHADER_HANDLE,
                 shader_defs: Vec::new(),
-                entry_point: "fragment".into(),
+                entry_point: Some("fragment".into()),
                 targets: vec![Some(ColorTargetState {
                     format: TextureFormat::bevy_default(),
                     blend: Some(BlendState::ALPHA_BLENDING),

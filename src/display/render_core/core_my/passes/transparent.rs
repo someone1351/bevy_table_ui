@@ -1,8 +1,9 @@
 
+use bevy::camera::Viewport;
 // use crate::core_2d::Opaque2d;
 use bevy::ecs::prelude::World;
 use bevy::math::UVec2;
-use bevy::render::camera::Viewport;
+// use bevy::render::camera::Viewport;
 use bevy::render::render_phase::ViewSortedRenderPhases;
 use bevy::render::{
     camera::ExtractedCamera,
@@ -37,7 +38,7 @@ impl ViewNode for MainTransparentPassMyNode {
         &self,
         graph: &mut RenderGraphContext,
         render_context: &mut RenderContext<'w>,
-        (camera, view, target, depth): bevy::ecs::query::QueryItem<'w, Self::ViewQuery>,
+        (camera, view, target, depth): bevy::ecs::query::QueryItem<'w, '_,Self::ViewQuery>,
         world: &'w World,
     ) -> Result<(), NodeRunError> {
         let Some(transparent_phases) =

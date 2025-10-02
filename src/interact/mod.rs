@@ -2,7 +2,7 @@ pub mod components;
 pub mod systems;
 pub mod resources;
 pub mod plugin;
-pub mod events;
+pub mod messages;
 // use bevy::app::PostUpdate;
 /*
 TODO

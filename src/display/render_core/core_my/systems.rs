@@ -1,4 +1,5 @@
 
+use bevy::camera::Camera;
 use bevy::platform::collections::{HashMap, HashSet};
 use bevy::render::{
     batching::gpu_preprocessing::GpuPreprocessingMode,
@@ -8,7 +9,7 @@ use bevy::render::{
 
 use bevy::ecs::prelude::*;
 use bevy::render::{
-    camera::{Camera, ExtractedCamera},
+    camera::ExtractedCamera,
     render_phase::{
         ViewBinnedRenderPhases,
         ViewSortedRenderPhases,

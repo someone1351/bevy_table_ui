@@ -24,7 +24,7 @@ use bevy::ecs::prelude::*;
 
 use super::super::components::*;
 use super::super::resources::*;
-use super::super::events::*;
+use super::super::messages::*;
 // use super::super::utils::*;
 // use super::super::values::*;
 
@@ -73,7 +73,7 @@ enum FocusMove {Left,Right,Up,Down,Prev,Next}
 //     };
 // }
 pub fn update_focus_events(
-    mut input_event_reader: EventReader<UiInteractInputEvent>,
+    mut input_event_reader: MessageReader<UiInteractInputMessage>,
 
     // computed_query: Query<&UiComputed>,
     computed_query: Query<&UiLayoutComputed,With<UiLayoutComputed>>,
@@ -89,7 +89,7 @@ pub fn update_focus_events(
 
     children_query: Query<&Children,(With<UiLayoutComputed>,)>,
 
-    mut ui_event_writer: EventWriter<UiInteractEvent>,
+    mut ui_event_writer: MessageWriter<UiInteractEvent>,
 
     //todo replace cur_focus_entity with bool, and move cur_focus_entity to focus_entity_stk
     // mut focus_state.cur_focuses  : Local<HashMap<
@@ -150,7 +150,7 @@ pub fn update_focus_events(
 
                     //also end this
                     if let Some(entity)=*cur_focus_entity {
-                        ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::FocusEnd{group:cur_group}});
+                        ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group}});
                         *cur_focus_entity=None;
 
                         //comment out?
@@ -162,7 +162,7 @@ pub fn update_focus_events(
                     //
                     for j in (i..focus_entity_stk.len()).rev() {
                         let entity=focus_entity_stk[j];
-                        ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::FocusEnd{group:cur_group}});
+                        ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group}});
 
                         //comment out?
                         if let Ok(mut focusable)=focusable_query.get_mut(entity) {
@@ -186,7 +186,7 @@ pub fn update_focus_events(
                 let node_focus_group = focusable.as_ref().map(|x|x.group).unwrap_or_default();
 
                 if !root_entity_alive || !focusable_enabled || !unlocked || node_focus_group != cur_group {
-                    ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::FocusEnd{group:cur_group}});
+                    ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group}});
                     *cur_focus_entity=None;
 
                     //comment out?
@@ -283,7 +283,7 @@ pub fn update_focus_events(
                 *cur_focus_entity=None;
             } else if let Some(entity)=*cur_focus_entity {
                 //unfocus cur_focus_entity
-                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::FocusEnd{group:cur_group}});
+                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group}});
                 focusable_query.get_mut(entity).unwrap().focused=false;
                 *cur_focus_entity=None;
             }
@@ -297,7 +297,7 @@ pub fn update_focus_events(
                 //send focus ends
                 for j in (i .. focus_entity_stk.len()).rev() {
                     let entity=focus_entity_stk[j];
-                    ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::FocusEnd{group:cur_group}});
+                    ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group}});
                     focusable_query.get_mut(entity).unwrap().focused=false;
                 }
 
@@ -314,7 +314,7 @@ pub fn update_focus_events(
                 let entity=focus_ancestor_entities[i];
                 focus_entity_stk.push(entity);
                 // prev_focused_stk.push(Default::default());
-                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::FocusBegin{group:cur_group}});
+                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group:cur_group}});
 
                 if let Ok(mut focusable2)=focusable_query.get_mut(entity) {
                     focusable2.focused=true;
@@ -327,7 +327,7 @@ pub fn update_focus_events(
 
             //
             *cur_focus_entity=Some(entity);
-            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::FocusBegin{group:cur_group}});
+            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group:cur_group}});
             focusable_query.get_mut(entity).unwrap().focused=true;
 
 
@@ -414,7 +414,7 @@ pub fn update_focus_events(
             for i in focus_entity_stk.len() .. focus_ancestor_entities.len() {
                 let entity=focus_ancestor_entities[i];
                 focus_entity_stk.push(entity);
-                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::FocusBegin{group:focus_group}});
+                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group:focus_group}});
 
                 if let Ok(mut focusable2)=focusable_query.get_mut(entity) {
                     focusable2.focused=true;
@@ -433,7 +433,7 @@ pub fn update_focus_events(
 
 
             *cur_focus_entity=Some(entity);
-            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::FocusBegin{group:focus_group}});
+            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group:focus_group}});
         }
     }
 
@@ -456,7 +456,7 @@ pub fn update_focus_events(
 
 
         match ev.clone() {
-            UiInteractInputEvent::FocusEnter{root_entity,group} => {
+            UiInteractInputMessage::FocusEnter{root_entity,group} => {
                 if let Some(groups)=focus_states.cur_focuses.get_mut(&root_entity) {
                     if let Some((cur_focus_entity,focus_entity_stk, _hist))=groups.get_mut(&group) {
                         if let Some(entity)=*cur_focus_entity {
@@ -467,12 +467,12 @@ pub fn update_focus_events(
                     }
                 }
             }
-            UiInteractInputEvent::FocusExit{root_entity,group} => {
+            UiInteractInputMessage::FocusExit{root_entity,group} => {
                 if let Some(groups)=focus_states.cur_focuses.get_mut(&root_entity) {
                     if let Some((cur_focus_entity,focus_entity_stk, _hist))=groups.get_mut(&group) {
                         //already checked above for enabled/unlocked
                         if let Some(entity)=*cur_focus_entity {
-                            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::FocusEnd{group}});
+                            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group}});
 
                             *cur_focus_entity=focus_entity_stk.pop();
 
@@ -496,11 +496,11 @@ pub fn update_focus_events(
 
         //
         let (top_root_entity, cur_group,(cur_focus_entity,focus_entity_stk, hist))=match ev {
-            UiInteractInputEvent::FocusEnter{root_entity,group}
-                |UiInteractInputEvent::FocusPrev{root_entity,group}|UiInteractInputEvent::FocusNext{root_entity,group}
-                |UiInteractInputEvent::FocusLeft{root_entity,group}|UiInteractInputEvent::FocusRight {root_entity,group}
-                |UiInteractInputEvent::FocusUp{root_entity,group}|UiInteractInputEvent::FocusDown{root_entity,group}
-                |UiInteractInputEvent::FocusInit{root_entity,group}
+            UiInteractInputMessage::FocusEnter{root_entity,group}
+                |UiInteractInputMessage::FocusPrev{root_entity,group}|UiInteractInputMessage::FocusNext{root_entity,group}
+                |UiInteractInputMessage::FocusLeft{root_entity,group}|UiInteractInputMessage::FocusRight {root_entity,group}
+                |UiInteractInputMessage::FocusUp{root_entity,group}|UiInteractInputMessage::FocusDown{root_entity,group}
+                |UiInteractInputMessage::FocusInit{root_entity,group}
                 // |UiInputEvent::FocusPressBegin(root_entity,group,..)
             => {
                 (root_entity,group,focus_states.cur_focuses.entry(root_entity).or_default().entry(group).or_default())
@@ -509,11 +509,11 @@ pub fn update_focus_events(
         };
 
         let move_dir=match ev.clone() {
-            UiInteractInputEvent::FocusEnter{..}|UiInteractInputEvent::FocusNext{..}|UiInteractInputEvent::FocusRight{..}|UiInteractInputEvent::FocusDown{..}
-            |UiInteractInputEvent::FocusInit{..}
+            UiInteractInputMessage::FocusEnter{..}|UiInteractInputMessage::FocusNext{..}|UiInteractInputMessage::FocusRight{..}|UiInteractInputMessage::FocusDown{..}
+            |UiInteractInputMessage::FocusInit{..}
                 // |UiInputEvent::FocusPressBegin(..)
                 if cur_focus_entity.is_none() => FocusMove::Next,
-            UiInteractInputEvent::FocusPrev{..}|UiInteractInputEvent::FocusLeft{..}|UiInteractInputEvent::FocusUp{..} if cur_focus_entity.is_none()  =>  {
+            UiInteractInputMessage::FocusPrev{..}|UiInteractInputMessage::FocusLeft{..}|UiInteractInputMessage::FocusUp{..} if cur_focus_entity.is_none()  =>  {
                 if !was_resent {
                     ev_stk.push(ev.clone());
                     was_resent=true;
@@ -523,12 +523,12 @@ pub fn update_focus_events(
 
                 FocusMove::Next
             },
-            UiInteractInputEvent::FocusPrev{..} => FocusMove::Prev,
-            UiInteractInputEvent::FocusNext{..} => FocusMove::Next,
-            UiInteractInputEvent::FocusLeft{..} => FocusMove::Left,
-            UiInteractInputEvent::FocusRight{..} => FocusMove::Right,
-            UiInteractInputEvent::FocusUp{..} => FocusMove::Up,
-            UiInteractInputEvent::FocusDown{..} => FocusMove::Down,
+            UiInteractInputMessage::FocusPrev{..} => FocusMove::Prev,
+            UiInteractInputMessage::FocusNext{..} => FocusMove::Next,
+            UiInteractInputMessage::FocusLeft{..} => FocusMove::Left,
+            UiInteractInputMessage::FocusRight{..} => FocusMove::Right,
+            UiInteractInputMessage::FocusUp{..} => FocusMove::Up,
+            UiInteractInputMessage::FocusDown{..} => FocusMove::Down,
             _ => {continue;}
         };
 
@@ -858,7 +858,7 @@ pub fn update_focus_events(
                 if let Some(focusable) = focusable_query.get(entity).ok() {
                     if cur_group==focusable.group && focusable.enable {
                         if let Some(cur_focus_entity) = *cur_focus_entity {
-                            ui_event_writer.write(UiInteractEvent{entity:cur_focus_entity,event_type:UiInteractEventType::FocusEnd{group:cur_group}});
+                            ui_event_writer.write(UiInteractEvent{entity:cur_focus_entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group}});
 
                             if let Ok(mut focusable)=focusable_query.get_mut(cur_focus_entity) {
                                 focusable.focused=false;
@@ -870,7 +870,7 @@ pub fn update_focus_events(
                                 let entity=focus_entity_stk.pop().unwrap();
                                 // prev_focused_stk.pop().unwrap();
 
-                                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::FocusEnd{group:cur_group}});
+                                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group}});
 
                                 if let Ok(mut focusable)=focusable_query.get_mut(entity) {
                                     focusable.focused=false;
@@ -882,7 +882,7 @@ pub fn update_focus_events(
                         //
 
                         *cur_focus_entity = Some(entity);
-                        ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::FocusBegin{group:cur_group}});
+                        ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group:cur_group}});
 
 
                         // if let Ok(mut focusable)=focusable_query.get_mut(entity) {
@@ -1341,7 +1341,7 @@ pub fn update_focus_events(
         }
 
         //
-        if let UiInteractInputEvent::FocusEnter{..}=ev { //if no focus found, undo focus_entity_push above
+        if let UiInteractInputMessage::FocusEnter{..}=ev { //if no focus found, undo focus_entity_push above
             if cur_focus_entity.is_none() {//&& focus_entity_stk.len()>1
                 *cur_focus_entity=focus_entity_stk.pop();
 

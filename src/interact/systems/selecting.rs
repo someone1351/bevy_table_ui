@@ -9,7 +9,7 @@ use super::super::super::layout::components::{UiLayoutComputed,UiRoot};
 
 use super::super::components::*;
 // use super::super::resources::*;
-use super::super::events::*;
+use super::super::messages::*;
 // use super::super::utils::*;
 // use super::super::values::*;
 
@@ -23,7 +23,7 @@ pub fn update_select_events(
     mut selectable_query: Query<(Entity,&mut UiSelectable)>,
     mut root_group_selecteds : Local<HashMap<Entity,HashMap<String,Entity>>>, //[root_entity][select_group]=node
     mut root_single_selecteds : Local<HashMap<Entity,HashSet<Entity>>>, //[root_entity][node]
-    mut ui_event_writer: EventWriter<UiInteractEvent>,
+    mut ui_event_writer: MessageWriter<UiInteractEvent>,
 ) {
 
     //unselect removed entities, selecteds with changed group names, removed/disabled selectable
@@ -48,7 +48,7 @@ pub fn update_select_events(
                 || !selected
                 || selectable_group.map(|x|x.is_empty()).unwrap_or_default()
             {
-                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::SelectEnd});
+                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::SelectEnd});
                 group_selecteds.remove(&group);
             }
         }
@@ -84,7 +84,7 @@ pub fn update_select_events(
                 || !selected
                 || selectable_group.map(|x|!x.is_empty()).unwrap_or_default()
             {
-                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::SelectEnd});
+                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::SelectEnd});
                 single_selecteds.remove(&entity);
             }
         }
@@ -148,7 +148,7 @@ pub fn update_select_events(
             if cur_selectable.selected {
                 if cur_selectable.group.is_empty() { //single
                     if !single_selecteds.contains(&entity) {
-                        ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::SelectBegin});
+                        ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::SelectBegin});
                         single_selecteds.insert(entity);
                     }
                 } else { //group
@@ -157,13 +157,13 @@ pub fn update_select_events(
                             let (_,mut other_selectable)=selectable_query.get_mut(*other_entity).unwrap();
 
                             other_selectable.selected=false;
-                            ui_event_writer.write(UiInteractEvent{entity:*other_entity,event_type:UiInteractEventType::SelectEnd});
+                            ui_event_writer.write(UiInteractEvent{entity:*other_entity,event_type:UiInteractMessageType::SelectEnd});
 
                             //
-                            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::SelectBegin});
+                            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::SelectBegin});
                             *other_entity=entity;
                         } else { //first time group has selected
-                            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::SelectBegin});
+                            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::SelectBegin});
                             group_selecteds.insert(cur_selectable.group.clone(),entity);
                         }
                     }

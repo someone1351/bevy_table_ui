@@ -33,7 +33,7 @@ fn main() {
                 .set(WindowPlugin {
                     primary_window: Some(Window {
                         title: "table ui".into(),
-                        resolution: (800.0, 600.0).into(),
+                        resolution: (800, 600).into(),
                         resizable: true,
                         ..Default::default()
                     }),
@@ -71,7 +71,7 @@ fn main() {
 pub fn update_ui_roots(
     windows: Query<&Window>,
     mut root_query: Query<&mut UiRoot,>,
-    mut key_events: EventReader<bevy::input::keyboard::KeyboardInput>,
+    mut key_events: MessageReader<bevy::input::keyboard::KeyboardInput>,
 ) {
 
     let window_size=windows.single()
@@ -361,8 +361,8 @@ fn setup_camera(mut commands: Commands) {
 }
 
 fn update_input(
-    mut key_events: EventReader<bevy::input::keyboard::KeyboardInput>,
-    mut exit: EventWriter<AppExit>,
+    mut key_events: MessageReader<bevy::input::keyboard::KeyboardInput>,
+    mut exit: MessageWriter<AppExit>,
     // mut screenshot_manager: ResMut<bevy::render::view::screenshot::ScreenshotManager>,
     // main_window: Query<Entity, With<bevy::window::PrimaryWindow>>,
     mut last_pressed:Local<HashSet<KeyCode>>,

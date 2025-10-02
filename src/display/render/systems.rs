@@ -4,20 +4,21 @@ use std::collections::HashMap;
 
 
 
-use bevy::asset::{AssetEvent, Assets, Handle};
+use bevy::asset::{AssetEvent, AssetId, Assets, };
+use bevy::camera::visibility::RenderLayers;
 use bevy::color::Color;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::query::With;
 use bevy::image::{Image, TextureAtlasLayout};
 use bevy::math::{FloatOrd, Vec2};
 // use bevy::platform::collections::HashSet;
-use bevy::prelude::{ EventReader, Msaa};
+use bevy::prelude::{ MessageReader, Msaa};
 use bevy::render::render_asset::RenderAssets;
 use bevy::render::texture::GpuImage;
 use bevy::render::{render_phase::*, Extract};
 use bevy::render::renderer::{RenderDevice, RenderQueue};
 use bevy::render::sync_world::{MainEntity, TemporaryRenderEntity};
-use bevy::render::view::{ExtractedView, RenderLayers, ViewUniforms};
+use bevy::render::view::{ExtractedView, ViewUniforms};
 use bevy::ecs::system::*;
 
 
@@ -42,7 +43,7 @@ fn create_image_bind_group(
     render_device: &RenderDevice,
     mesh2d_pipeline: &MyUiPipeline,
     image_bind_groups: &mut MyUiImageBindGroups,
-    handle:Option<Handle<Image>>,
+    handle:Option<AssetId<Image>>,
     gpu_image:&GpuImage,
 ) {
 
@@ -54,7 +55,7 @@ fn create_image_bind_group(
         ]
     );
 
-    let image_id=handle.clone().map(|x|x.id());
+    let image_id=handle.clone();//.map(|x|x.id());
     image_bind_groups.values.insert(image_id, bind_group);
 }
 fn create_image_bind_group2(
@@ -62,12 +63,12 @@ fn create_image_bind_group2(
     mesh2d_pipeline: &MyUiPipeline,
     gpu_images: &RenderAssets<GpuImage>,
     image_bind_groups: &mut MyUiImageBindGroups,
-    handle:Option<Handle<Image>>,
+    handle:Option<AssetId<Image>>,
 ) {
 
 
     //
-    let image_id=handle.clone().map(|x|x.id());
+    let image_id=handle.clone();//.map(|x|x.id());
     // let image_id=test.handle.id();
     //
     if image_bind_groups.values.contains_key(&image_id) {
@@ -115,7 +116,7 @@ pub fn extract_images(
         Entity,
         &TestRenderComponent,
     )> >,
-    mut image_asset_events: Extract<EventReader<AssetEvent<Image>>>,
+    mut image_asset_events: Extract<MessageReader<AssetEvent<Image>>>,
 
     render_device: Res<RenderDevice>,
     mesh2d_pipeline: Res<MyUiPipeline>,
@@ -135,7 +136,7 @@ pub fn extract_images(
 
     for (_entity, test,  ) in uinode_query.iter() {
         if test.handle.is_some() {
-            let handle=test.handle.clone();
+            let handle=test.handle.clone().map(|h|h.id());
             create_image_bind_group2(&render_device,&mesh2d_pipeline,&gpu_images,&mut image_bind_groups,handle);
         }
     }
@@ -150,7 +151,7 @@ pub fn extract_images2(
         Option<&TextLayoutInfo>,
         // Option<&MyTargetCamera>,
     )> >,
-    mut image_asset_events: Extract<EventReader<AssetEvent<Image>>>,
+    mut image_asset_events: Extract<MessageReader<AssetEvent<Image>>>,
 
     render_device: Res<RenderDevice>,
     mesh2d_pipeline: Res<MyUiPipeline>,
@@ -180,7 +181,8 @@ pub fn extract_images2(
 
         //image
         if image.is_some() {
-            let handle=image.map(|x|x.handle.clone());
+            let handle=image.map(|x|x.handle.clone()).map(|h|h.id());
+
             create_image_bind_group2(&render_device,&mesh2d_pipeline,&gpu_images,&mut image_bind_groups,handle);
         }
 
@@ -190,8 +192,8 @@ pub fn extract_images2(
          {
             for text_glyph in text_layout.glyphs.iter() {
 
-                let handle=text_glyph.atlas_info.texture.clone();
-                let handle: Option<bevy::prelude::Handle<Image>>=Some(handle);
+                let handle=Some(text_glyph.atlas_info.texture.clone());
+                // let handle: Option<bevy::prelude::Handle<Image>>=Some(handle);
 
                 create_image_bind_group2(&render_device,&mesh2d_pipeline,&gpu_images,&mut image_bind_groups,handle);
 
@@ -242,7 +244,7 @@ pub fn extract_uinodes(
             color: test.col,
             depth: 0,
             render_layers,
-            image: test.handle.clone(),
+            image: test.handle.clone().map(|h|h.id()),
             bl: Vec2::new(x, y2),
             br: Vec2::new(x2, y2),
             tl: Vec2::new(x, y),
@@ -525,7 +527,7 @@ pub fn extract_uinodes2(
                     color : image.color.clone(),
                     bl_uv,br_uv,tl_uv,tr_uv,
                     depth:image_depth,
-                    image:Some(image.handle.clone()),
+                    image:Some(image.handle.clone().id()),
 
                     entity:commands.spawn((TemporaryRenderEntity,)).id(),
                     // camera_entity,
@@ -543,7 +545,9 @@ pub fn extract_uinodes2(
 
             for text_glyph in text_layout.glyphs.iter() {
                 let color = text.color;
-                let atlas = texture_atlases.get(&text_glyph.atlas_info.texture_atlas).unwrap();
+                let atlas = texture_atlases.get(text_glyph.atlas_info.texture_atlas
+                    .clone() //necessary?
+                ).unwrap();
                 let glyph_index = text_glyph.atlas_info.location.glyph_index as usize;
                 let atlas_glyph_rect = atlas.textures[glyph_index].as_rect();
 

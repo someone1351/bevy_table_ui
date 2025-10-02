@@ -12,7 +12,7 @@ use bevy::image::{Image, TextureAtlasLayout};
 use bevy::math::Vec2;
 // use bevy::render::texture::Image;
 // use bevy::sprite::TextureAtlasLayout;
-use bevy::text::{ComputedTextBlock, CosmicFontSystem, Font, FontAtlasSets, FontSmoothing, JustifyText, LineBreak, LineHeight, SwashCache, TextBounds, TextError, TextFont, TextLayout, TextLayoutInfo, TextPipeline, YAxisOrientation};
+use bevy::text::{ComputedTextBlock, CosmicFontSystem, Font, FontAtlasSets, FontSmoothing, Justify, LineBreak, LineHeight, SwashCache, TextBounds, TextError, TextFont, TextLayout, TextLayoutInfo, TextPipeline, };
 // use bevy::window::Window;
 
 
@@ -136,9 +136,9 @@ pub fn update_text_image(
                 let mut new_text_max_size= Vec2::ZERO;
 
                 let text_alignment = match text.halign {
-                    UiTextHAlign::Center => JustifyText::Center,
-                    UiTextHAlign::Left => JustifyText::Left,
-                    UiTextHAlign::Right => JustifyText::Right,
+                    UiTextHAlign::Center => Justify::Center,
+                    UiTextHAlign::Left => Justify::Left,
+                    UiTextHAlign::Right => Justify::Right,
                 };
 
                 //
@@ -171,10 +171,10 @@ pub fn update_text_image(
                         &mut font_atlas_sets,
                         &mut texture_atlases,
                         &mut *textures,
-                        YAxisOrientation::TopToBottom,
                         &mut computed_text_block,
                         &mut font_system,
                         &mut swash_cache,
+                        // YAxisOrientation::TopToBottom,
                     ) {
                         if text.hlen!=0 {
                             bound_width=Some(temp_text_layout_info.size.x);
@@ -206,10 +206,10 @@ pub fn update_text_image(
                     &mut font_atlas_sets,
                     &mut texture_atlases,
                     &mut *textures,
-                    YAxisOrientation::TopToBottom,
                     &mut computed_text_block,
                     &mut font_system,
                     &mut swash_cache,
+                    // YAxisOrientation::TopToBottom,
 
                 ) {
                     Err(e @ TextError::FailedToGetGlyphImage(_)) => {

@@ -3,7 +3,7 @@
 use core::ops::Range;
 
 
-use bevy::asset::Handle;
+use bevy::asset::AssetId;
 use bevy::ecs::component::Component;
 
 
@@ -21,5 +21,5 @@ pub struct MyViewBindGroup {
 #[derive(Component, Default, Debug, Clone)]
 pub struct MyUiBatch {
     pub range: Range<u32>,
-    pub image_handle: Option<Handle<Image>>,
+    pub image_handle: Option<AssetId<Image>>,
 }

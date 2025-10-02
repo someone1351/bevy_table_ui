@@ -58,7 +58,7 @@ impl SpecializedRenderPipeline for BlitPipeline {
             fragment: Some(FragmentState {
                 shader: BLIT_SHADER_HANDLE,
                 shader_defs: vec![],
-                entry_point: "fs_main".into(),
+                entry_point: Some("fs_main".into()),
                 targets: vec![Some(ColorTargetState {
                     format: key.texture_format,
                     blend: key.blend_state,

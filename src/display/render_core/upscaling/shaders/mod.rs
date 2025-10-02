@@ -1,16 +1,17 @@
 use bevy::app::App;
-use bevy::asset::{load_internal_asset, weak_handle, Handle};
+use bevy::asset::{load_internal_asset, uuid_handle, Handle};
 use bevy::render::render_resource::*;
+use bevy::shader::Shader;
 
 
 // use crate::fullscreen_vertex_shader::fullscreen_shader_vertex_state;
 
-pub const BLIT_SHADER_HANDLE: Handle<Shader> = weak_handle!("19be3075-c34e-43e7-bf24-c8fe21a0192e");
+pub const BLIT_SHADER_HANDLE: Handle<Shader> = uuid_handle!("19be3075-c34e-43e7-bf24-c8fe21a0192e");
 
 
 
 pub const FULLSCREEN_SHADER_HANDLE: Handle<Shader> =
-    weak_handle!("481fb759-d0b1-4175-8319-c439acde30a3");
+    uuid_handle!("481fb759-d0b1-4175-8319-c439acde30a3");
 
 /// uses the [`FULLSCREEN_SHADER_HANDLE`] to output a
 /// ```wgsl
@@ -27,7 +28,7 @@ pub fn fullscreen_shader_vertex_state() -> VertexState {
     VertexState {
         shader: FULLSCREEN_SHADER_HANDLE,
         shader_defs: Vec::new(),
-        entry_point: "fullscreen_vertex_shader".into(),
+        entry_point: Some("fullscreen_vertex_shader".into()),
         buffers: Vec::new(),
     }
 }

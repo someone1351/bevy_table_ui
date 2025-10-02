@@ -1,7 +1,8 @@
 
 #![allow(dead_code)]
 
-use bevy::asset::{AssetId, Handle};
+use bevy::asset::AssetId;
+use bevy::camera::visibility::RenderLayers;
 use bevy::color::Color;
 use bevy::ecs::resource::Resource;
 
@@ -11,7 +12,7 @@ use bevy::platform::collections::HashMap;
 use bevy::prelude::Entity;
 use bevy::render::render_resource::{BindGroup, BufferUsages, RawBufferVec};
 use bevy::render::sync_world::MainEntity;
-use bevy::render::view::RenderLayers;
+// use bevy::render::view::RenderLayers;
 
 
 
@@ -36,7 +37,8 @@ pub struct MyUiExtractedElement{
     // pub render_layers:Option<RenderLayers>,
     pub render_layers:RenderLayers,
 
-    pub image : Option<Handle<Image>>,
+    // pub image : Option<Handle<Image>>,
+    pub image : Option<AssetId<Image>>,
 }
 
 impl Default for MyUiExtractedElement {

@@ -5,7 +5,7 @@ use bevy::app::App;
 
 
 use bevy::ecs::schedule::IntoScheduleConfigs;
-use bevy::render::{render_phase::*, ExtractSchedule, Render, RenderApp, RenderSet};
+use bevy::render::{render_phase::*, ExtractSchedule, Render, RenderApp, RenderSystems};
 
 
 
@@ -78,12 +78,12 @@ pub fn render_setup(app: &mut App) {
             extract_uinodes2,
         ).chain())
         .add_systems( Render,(
-            queue_uinodes.in_set(RenderSet::Queue),
+            queue_uinodes.in_set(RenderSystems::Queue),
             // // sort_phase_system::<MyTransparentUi>.in_set(RenderSet::PhaseSort),
             (
                 prepare_views,
                 prepare_uinodes,
-            ).chain().in_set(RenderSet::PrepareBindGroups),
+            ).chain().in_set(RenderSystems::PrepareBindGroups),
         )) ;
 
     setup_shaders(app);

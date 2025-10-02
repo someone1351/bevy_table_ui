@@ -16,17 +16,17 @@ impl bevy::app::Plugin for UiDisplayPlugin {
     fn build(&self, app: &mut bevy::app::App) {
         app
 
-            // // .add_event::<loader::UiAssetEvent>()
-            // // .add_event::<input_map::InputMapEvent<core::UiInputMapping>>()
+            // // .add_message::<loader::UiAssetEvent>()
+            // // .add_message::<input_map::InputMapEvent<core::UiInputMapping>>()
             // // .register_type::<core::UiText>()
             // // .register_type::<core::UiImage>()
             // // .register_type::<core::UiId>()
             // // .register_type::<interact::UiFocusable>()
             // // .init_resource::<core::UiCustomOutput>()
 
-            // .add_event::<core::UiEvent>()
-            // .add_event::<core::UiInputEvent>()
-            // .add_event::<core::UiCustomEvent>()
+            // .add_message::<core::UiEvent>()
+            // .add_message::<core::UiInputEvent>()
+            // .add_message::<core::UiCustomEvent>()
 
 
             // .init_resource::<core::UiGcScope>()

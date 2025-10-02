@@ -8,7 +8,7 @@ use super::components::*;
 use super::super::layout::components::UiLayoutComputed;
 use super::super::display::components::{UiColor,UiText}; //,UiImage
 
-use super::super::interact::events::{UiInteractEvent,UiInteractEventType};
+use super::super::interact::messages::{UiInteractEvent,UiInteractMessageType};
 
 /*
 * what to do about an attribute set by multiple events?
@@ -17,7 +17,7 @@ use super::super::interact::events::{UiInteractEvent,UiInteractEventType};
 */
 
 pub fn run_affect_states(
-    mut interact_event_reader: EventReader<UiInteractEvent>,
+    mut interact_event_reader: MessageReader<UiInteractEvent>,
 
     mut affect_computed_query: Query<&mut UiAffect,>,
     // mut color_query: Query<(&UiAffectColor, &mut UiColor,)>,
@@ -42,11 +42,11 @@ pub fn run_affect_states(
         };
 
         match &ev.event_type {
-            UiInteractEventType::FocusBegin { .. } => {
+            UiInteractMessageType::FocusBegin { .. } => {
                 affect_computed.states.insert(UiAffectState::Focus);
                 new_states.insert(UiAffectState::Focus);
             }
-            UiInteractEventType::FocusEnd { .. } => {
+            UiInteractMessageType::FocusEnd { .. } => {
                 if new_states.contains(&UiAffectState::Focus) {
                     affect_computed.remove_states.insert(UiAffectState::Focus);
                 } else {
@@ -64,42 +64,42 @@ pub fn run_affect_states(
             //         affect_computed.states.remove(&UiAffectState::Drag);
             //     }
             // }
-            UiInteractEventType::PressBegin => {
+            UiInteractMessageType::PressBegin => {
                 affect_computed.states.insert(UiAffectState::Press);
                 new_states.insert(UiAffectState::Press);
             }
-            UiInteractEventType::PressEnd => {
+            UiInteractMessageType::PressEnd => {
                 if new_states.contains(&UiAffectState::Press) {
                     affect_computed.remove_states.insert(UiAffectState::Press);
                 } else {
                     affect_computed.states.remove(&UiAffectState::Press);
                 }
             }
-            UiInteractEventType::SelectBegin => {
+            UiInteractMessageType::SelectBegin => {
                 affect_computed.states.insert(UiAffectState::Select);
                 new_states.insert(UiAffectState::Select);
             }
-            UiInteractEventType::SelectEnd => {
+            UiInteractMessageType::SelectEnd => {
                 if new_states.contains(&UiAffectState::Select) {
                     affect_computed.remove_states.insert(UiAffectState::Select);
                 } else {
                     affect_computed.states.remove(&UiAffectState::Select);
                 }
             }
-            UiInteractEventType::HoverBegin{..} => {
+            UiInteractMessageType::HoverBegin{..} => {
                 affect_computed.states.insert(UiAffectState::Hover);
                 new_states.insert(UiAffectState::Hover);
             }
-            UiInteractEventType::HoverEnd{..} => {
+            UiInteractMessageType::HoverEnd{..} => {
                 if new_states.contains(&UiAffectState::Hover) {
                     affect_computed.remove_states.insert(UiAffectState::Hover);
                 } else {
                     affect_computed.states.remove(&UiAffectState::Hover);
                 }
             }
-            UiInteractEventType::Click => {}
-            UiInteractEventType::DragX{..} => {}
-            UiInteractEventType::DragY{..} => {}
+            UiInteractMessageType::Click => {}
+            UiInteractMessageType::DragX{..} => {}
+            UiInteractMessageType::DragY{..} => {}
             // UiInteractEventType::DragMove { .. } =>{}
             // _ =>{}
         }

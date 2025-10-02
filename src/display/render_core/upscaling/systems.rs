@@ -1,9 +1,10 @@
 // use crate::blit::{BlitPipeline, BlitPipelineKey};
 
+use bevy::camera::CameraOutputMode;
 use bevy::ecs::prelude::*;
 use bevy::platform::collections::HashSet;
 use bevy::render::{
-    camera::{CameraOutputMode, ExtractedCamera},
+    camera::ExtractedCamera,
     render_resource::*,
     view::ViewTarget,
 };

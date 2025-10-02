@@ -13,7 +13,7 @@ mod display;
 mod affect;
 
 pub use layout::{plugin::*,components::*,values::*,};
-pub use interact::{plugin::*,components::*,resources::*,events::*};
+pub use interact::{plugin::*,components::*,resources::*,messages::*};
 pub use display::{plugin::*,components::*,values::*};
 pub use affect::{plugin::*,components::*};
 

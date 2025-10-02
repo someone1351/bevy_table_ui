@@ -3,7 +3,7 @@ use bevy::app::prelude::*;
 use bevy::ecs::prelude::*;
 use bevy::render::render_resource::SpecializedRenderPipelines;
 use bevy::render::{
-    Render, RenderApp, RenderSet,
+    Render, RenderApp, RenderSystems,
 };
 
 mod nodes;
@@ -43,7 +43,7 @@ impl Plugin for UpscalingPlugin {
                 // and aversion to extensive and intrusive system ordering.
                 // See https://github.com/bevyengine/bevy/issues/14770 for more context.
                 prepare_view_upscaling_pipelines
-                    .in_set(RenderSet::Prepare)
+                    .in_set(RenderSystems::Prepare)
                     .ambiguous_with_all(),
             );
         }

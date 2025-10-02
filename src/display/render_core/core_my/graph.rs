@@ -1,10 +1,10 @@
 
 
 
-use bevy::render::render_graph::{EmptyNode, RenderGraphApp, ViewNodeRunner};
+use bevy::render::render_graph::{EmptyNode,  ViewNodeRunner,RenderGraphExt,RenderLabel, RenderSubGraph};
 
 
-use bevy::{app::SubApp, render::render_graph::{RenderLabel, RenderSubGraph}};
+use bevy::app::SubApp;
 
 use super::super::upscaling::UpscalingNode;
 

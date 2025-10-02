@@ -21,7 +21,7 @@ use super::super::super::layout::values::UiRect;
 
 use super::super::components::*;
 // use super::super::resources::*;
-use super::super::events::*;
+use super::super::messages::*;
 // use super::super::utils::*;
 // use super::super::values::*;
 
@@ -42,8 +42,8 @@ pub fn update_drag_events(
     root_query: Query<(Entity,&UiLayoutComputed), With<UiRoot>>,
 
 
-    mut input_event_reader: EventReader<UiInteractInputEvent>,
-    mut ui_output_event_writer: EventWriter<UiInteractEvent>,
+    mut input_event_reader: MessageReader<UiInteractInputMessage>,
+    mut ui_output_event_writer: MessageWriter<UiInteractEvent>,
     // root_query: Query<Entity,(Without<Parent>,With<UiLayoutComputed>)>,
     // children_query: Query<&Children,(With<UiLayoutComputed>,)>,
 
@@ -96,7 +96,7 @@ pub fn update_drag_events(
             continue;
         }
         match ev.clone() {
-            UiInteractInputEvent::CursorMoveTo{root_entity,device,cursor} => {
+            UiInteractInputMessage::CursorMoveTo{root_entity,device,cursor} => {
                 // println!("cursor {cursor:?}");
                 let Some(cursor)=cursor else {
                     device_cursors.remove(&(root_entity,device));
@@ -124,16 +124,16 @@ pub fn update_drag_events(
                 *start_cursor=cursor;
 
                 if dragged_px.x != 0.0 {
-                    ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::DragX {px:dragged_px.x,scale:dragged_scale.x}});
+                    ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::DragX {px:dragged_px.x,scale:dragged_scale.x}});
                 }
 
                 if dragged_px.y != 0.0 {
-                    ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractEventType::DragY {px:dragged_px.y,scale:dragged_scale.y}});
+                    ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::DragY {px:dragged_px.y,scale:dragged_scale.y}});
                 }
             }
 
             //if same device used for cursor and button press, then a depress of one will depress the other
-            UiInteractInputEvent::CursorPressBegin{root_entity,device} => {
+            UiInteractInputMessage::CursorPressBegin{root_entity,device} => {
                 //remove any prev (not normally needed)
                 device_drags.remove(&(root_entity,device));
 
@@ -163,10 +163,10 @@ pub fn update_drag_events(
                 //
                 device_drags.insert((root_entity,device), (found_entity,cell_size,border_rect.left_top(),cursor));
             }
-            UiInteractInputEvent::CursorPressEnd{root_entity,device} => {
+            UiInteractInputMessage::CursorPressEnd{root_entity,device} => {
                 device_drags.remove(&(root_entity,device));
             }
-            UiInteractInputEvent::CursorPressCancel{root_entity,device} => {
+            UiInteractInputMessage::CursorPressCancel{root_entity,device} => {
                 device_drags.remove(&(root_entity,device));
             }
             _=>{}

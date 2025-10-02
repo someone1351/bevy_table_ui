@@ -24,7 +24,7 @@ use bevy::render::{
         sort_phase_system, DrawFunctions, ViewBinnedRenderPhases,
         ViewSortedRenderPhases,
     },
-    ExtractSchedule, Render, RenderApp, RenderSet,
+    ExtractSchedule, Render, RenderApp, RenderSystems,
 };
 
 pub mod phases;
@@ -61,9 +61,9 @@ impl Plugin for CoreMyPlugin {
             .add_systems(
                 Render,
                 (
-                    sort_phase_system::<TransparentMy>.in_set(RenderSet::PhaseSort),
+                    sort_phase_system::<TransparentMy>.in_set(RenderSystems::PhaseSort),
                     // sort_phase_system::<MyTransparentUi>.in_set(RenderSet::PhaseSort), //
-                    prepare_core_2d_depth_textures.in_set(RenderSet::PrepareResources),
+                    prepare_core_2d_depth_textures.in_set(RenderSystems::PrepareResources),
                 ),
             );
         setup_graph(render_app);

@@ -29,7 +29,7 @@ pub fn create_dummy_image(render_device: &RenderDevice, render_queue:&RenderQueu
         ..Default::default()
     });
 
-    let format_size = image.texture_descriptor.format.pixel_size();
+    let format_size = image.texture_descriptor.format.pixel_size().expect("TableUI, dummy image format pixel size err");
 
     render_queue.write_texture(
         texture.as_image_copy(),

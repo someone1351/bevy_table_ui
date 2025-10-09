@@ -135,7 +135,18 @@ pub fn update_drag_events(
                 let dragged_delta_px = cursor-drag.cursor;
                 let dragged_px = cursor-drag.start_cursor;
                 // let dragged_scale = dragged_px/ drag.size;
-                let dragged_scale = dragged_px/layout_computed.cell_size.sum();
+                // dragged_px/layout_computed.cell_size.sum()
+
+                let mut dragged_scale = Vec2::ZERO;
+                let cell_size=layout_computed.cell_size.sum();
+
+                if cell_size.x==0.0 {
+                    dragged_scale.x=dragged_px.x/cell_size.x;
+                }
+                if cell_size.y==0.0 {
+                    dragged_scale.y=dragged_px.y/cell_size.y;
+                }
+
                 // let dragged_scale = dragged_px;//Vec2::new(0.0,0.0);
 
                 drag.cursor=cursor;

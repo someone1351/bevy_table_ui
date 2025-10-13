@@ -63,5 +63,7 @@ TODO
 
 * probably want to allow different ui's on dif monitors, where cursor can move across and click on them?
 
+TODO
+* replace all floats with ints and fractions
 */
 

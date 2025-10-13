@@ -5,7 +5,9 @@ use super::messages;
 use super::systems;
 use super::super::layout;
 
+use bevy::app::Update;
 use bevy::ecs::prelude::*;
+use bevy::input::InputSystems;
 
 
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
@@ -27,7 +29,7 @@ impl bevy::app::Plugin for UiInteractPlugin {
             // .init_resource::<resources::UiDragStates>()
 
 
-            .add_systems(bevy::app::PostUpdate, (
+            .add_systems(Update, (
                 (
                     // update_active_nodes,
 
@@ -46,7 +48,7 @@ impl bevy::app::Plugin for UiInteractPlugin {
                     // ui_asset_modified,
                     // ui_asset_load,
                 ).chain().in_set(UiInteractSystem)
-                    .after(layout::plugin::UiLayoutSystem)
+                    .after(layout::plugin::UiLayoutSystem).after(InputSystems)
 
                     ,
             ))

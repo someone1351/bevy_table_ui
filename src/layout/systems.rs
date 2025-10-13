@@ -70,11 +70,13 @@ TODO 10
 * for align, add option to align from near/far edge of node,
 ** currently pixel is space before near edge
 ** currently scale is space befor near edge divided by near space+far space
-*/
 
-
-/*
+TODO 11
 text need to clip where it goes out of bounds
+
+TODO 12
+* could remove scroll, and instead use align, and have the body size be scale -2.0,
+** would need it scrolled to bottom/right, could use extra flag, eg halign_clip true or halign_clamp true
 */
 
 

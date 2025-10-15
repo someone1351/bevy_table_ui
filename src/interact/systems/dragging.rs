@@ -139,7 +139,7 @@ pub fn update_drag_events(
 
                 let mut dragged_scale = Vec2::ZERO;
                 let cell_size=layout_computed.cell_size.sum();
-                println!("hmm {cell_size:?}");
+                // println!("hmm {cell_size:?}");
                 if cell_size.x>0.0 {
                     dragged_scale.x=dragged_px.x/cell_size.x;
                 }

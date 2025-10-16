@@ -5,7 +5,8 @@ use super::messages;
 use super::systems;
 use super::super::layout;
 
-use bevy::app::Update;
+use bevy::app::*;
+// use bevy::app::Update;
 use bevy::ecs::prelude::*;
 use bevy::input::InputSystems;
 
@@ -29,7 +30,7 @@ impl bevy::app::Plugin for UiInteractPlugin {
             // .init_resource::<resources::UiDragStates>()
 
 
-            .add_systems(Update, (
+            .add_systems(PreUpdate, (
                 (
                     // update_active_nodes,
 

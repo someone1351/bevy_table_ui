@@ -111,8 +111,8 @@ pub enum UiInteractMessageType {
     // DragEnd,
     // DragMove{ h_px:i32,v_px:i32, h_scale:f32,v_scale:f32, },
 
-    DragX{px:f32,scale:f32},
-    DragY{px:f32,scale:f32},
+    DragX{px:f32,}, //scale:f32
+    DragY{px:f32,}, //scale:f32
     SelectBegin,
     SelectEnd,
     FocusBegin{group:i32},

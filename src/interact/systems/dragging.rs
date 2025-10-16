@@ -129,7 +129,7 @@ pub fn update_drag_events(
 
 
                 // let entity_presseds=entities_presseds.entry((root_entity,entity)).or_default();
-                let (_,layout_computed,_)=draggable_query.get(drag.dragged_entity).unwrap();
+                // let (_,layout_computed,_)=draggable_query.get(drag.dragged_entity).unwrap();
                 // *drag_start_offset=start_cursor - offset;
                 // let dragged_px = cursor-drag.offset-(drag.cursor - drag.offset);
                 let dragged_delta_px = cursor-drag.cursor;
@@ -137,15 +137,15 @@ pub fn update_drag_events(
                 // let dragged_scale = dragged_px/ drag.size;
                 // dragged_px/layout_computed.cell_size.sum()
 
-                let mut dragged_scale = Vec2::ZERO;
-                let cell_size=layout_computed.cell_size.sum();
-                // println!("hmm {cell_size:?}");
-                if cell_size.x>0.0 {
-                    dragged_scale.x=dragged_px.x/cell_size.x;
-                }
-                if cell_size.y>0.0 {
-                    dragged_scale.y=dragged_px.y/cell_size.y;
-                }
+                // let mut dragged_scale = Vec2::ZERO;
+                // let cell_size=layout_computed.cell_size.sum();
+                // // println!("hmm {cell_size:?}");
+                // if cell_size.x>0.0 {
+                //     dragged_scale.x=dragged_px.x/cell_size.x;
+                // }
+                // if cell_size.y>0.0 {
+                //     dragged_scale.y=dragged_px.y/cell_size.y;
+                // }
 
                 // let dragged_scale = dragged_px;//Vec2::new(0.0,0.0);
 
@@ -154,14 +154,14 @@ pub fn update_drag_events(
                 if dragged_delta_px.x != 0.0 {
                     ui_output_event_writer.write(UiInteractEvent{
                         entity:drag.dragged_entity,
-                        event_type:UiInteractMessageType::DragX {px:dragged_px.x,scale:dragged_scale.x}
+                        event_type:UiInteractMessageType::DragX {px:dragged_px.x,} //scale:dragged_scale.x
                     });
                 }
 
                 if dragged_delta_px.y != 0.0 {
                     ui_output_event_writer.write(UiInteractEvent{
                         entity:drag.dragged_entity,
-                        event_type:UiInteractMessageType::DragY {px:dragged_px.y,scale:dragged_scale.y}
+                        event_type:UiInteractMessageType::DragY {px:dragged_px.y,} //scale:dragged_scale.y
                     });
                 }
             }

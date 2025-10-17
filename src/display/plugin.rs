@@ -72,7 +72,7 @@ impl bevy::app::Plugin for UiDisplayPlugin {
             // )
             //TestRenderPlugin,
             .add_plugins((CorePipelinePlugin, ))
-            .add_systems(bevy::app::PostUpdate,
+            .add_systems(bevy::app::Update,
                 (
                     systems::update_text_image,
                 ).after(layout::systems::ui_init_computeds)

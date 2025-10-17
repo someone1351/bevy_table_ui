@@ -2,6 +2,8 @@
 use bevy::ecs::prelude::*;
 // use bevy::app::PostUpdate;
 
+use crate::layout;
+
 use super::systems::*;
 use super::super::interact;
 
@@ -16,20 +18,22 @@ impl bevy::app::Plugin for UiAffectPlugin {
         app
             // .add_message::<UiInteractEvent>()
             // .init_resource::<UiFocusState>()
-          
-            .add_systems(bevy::app::PostUpdate, (
-                (  
+
+            .add_systems(bevy::app::Update, (
+                (
                     run_affect_states,
                     run_affect_vals,
                     // run_affect_text,
-                ).chain().in_set(UiAffectSystem).after(interact::plugin::UiInteractSystem)
-                
+                ).chain().in_set(UiAffectSystem)
+                    .after(interact::plugin::UiInteractSystem)
+                    .before(layout::plugin::UiLayoutSystem)
+
                 ,
-                
+
                 // .before(super:)
                 //update_text_image
             ))
             ;
-        
+
     }
 }

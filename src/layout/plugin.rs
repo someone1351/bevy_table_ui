@@ -1,5 +1,6 @@
 
-use bevy::app::Update;
+use bevy::app::PostUpdate;
+// use bevy::app::Update;
 // use bevy::app::prelude::*;
 use bevy::ecs::prelude::*;
 
@@ -43,7 +44,7 @@ impl bevy::app::Plugin for UiLayoutPlugin {
             .register_type::<UiInnerSize>()
             .register_type::<UiLayoutComputed>()
 
-            .add_systems(Update,
+            .add_systems(PostUpdate,
                 (
                     ui_init_computeds,
                     ui_calc_rows_cols,

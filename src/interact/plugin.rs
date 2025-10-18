@@ -3,7 +3,7 @@ use super::resources;
 use super::messages;
 // use super::components;
 use super::systems;
-use super::super::layout;
+// use super::super::layout;
 
 use bevy::app::*;
 // use bevy::app::Update;
@@ -49,8 +49,8 @@ impl bevy::app::Plugin for UiInteractPlugin {
                     // ui_asset_modified,
                     // ui_asset_load,
                 ).chain().in_set(UiInteractSystem)
-                    .before(layout::plugin::UiLayoutSystem)
-                    // .after(InputSystems)
+                    // .before(layout::plugin::UiLayoutSystem)
+                    // // .after(InputSystems)
 
                     ,
             ))

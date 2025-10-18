@@ -4,11 +4,13 @@ version = "0.1.1"
 edition = "2021"
 
 [dependencies]
-bevy = { version = "0.17", default-features = false, features = [
+bevy = { version = "0.17.2", default-features = false, features = [
     "bevy_render","bevy_asset","bevy_color","bevy_image","bevy_text","trace",
     #"bevy_window",
     #"serialize","x11", "bevy_render", "bevy_asset","bevy_color","multi_threaded"
 ] }
+#bevy = { version = "0.17", default-features = true, features = [ "serialize","file_watcher",] }
+
 #bevy_internal = { version = "0.16", features = [ "bevy_image" ]}
 #bevy_internal = { version = "0.16", features = [ "bevy_render" ]}
 bytemuck = "1.7"
@@ -19,7 +21,7 @@ radsort = "0.1"
 
 [dev-dependencies]
 #bevy = { version = "0.17", default-features = false, features = [ "serialize","multi_threaded","bevy_window","x11", "file_watcher","png", } #"dynamic_linking" ,"bevy_ui"
-bevy = { version = "0.17", default-features = true, features = [ "serialize","file_watcher",] } 
+bevy = { version = "0.17.2", default-features = true, features = [ "serialize","file_watcher",] }
 
 [lib]
 name = "bevy_table_ui"

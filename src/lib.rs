@@ -10,12 +10,12 @@
 mod layout;
 mod interact;
 mod display;
-mod affect;
+// mod affect;
 
 pub use layout::{plugin::*,components::*,values::*,};
 pub use interact::{plugin::*,components::*,resources::*,messages::*};
 pub use display::{plugin::*,components::*,values::*};
-pub use affect::{plugin::*,components::*};
+// pub use affect::{plugin::*,components::*};
 
 pub use display::render_core::core_my::CameraUi; //mesh
 pub use display::TestRenderComponent;

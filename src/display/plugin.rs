@@ -1,3 +1,4 @@
+use bevy::app::PostUpdate;
 // use bevy::app::PostUpdate;
 use bevy::ecs::prelude::*;
 // use bevy::render;
@@ -72,7 +73,7 @@ impl bevy::app::Plugin for UiDisplayPlugin {
             // )
             //TestRenderPlugin,
             .add_plugins((CorePipelinePlugin, ))
-            .add_systems(bevy::app::Update,
+            .add_systems(PostUpdate,
                 (
                     systems::update_text_image,
                 ).after(layout::systems::ui_init_computeds)

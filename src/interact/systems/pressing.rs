@@ -13,6 +13,9 @@ TODO
 * could just add cursormove to end of input events with last cursor
 
 * fix on root/entity removed section, some overlap, and pressed entities not being removed from all local resources?
+
+TODO
+* allow additional buttons for press? or just provide it an alternate "device" for dif buttons?
 */
 
 use std::collections::{HashMap, HashSet};

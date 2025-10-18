@@ -43,7 +43,7 @@ fn main() {
             table_ui::UiLayoutPlugin,
             table_ui::UiInteractPlugin,
             table_ui::UiDisplayPlugin,
-            table_ui::UiAffectPlugin,
+            // table_ui::UiAffectPlugin,
         ))
 
 

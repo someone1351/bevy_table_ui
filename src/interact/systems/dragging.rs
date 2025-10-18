@@ -1,6 +1,6 @@
 /*
 TODO
-* change cell_size if updated? no?
+* have flag on draggable component that indicates whether dragging or not? so pressable component to start dragging?
 */
 // use std::collections::HashMap;
 

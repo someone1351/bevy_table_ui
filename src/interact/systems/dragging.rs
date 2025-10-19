@@ -1,6 +1,7 @@
 /*
 TODO
 * have flag on draggable component that indicates whether dragging or not? so pressable component to start dragging?
+** no as waiting for flag to be set will take atleast 1 frame, unless the drag system is run twice
 */
 // use std::collections::HashMap;
 
@@ -154,14 +155,14 @@ pub fn update_drag_events(
                 if dragged_delta_px.x != 0.0 {
                     ui_output_event_writer.write(UiInteractEvent{
                         entity:drag.dragged_entity,
-                        event_type:UiInteractMessageType::DragX {px:dragged_px.x,} //scale:dragged_scale.x
+                        event_type:UiInteractMessageType::DragX {dist:dragged_px.x,delta:dragged_delta_px.x} //scale:dragged_scale.x
                     });
                 }
 
                 if dragged_delta_px.y != 0.0 {
                     ui_output_event_writer.write(UiInteractEvent{
                         entity:drag.dragged_entity,
-                        event_type:UiInteractMessageType::DragY {px:dragged_px.y,} //scale:dragged_scale.y
+                        event_type:UiInteractMessageType::DragY {dist:dragged_px.y,delta:dragged_delta_px.y} //scale:dragged_scale.y
                     });
                 }
             }

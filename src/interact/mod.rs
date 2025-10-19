@@ -12,5 +12,11 @@ TODO
 * * have pressed,released ?
 * * have selected ?
 
+
+TODO
+
+* add buttons(i32) for drag, focusing, pressing
+
+* have dist and delta for drag
 */
 

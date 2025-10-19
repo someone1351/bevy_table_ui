@@ -79,7 +79,9 @@ pub fn update_text_image(
             continue;
         }
 
-        let scale_factor=root_query.get(layout_computed.root_entity).unwrap().scaling.max(0.0);
+        let root_entity=root_query.get(layout_computed.root_entity).unwrap();
+        let scale_factor=root_entity.scaling.max(0.0);
+        let text_scale_factor=scale_factor*root_entity.text_scaling.max(0.0);
 
         inner_size.width = 0.0;
         inner_size.height = 0.0;
@@ -126,7 +128,7 @@ pub fn update_text_image(
 
             let font_size=text.font_size;//*scale_factor*10.0;
 
-            let tex_updated= text.update || text_computed.scaling!=scale_factor;
+            let tex_updated= text.update || text_computed.scaling!=text_scale_factor;
 
             //
             if tex_updated && fonts_loaded {
@@ -164,7 +166,7 @@ pub fn update_text_image(
                         &mut temp_text_layout_info,
                         &fonts,
                         text_spans.into_iter(),
-                        scale_factor as f64,
+                        text_scale_factor as f64,
                         // 1.0,
                         &TextLayout {justify: text_alignment,linebreak: LineBreak::NoWrap,},
                         TextBounds{width:None,height:None},
@@ -199,7 +201,7 @@ pub fn update_text_image(
                     &mut text_layout_info,
                     &fonts,
                     text_spans.into_iter(),
-                    scale_factor as f64,
+                    text_scale_factor as f64,
                     // 1.0,
                     &TextLayout {justify: text_alignment,linebreak: LineBreak::WordBoundary,},
                     TextBounds{width:bound_width,height:bound_height},
@@ -237,7 +239,7 @@ pub fn update_text_image(
 
                 //
                 text.update=false;
-                text_computed.scaling=scale_factor;
+                text_computed.scaling=text_scale_factor;
             } else { //whats this for again? because inner_size is cleared at top, need to reset it when not updated? what about for image?
                 inner_size.width = inner_size.width.max(text_computed.max_size.x); //size
                 inner_size.height = inner_size.height.max(text_computed.max_size.y); //size

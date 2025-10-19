@@ -169,13 +169,14 @@ pub struct UiRoot {
     pub width:f32,
     pub height:f32,
     pub scaling:f32,
+    pub text_scaling:f32,
     pub order:i32,
 }
 
 impl Default for UiRoot {
     fn default() -> Self {
         Self {
-            x: 0.0, y: 0.0, width: 0.0, height: 0.0, scaling: 1.0, order: 0,
+            x: 0.0, y: 0.0, width: 0.0, height: 0.0, scaling: 1.0, text_scaling:1.0, order: 0,
         }
     }
 }

@@ -1,7 +1,12 @@
 
 use bevy::ecs::prelude::*;
 
+/*
+TODO
+* add device to focus init/left/right/up/down/prev/next/enter/exit?
+* add button to focus press begin/end/cancel?
 
+*/
 #[derive(Debug,Message,Clone)]
 pub enum UiInteractInputMessage {
     FocusInit{root_entity:Entity, group:i32},
@@ -111,8 +116,8 @@ pub enum UiInteractMessageType {
     // DragEnd,
     // DragMove{ h_px:i32,v_px:i32, h_scale:f32,v_scale:f32, },
 
-    DragX{px:f32,}, //scale:f32
-    DragY{px:f32,}, //scale:f32
+    DragX{dist:f32,delta:f32,}, //scale:f32
+    DragY{dist:f32,delta:f32,}, //scale:f32
     SelectBegin,
     SelectEnd,
     FocusBegin{group:i32},

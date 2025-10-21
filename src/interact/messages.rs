@@ -3,12 +3,13 @@ use bevy::ecs::prelude::*;
 
 /*
 TODO
-* add device to focus init/left/right/up/down/prev/next/enter/exit?
+* add device to focus init/left/right/up/down/prev/next/enter/exit ?
 * add button to focus press begin/end/cancel?
 
 */
 #[derive(Debug,Message,Clone)]
 pub enum UiInteractInputMessage {
+    //add device to focus, so can have multiple users selecting from same nodes
     FocusInit{root_entity:Entity, group:i32},
     FocusLeft{root_entity:Entity, group:i32},
     FocusRight{root_entity:Entity, group:i32},
@@ -19,14 +20,16 @@ pub enum UiInteractInputMessage {
     FocusEnter{root_entity:Entity, group:i32},
     FocusExit{root_entity:Entity, group:i32},
 
-    FocusPressBegin{root_entity:Entity,group:i32,device:i32},
-    FocusPressEnd{root_entity:Entity,device:i32}, //why does this lack group?
-    FocusPressCancel{root_entity:Entity,device:i32}, //why does this lack group?
+    FocusPressBegin{root_entity:Entity,group:i32,device:i32,button:i32},
+    FocusPressEnd{root_entity:Entity,device:i32,button:i32}, //why does this lack group? group is set by begin?
+    FocusPressCancel{root_entity:Entity,device:i32,button:i32}, //why does this lack group?
 
-    CursorPressBegin{root_entity:Entity,device:i32},
-    CursorPressEnd{root_entity:Entity,device:i32},
-    CursorPressCancel{root_entity:Entity,device:i32},
+    CursorPressBegin{root_entity:Entity,device:i32,button:i32},
+    CursorPressEnd{root_entity:Entity,device:i32,button:i32},
+    CursorPressCancel{root_entity:Entity,device:i32,button:i32},
     CursorMoveTo{root_entity:Entity,device:i32,cursor:Option<bevy::math::Vec2>},
+
+    //add DragBegin/DragEnd/DragMoveTo ? so can do the mmb click to toggle scroll,
 
     // // Custom(Entity,String,Vec<script_lang::Value>), //root_entity,custom_event_name, params
     // Custom2{
@@ -59,6 +62,7 @@ impl UiInteractInputMessage {
             Self::CursorPressEnd{root_entity,..}|
             Self::CursorPressCancel{root_entity,..}|
             Self::CursorMoveTo{root_entity,..}
+
             => {
                 *root_entity
             }
@@ -109,19 +113,20 @@ impl UiInteractInputMessage {
 pub enum UiInteractMessageType {
     HoverBegin{device:i32,}, //don't really need device? like press?
     HoverEnd{device:i32,},
-    PressBegin, //{device:i32,is_cursor:bool}, //might need hashset of devices?
-    PressEnd, //{device:i32,is_cursor:bool},
-    Click,
+    PressBegin{device:i32,button:i32}, //,is_cursor:bool //might need hashset of devices?
+    PressEnd{device:i32,button:i32}, //is_cursor:bool
+    Click{device:i32,button:i32},
     // DragBegin,
     // DragEnd,
     // DragMove{ h_px:i32,v_px:i32, h_scale:f32,v_scale:f32, },
 
-    DragX{dist:f32,delta:f32,}, //scale:f32
-    DragY{dist:f32,delta:f32,}, //scale:f32
+    //add drag_begin/drag_end
+    DragX{dist:f32,delta:f32,device:i32,button:i32,}, //scale:f32
+    DragY{dist:f32,delta:f32,device:i32,button:i32,}, //scale:f32
     SelectBegin,
     SelectEnd,
-    FocusBegin{group:i32},
-    FocusEnd{group:i32},
+    FocusBegin{group:i32,device:i32,},
+    FocusEnd{group:i32,device:i32,},
 
     // FocusLeft{group:i32,moved:bool},
     // FocusRight{group:i32,moved:bool},
@@ -169,9 +174,9 @@ impl UiInteractMessageType {
         match self {
             Self::HoverBegin{..} => "hover_begin",
             Self::HoverEnd{..} => "hover_end",
-            Self::PressBegin => "press_begin",
-            Self::PressEnd => "press_end",
-            Self::Click => "click",
+            Self::PressBegin{..} => "press_begin",
+            Self::PressEnd{..} => "press_end",
+            Self::Click{..} => "click",
             // Self::DragBegin => "drag_begin",
             // Self::DragEnd => "drag_end",
             // Self::DragMove{..} => "drag_move",

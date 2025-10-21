@@ -155,20 +155,20 @@ pub fn update_drag_events(
                 if dragged_delta_px.x != 0.0 {
                     ui_output_event_writer.write(UiInteractEvent{
                         entity:drag.dragged_entity,
-                        event_type:UiInteractMessageType::DragX {dist:dragged_px.x,delta:dragged_delta_px.x} //scale:dragged_scale.x
+                        event_type:UiInteractMessageType::DragX {dist:dragged_px.x,delta:dragged_delta_px.x, device, button: 99 } //scale:dragged_scale.x
                     });
                 }
 
                 if dragged_delta_px.y != 0.0 {
                     ui_output_event_writer.write(UiInteractEvent{
                         entity:drag.dragged_entity,
-                        event_type:UiInteractMessageType::DragY {dist:dragged_px.y,delta:dragged_delta_px.y} //scale:dragged_scale.y
+                        event_type:UiInteractMessageType::DragY {dist:dragged_px.y,delta:dragged_delta_px.y, device, button: 99 } //scale:dragged_scale.y
                     });
                 }
             }
 
             //if same device used for cursor and button press, then a depress of one will depress the other
-            UiInteractInputMessage::CursorPressBegin{root_entity,device} => {
+            UiInteractInputMessage::CursorPressBegin{root_entity,device, button } => {
                 //remove any prev (not normally needed)
                 device_drags.remove(&DragKey {root_entity,device});
 
@@ -204,10 +204,10 @@ pub fn update_drag_events(
                     },
                 );
             }
-            UiInteractInputMessage::CursorPressEnd{root_entity,device} => {
+            UiInteractInputMessage::CursorPressEnd{root_entity,device, button } => {
                 device_drags.remove(&DragKey {root_entity,device});
             }
-            UiInteractInputMessage::CursorPressCancel{root_entity,device} => {
+            UiInteractInputMessage::CursorPressCancel{root_entity,device, button } => {
                 device_drags.remove(&DragKey {root_entity,device});
             }
             _=>{}

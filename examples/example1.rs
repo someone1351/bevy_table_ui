@@ -1,9 +1,9 @@
 
-#![allow(unused_mut)]
-#![allow(unused_variables)]
-#![allow(unreachable_code)]
+// #![allow(unused_mut)]
+// #![allow(unused_variables)]
+// #![allow(unreachable_code)]
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use bevy::app::*;
 use bevy::asset::prelude::*;
@@ -11,6 +11,10 @@ use bevy::color::Color;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::ecs::prelude::*;
 
+use bevy::input::keyboard::KeyboardInput;
+use bevy::input::mouse::{MouseButton, MouseButtonInput};
+use bevy::input::ButtonState;
+use bevy::math::Vec2;
 use bevy::text::*;
 // use bevy::ui::{AlignSelf, JustifySelf, Node};
 use bevy::window::*;
@@ -60,7 +64,9 @@ fn main() {
         ))
         .add_systems(Update, (
             update_input,
+            update_ui_input,
             update_ui_roots,
+            update_ui.after(update_ui_input),
             show_fps.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(300))),
         ))
         ;
@@ -71,7 +77,6 @@ fn main() {
 pub fn update_ui_roots(
     windows: Query<&Window>,
     mut root_query: Query<&mut UiRoot,>,
-    mut key_events: MessageReader<bevy::input::keyboard::KeyboardInput>,
 ) {
 
     let window_size=windows.single()
@@ -83,12 +88,54 @@ pub fn update_ui_roots(
         x.height=window_size.1;
     }
 }
+
+pub fn update_ui(
+
+    mut interact_events: MessageReader<UiInteractEvent>,
+    mut ui_color_query: Query<&mut UiColor,>,
+
+    mut prev_border_col:Local<HashMap<Entity,Color>>,
+    // mut prev_back_col:Local<HashMap<Entity,Color>>,
+) {
+    for ev in interact_events.read() {
+        match &ev.event_type {
+            UiInteractMessageType::HoverBegin { .. } => {}
+            UiInteractMessageType::HoverEnd { .. } => {}
+            UiInteractMessageType::PressBegin{ .. } => {
+
+            }
+            UiInteractMessageType::PressEnd{ .. } => {
+
+            }
+            UiInteractMessageType::Click{ .. } => {}
+            UiInteractMessageType::DragX { .. } => {}
+            UiInteractMessageType::DragY { .. } => {}
+            UiInteractMessageType::SelectBegin => {}
+            UiInteractMessageType::SelectEnd => {}
+            UiInteractMessageType::FocusBegin { .. } => {
+                if let Ok(mut col)=ui_color_query.get_mut(ev.entity) {
+                    prev_border_col.insert(ev.entity, col.border);
+                    col.border= Color::linear_rgb(0.8,0.8,0.2)
+                }
+            }
+            UiInteractMessageType::FocusEnd { .. } => {
+                if let Ok(mut col)=ui_color_query.get_mut(ev.entity) {
+
+                    col.border= prev_border_col.get(&ev.entity).cloned().unwrap_or_default();
+                }
+
+            }
+        }
+    }
+    //
+
+}
 #[derive(Component)]
 pub struct MenuUiRoot;
 
 pub fn setup_ui(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    // asset_server: Res<AssetServer>,
 ) {
     // commands.spawn((
     //     MenuUiRoot,
@@ -132,175 +179,178 @@ pub fn setup_ui(
         for i in 0..3 {
 
             parent.spawn((
-                UiColor{back:cols[i],..Default::default()},
+                UiColor{back:cols[i],border:Color::linear_rgb(0.5,0.5,0.5),..Default::default()},
                 UiSize{ width:UiVal::Px(50.0), height:UiVal::Px(50.0), },
+                UiFocusable{ enable: true, ..Default::default() },
+                UiPressable{ enable: true, ..Default::default() },
+                UiEdge{  border: UiRectVal::new_scalar(UiVal::Px(5.0)),  ..Default::default() }
             ));
         }
     });
 
     return;
 
-    commands.spawn((
-        MenuUiRoot,
-        UiRoot::default(),
+    // commands.spawn((
+    //     MenuUiRoot,
+    //     UiRoot::default(),
 
-        UiColor{back:Color::srgb(0.2,0.4,0.6),..Default::default()},
-        UiSize{
-            // width:UiVal::Px(200.0),
-            width:UiVal::None,
-            // height:UiVal::Px(500.0),
-            height:UiVal::None,
-        },
-        UiSpan{span:1},
-        UiGap{hgap:UiVal::Px(30.0),vgap:UiVal::Px(30.0)},
-    )).with_children(|parent|{
+    //     UiColor{back:Color::srgb(0.2,0.4,0.6),..Default::default()},
+    //     UiSize{
+    //         // width:UiVal::Px(200.0),
+    //         width:UiVal::None,
+    //         // height:UiVal::Px(500.0),
+    //         height:UiVal::None,
+    //     },
+    //     UiSpan{span:1},
+    //     UiGap{hgap:UiVal::Px(30.0),vgap:UiVal::Px(30.0)},
+    // )).with_children(|parent|{
 
-        //0
-        parent.spawn((
+    //     //0
+    //     parent.spawn((
 
-            // UiInnerSize::default(),
-            UiColor{
-                back:Color::BLACK,
-                cell:Color::srgb(0.3,0.3,0.3),
-                ..Default::default()
-            },
-            UiImage{
-                handle:asset_server.load("bevy_logo_dark_big.png"),
-                width_scale:0.5,
-                height_scale:0.5,
-                ..Default::default()
-            },
-            UiCongruent {
-                row_width_scale: 0.0,
-                col_height_scale: 1.0,
-            },
-        ));
+    //         // UiInnerSize::default(),
+    //         UiColor{
+    //             back:Color::BLACK,
+    //             cell:Color::srgb(0.3,0.3,0.3),
+    //             ..Default::default()
+    //         },
+    //         UiImage{
+    //             handle:asset_server.load("bevy_logo_dark_big.png"),
+    //             width_scale:0.5,
+    //             height_scale:0.5,
+    //             ..Default::default()
+    //         },
+    //         UiCongruent {
+    //             row_width_scale: 0.0,
+    //             col_height_scale: 1.0,
+    //         },
+    //     ));
 
-        //1
-        parent.spawn((
+    //     //1
+    //     parent.spawn((
 
-            UiColor{
-                back:Color::srgb(1.0,0.3,0.1),
-                cell:Color::srgb(1.0,0.5,0.1),
-                // border:Color::srgb(0.1,0.5,1.0),
-                border:Color::srgb(0.1,1.0,0.5),
-                ..Default::default()
-            },
-            UiEdge{border:UiRectVal {
-                // left: UiVal::Scale(-10.0),
-                right: UiVal::Px(-10.0),
-                // top: UiVal::Px(10.0),
-                // bottom: UiVal::Px(10.0),
-                ..Default::default()
-            }, ..Default::default()},
-            UiText{
-                value:"Hello".to_string(),
-                font_size:30.0,
-                color:Color::WHITE,
-                font:asset_server.load("fonts/FiraMono-Medium.ttf"),
-                halign:UiTextHAlign::Right,
-                update:true,..Default::default()
-            },
-            UiFill{
-                hfill: UiVal::None,
-                // hfill: UiVal::Scale(1.0),
-                // vfill: UiVal::None,
-                vfill: UiVal::Scale(1.0),
-            },
-            // UiSize{width:UiVal::Px(200.0),height:UiVal::Px(70.0)},
-            UiSize{width:UiVal::Px(200.0),height:UiVal::None},
-            // UiAlign{halign:UiVal::Scale(0.0),..Default::default()},
-        ));
+    //         UiColor{
+    //             back:Color::srgb(1.0,0.3,0.1),
+    //             cell:Color::srgb(1.0,0.5,0.1),
+    //             // border:Color::srgb(0.1,0.5,1.0),
+    //             border:Color::srgb(0.1,1.0,0.5),
+    //             ..Default::default()
+    //         },
+    //         UiEdge{border:UiRectVal {
+    //             // left: UiVal::Scale(-10.0),
+    //             right: UiVal::Px(-10.0),
+    //             // top: UiVal::Px(10.0),
+    //             // bottom: UiVal::Px(10.0),
+    //             ..Default::default()
+    //         }, ..Default::default()},
+    //         UiText{
+    //             value:"Hello".to_string(),
+    //             font_size:30.0,
+    //             color:Color::WHITE,
+    //             font:asset_server.load("fonts/FiraMono-Medium.ttf"),
+    //             halign:UiTextHAlign::Right,
+    //             update:true,..Default::default()
+    //         },
+    //         UiFill{
+    //             hfill: UiVal::None,
+    //             // hfill: UiVal::Scale(1.0),
+    //             // vfill: UiVal::None,
+    //             vfill: UiVal::Scale(1.0),
+    //         },
+    //         // UiSize{width:UiVal::Px(200.0),height:UiVal::Px(70.0)},
+    //         UiSize{width:UiVal::Px(200.0),height:UiVal::None},
+    //         // UiAlign{halign:UiVal::Scale(0.0),..Default::default()},
+    //     ));
 
-        //2
-        parent.spawn((
+    //     //2
+    //     parent.spawn((
 
-            UiColor{
-                back:Color::srgb(1.0,0.3,0.1),
-                cell:Color::srgb(1.0,0.5,0.1),
-                ..Default::default()
-            },
-            UiText{
-                value:"Hello".to_string(),
-                font_size:30.0,
-                color:Color::WHITE,
-                font:asset_server.load("fonts/FiraMono-Medium.ttf"),
-                halign:UiTextHAlign::Left,
-                valign:UiTextVAlign::Top,
-                update:true,..Default::default()
-            },
-            UiFill{
-                // hfill: UiVal::None,
-                hfill: UiVal::Scale(1.0),
-                vfill: UiVal::None,
-            },
-            // UiSize{width:UiVal::Px(200.0),height:UiVal::Px(70.0)},
-        ));
+    //         UiColor{
+    //             back:Color::srgb(1.0,0.3,0.1),
+    //             cell:Color::srgb(1.0,0.5,0.1),
+    //             ..Default::default()
+    //         },
+    //         UiText{
+    //             value:"Hello".to_string(),
+    //             font_size:30.0,
+    //             color:Color::WHITE,
+    //             font:asset_server.load("fonts/FiraMono-Medium.ttf"),
+    //             halign:UiTextHAlign::Left,
+    //             valign:UiTextVAlign::Top,
+    //             update:true,..Default::default()
+    //         },
+    //         UiFill{
+    //             // hfill: UiVal::None,
+    //             hfill: UiVal::Scale(1.0),
+    //             vfill: UiVal::None,
+    //         },
+    //         // UiSize{width:UiVal::Px(200.0),height:UiVal::Px(70.0)},
+    //     ));
 
-        //3
-        parent.spawn((
+    //     //3
+    //     parent.spawn((
 
-            UiColor{
-                back:Color::srgb(1.0,0.3,0.1),
-                cell:Color::srgb(1.0,0.5,0.1),
-                ..Default::default()
-            },
-            UiText{
-                value:"Hello".to_string(),
-                font_size:30.0,
-                color:Color::WHITE,
-                font:asset_server.load("fonts/FiraMono-Medium.ttf"),
-                halign:UiTextHAlign::Center,
-                valign:UiTextVAlign::Center,
-                update:true,..Default::default()
-            },
-            UiFill{
-                // hfill: UiVal::None,
-                hfill: UiVal::Scale(1.0),
-                vfill: UiVal::None,
-            },
-            // UiSize{width:UiVal::Px(200.0),height:UiVal::None},
-        ));
+    //         UiColor{
+    //             back:Color::srgb(1.0,0.3,0.1),
+    //             cell:Color::srgb(1.0,0.5,0.1),
+    //             ..Default::default()
+    //         },
+    //         UiText{
+    //             value:"Hello".to_string(),
+    //             font_size:30.0,
+    //             color:Color::WHITE,
+    //             font:asset_server.load("fonts/FiraMono-Medium.ttf"),
+    //             halign:UiTextHAlign::Center,
+    //             valign:UiTextVAlign::Center,
+    //             update:true,..Default::default()
+    //         },
+    //         UiFill{
+    //             // hfill: UiVal::None,
+    //             hfill: UiVal::Scale(1.0),
+    //             vfill: UiVal::None,
+    //         },
+    //         // UiSize{width:UiVal::Px(200.0),height:UiVal::None},
+    //     ));
 
-        //4
-        parent.spawn((
+    //     //4
+    //     parent.spawn((
 
-            UiColor{
-                back:Color::srgb(1.0,0.3,0.1),
-                cell:Color::srgb(1.0,0.5,0.1),
-                ..Default::default()
-            },
-            UiText{
-                value:"X".to_string(),
-                hlen:3,
-                vlen:3,
-                font_size:30.0,
-                color:Color::WHITE,
-                font:asset_server.load("fonts/FiraMono-Medium.ttf"),
-                halign:UiTextHAlign::Right,
-                // halign:UiTextHAlign::Left,
-                valign:UiTextVAlign::Bottom,
-                // valign:UiTextVAlign::Top,
-                update:true,..Default::default()
-            },
-            UiFill{
-                // hfill: UiVal::None,
-                // hfill: UiVal::Scale(1.0),
-                // vfill: UiVal::None,
-                ..Default::default()
-            },
-            UiSize{
-                // width:UiVal::Px(200.0),
-                // height:UiVal::Px(70.0),
-                ..Default::default()
-            },
-            UiCongruent {
-                // row_width_scale: 0.0,
-                // col_height_scale: 1.0,
-                ..Default::default()
-            },
-        ));
-    });
+    //         UiColor{
+    //             back:Color::srgb(1.0,0.3,0.1),
+    //             cell:Color::srgb(1.0,0.5,0.1),
+    //             ..Default::default()
+    //         },
+    //         UiText{
+    //             value:"X".to_string(),
+    //             hlen:3,
+    //             vlen:3,
+    //             font_size:30.0,
+    //             color:Color::WHITE,
+    //             font:asset_server.load("fonts/FiraMono-Medium.ttf"),
+    //             halign:UiTextHAlign::Right,
+    //             // halign:UiTextHAlign::Left,
+    //             valign:UiTextVAlign::Bottom,
+    //             // valign:UiTextVAlign::Top,
+    //             update:true,..Default::default()
+    //         },
+    //         UiFill{
+    //             // hfill: UiVal::None,
+    //             // hfill: UiVal::Scale(1.0),
+    //             // vfill: UiVal::None,
+    //             ..Default::default()
+    //         },
+    //         UiSize{
+    //             // width:UiVal::Px(200.0),
+    //             // height:UiVal::Px(70.0),
+    //             ..Default::default()
+    //         },
+    //         UiCongruent {
+    //             // row_width_scale: 0.0,
+    //             // col_height_scale: 1.0,
+    //             ..Default::default()
+    //         },
+    //     ));
+    // });
 
 }
 
@@ -360,6 +410,141 @@ fn setup_camera(mut commands: Commands) {
     // ));
 }
 
+fn update_ui_input(
+    mut windows: Query<&mut Window>,
+    mut prev_cursor : Local<Option<Vec2>>,
+    mut ui_interact_input_event_writer: MessageWriter<UiInteractInputMessage>,
+    ui_root_query : Query<Entity,With<UiRoot>>,
+
+    mut key_events: MessageReader<KeyboardInput>,
+    mut mouse_button_events : MessageReader<MouseButtonInput>,
+    mut key_lasts : Local<HashSet<KeyCode>>,
+){
+
+    let Ok(window) = windows.single_mut() else {return;};
+    let mouse_cursor = window.cursor_position();//.unwrap_or(Vec2::ZERO);
+
+    //
+
+    let device=0;
+    let group=0;
+
+    //
+    for ev in key_events.read() {
+        match ev.state {
+            ButtonState::Pressed if !key_lasts.contains(&ev.key_code) => {
+                key_lasts.insert(ev.key_code);
+
+                for root_entity in ui_root_query.iter() {
+                    match ev.key_code {
+                        KeyCode::KeyW|KeyCode::ArrowUp => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusUp { root_entity, group });
+                        }
+                        KeyCode::KeyS|KeyCode::ArrowDown => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusDown { root_entity, group });
+                        }
+                        KeyCode::KeyA|KeyCode::ArrowLeft => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusLeft { root_entity, group });
+                        }
+                        KeyCode::KeyD|KeyCode::ArrowRight => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusRight { root_entity, group });
+                        }
+                        KeyCode::Tab|KeyCode::KeyE => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusNext { root_entity, group });
+                        }
+                        KeyCode::KeyQ => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPrev { root_entity, group });
+                        }
+                        KeyCode::Space|KeyCode::Enter => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPressBegin{root_entity, group, device: 0,button:0, });
+                        }
+                        KeyCode::Escape => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPressCancel{root_entity, device: 0,button:0, });
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            ButtonState::Released => {
+                key_lasts.remove(&ev.key_code);
+
+                for root_entity in ui_root_query.iter() {
+                    match ev.key_code {
+                        KeyCode::Space|KeyCode::Enter => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPressEnd{root_entity, device, button: 0 });
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    //
+    for ev in mouse_button_events.read() {
+        match ev.state {
+            ButtonState::Pressed => {
+                for root_entity in ui_root_query.iter() {
+                    match ev.button {
+                        MouseButton::Left => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressBegin{root_entity, device, button: 0 });
+
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 1 });
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 2 });
+                        }
+                        MouseButton::Right => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressBegin{root_entity, device, button: 2 });
+
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 0 });
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 1 });
+                        }
+                        MouseButton::Middle => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressBegin{root_entity, device, button: 1 });
+
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 0 });
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 2 });
+                        }
+                        MouseButton::Forward => {
+                        }
+                        MouseButton::Back => {
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            ButtonState::Released => {
+                for root_entity in ui_root_query.iter() {
+                    match ev.button {
+                        MouseButton::Left => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressEnd {root_entity, device, button: 0 });
+                        }
+                        MouseButton::Right => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressEnd {root_entity, device, button: 2 });
+                        }
+                        MouseButton::Middle => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressEnd {root_entity, device, button: 1 });
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
+
+    }
+
+    for root_entity in ui_root_query.iter() {
+        if *prev_cursor!=mouse_cursor {
+            let player=0;
+            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorMoveTo{root_entity,device: player,cursor:mouse_cursor});
+        }
+    }
+
+    *prev_cursor=mouse_cursor;
+
+}
+
+
 fn update_input(
     mut key_events: MessageReader<bevy::input::keyboard::KeyboardInput>,
     mut exit: MessageWriter<AppExit>,
@@ -372,60 +557,62 @@ fn update_input(
 ) {
     // let Ok(window_entity) = main_window.get_single() else {return;};
 
+
     for ev in key_events.read() {
         if ev.state==bevy::input::ButtonState::Pressed && !last_pressed.contains(&ev.key_code) {
-            if ev.key_code==KeyCode::Escape || ev.key_code==KeyCode::F4 {
-                exit.write(AppExit::Success);
-            } else {
-                match ev.key_code {
-                    KeyCode::F12 => {
-                        if let Some(path) = generate_screenshot_path("./screenshots","screenshot_","png") {
-                            // if screenshot_manager.save_screenshot_to_disk(window_entity, &path).is_err() {
-                            //     eprintln!("Failed to take screenshot at {path:?}.");
-                            // }
-                            commands
-                                .spawn(bevy::render::view::screenshot::Screenshot::primary_window())
-                                .observe(bevy::render::view::screenshot::save_to_disk(path));
-                        }
-                    }
-                    KeyCode::Equal => {
-                        println!("plus");
+            match ev.key_code {
+                KeyCode::Escape | KeyCode::F4 => {
+                    exit.write(AppExit::Success);
 
-                        for mut x in root_query.iter_mut() {
-                            x.scaling+=0.25;
-                        }
+                }
+                KeyCode::F12 => {
+                    if let Some(path) = generate_screenshot_path("./screenshots","screenshot_","png") {
+                        // if screenshot_manager.save_screenshot_to_disk(window_entity, &path).is_err() {
+                        //     eprintln!("Failed to take screenshot at {path:?}.");
+                        // }
+                        commands
+                            .spawn(bevy::render::view::screenshot::Screenshot::primary_window())
+                            .observe(bevy::render::view::screenshot::save_to_disk(path));
                     }
-                    KeyCode::Minus => {
-                        println!("minus");
-                        for mut x in root_query.iter_mut() {
-                            x.scaling-=0.25;
-                            x.scaling=x.scaling.max(0.0);
-                        }
-                    }
-                    KeyCode::ArrowLeft => {
-                        for mut x in root_query.iter_mut() {
-                            x.x-=100.0;
-                        }
-                    }
-                    KeyCode::ArrowRight => {
-                        for mut x in root_query.iter_mut() {
-                            x.x+=100.0;
-                        }
-                    }
-                    KeyCode::ArrowUp => {
-                        for mut x in root_query.iter_mut() {
-                            x.y-=100.0;
-                        }
-                    }
-                    KeyCode::ArrowDown => {
-                        for mut x in root_query.iter_mut() {
-                            x.y+=100.0;
-                        }
-                    }
-                    _ => {
+                }
+                KeyCode::Equal => {
+                    println!("plus");
 
-                        println!("key {ev:?}");
+                    for mut x in root_query.iter_mut() {
+                        x.scaling+=0.25;
                     }
+                }
+                KeyCode::Minus => {
+                    println!("minus");
+                    for mut x in root_query.iter_mut() {
+                        x.scaling-=0.25;
+                        x.scaling=x.scaling.max(0.0);
+                    }
+                }
+                // KeyCode::ArrowLeft => {
+                //     for mut x in root_query.iter_mut() {
+                //         x.x-=100.0;
+                //     }
+                // }
+                // KeyCode::ArrowRight => {
+                //     for mut x in root_query.iter_mut() {
+                //         x.x+=100.0;
+                //     }
+                // }
+                // KeyCode::ArrowUp => {
+                //     for mut x in root_query.iter_mut() {
+                //         x.y-=100.0;
+                //     }
+                // }
+                // KeyCode::ArrowDown => {
+                //     for mut x in root_query.iter_mut() {
+                //         x.y+=100.0;
+                //     }
+                // }
+
+                _ => {
+
+                    println!("key {ev:?}");
                 }
             }
         }
@@ -442,8 +629,8 @@ fn update_input(
 struct FpsText;
 
 fn setup_fps(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    // mut commands: Commands,
+    // asset_server: Res<AssetServer>,
 ) {
     // let font = asset_server.load("fonts/FiraMono-Medium.ttf");
 

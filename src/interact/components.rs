@@ -43,7 +43,7 @@ pub struct UiSelectable {
 #[require(UiLayoutComputed)]
 pub struct UiFocusable {
     pub enable : bool,
-    pub focused : bool, //set by both user and interact system
+    // pub focused : bool, //set by both user and interact system
     pub group : i32,
 
     pub tab_exit : bool,
@@ -53,8 +53,8 @@ pub struct UiFocusable {
     pub hdir_wrap : bool,
     pub vdir_wrap : bool,
 
-    pub hdir_press : bool, //when left/right on start/aready focus(ed) // ?
-    pub vdir_press : bool, //when up/down on start/aready focus(ed) // ?
+    // pub hdir_press : bool, //when left/right on start/aready focus(ed) // ?
+    // pub vdir_press : bool, //when up/down on start/aready focus(ed) // ?
 
 }
 

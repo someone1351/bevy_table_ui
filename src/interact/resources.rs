@@ -1,7 +1,10 @@
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use bevy::ecs::prelude::*;
+
+#[derive(Resource,Debug, Default)]
+pub struct UiFocuseds(pub HashSet<Entity>); //replaces focusable.focused, is it cleared if entity is deleted?
 
 
 #[derive(Resource,Debug, Default)]
@@ -16,7 +19,8 @@ pub struct UiFocusStates {
                 HashMap<Entity,u64>, //hist
             )
         >
-    >
+    >,
+    // pub focuseds:HashSet<Entity>, //replaces focusable.focused, is it cleared if entity is deleted?
 }
 
 

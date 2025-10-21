@@ -25,6 +25,7 @@ impl bevy::app::Plugin for UiInteractPlugin {
             .add_message::<messages::UiInteractInputMessage>()
             // .add_message::<UiCustomEvent>()UiPressStates
 
+            .init_resource::<resources::UiFocuseds>()
             .init_resource::<resources::UiFocusStates>()
             .init_resource::<resources::UiPressStates>()
             // .init_resource::<resources::UiDragStates>()

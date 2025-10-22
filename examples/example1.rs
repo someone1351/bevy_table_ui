@@ -95,35 +95,61 @@ pub fn update_ui(
     mut ui_color_query: Query<&mut UiColor,>,
 
     mut prev_border_col:Local<HashMap<Entity,Color>>,
-    // mut prev_back_col:Local<HashMap<Entity,Color>>,
+    mut prev_back_col:Local<HashMap<Entity,Color>>,
+    mut click_counter:Local<u32>,
+    mut bla:Local<HashMap<Entity,u32>>,
+    // mut bla : Local<Vec<>>
 ) {
+
+    // enum OnState {Press,}
+    // let mut new_states: HashMap<Entity,HashSet<OnState>>=Default::default();
+
+    bla.retain(|&entity,&mut c|{
+        if c==0 {
+            if let Ok(mut col)=ui_color_query.get_mut(entity) {
+                col.back= prev_back_col.get(&entity).cloned().unwrap_or_default();
+            }
+        }
+
+        c>0
+    });
+
     for ev in interact_events.read() {
         match &ev.event_type {
             UiInteractMessageType::HoverBegin { .. } => {}
             UiInteractMessageType::HoverEnd { .. } => {}
             UiInteractMessageType::PressBegin{ .. } => {
+                if let Ok(mut col)=ui_color_query.get_mut(ev.entity) {
+                    prev_back_col.entry(ev.entity).or_insert( col.back);
+                    col.back= Color::linear_rgb(0.8,0.5,0.2);
+                }
 
+                *bla.entry(ev.entity).or_default()+=1;
             }
             UiInteractMessageType::PressEnd{ .. } => {
 
+
+                *bla.get_mut(&ev.entity).unwrap()-=1;
+
             }
-            UiInteractMessageType::Click{ .. } => {}
+            UiInteractMessageType::Click{ .. } => {
+                *click_counter+=1;
+                println!("clicked {}",*click_counter);
+            }
             UiInteractMessageType::DragX { .. } => {}
             UiInteractMessageType::DragY { .. } => {}
             UiInteractMessageType::SelectBegin => {}
             UiInteractMessageType::SelectEnd => {}
             UiInteractMessageType::FocusBegin { .. } => {
                 if let Ok(mut col)=ui_color_query.get_mut(ev.entity) {
-                    prev_border_col.insert(ev.entity, col.border);
+                    prev_border_col.entry(ev.entity).or_insert(col.border);
                     col.border= Color::linear_rgb(0.8,0.8,0.2)
                 }
             }
             UiInteractMessageType::FocusEnd { .. } => {
                 if let Ok(mut col)=ui_color_query.get_mut(ev.entity) {
-
                     col.border= prev_border_col.get(&ev.entity).cloned().unwrap_or_default();
                 }
-
             }
         }
     }
@@ -183,6 +209,8 @@ pub fn setup_ui(
                 UiSize{ width:UiVal::Px(50.0), height:UiVal::Px(50.0), },
                 UiFocusable{ enable: true, ..Default::default() },
                 UiPressable{ enable: true, ..Default::default() },
+                UiHoverable{ enable: true },
+                UiDraggable{ enable: true },
                 UiEdge{  border: UiRectVal::new_scalar(UiVal::Px(5.0)),  ..Default::default() }
             ));
         }
@@ -490,21 +518,21 @@ fn update_ui_input(
                         MouseButton::Left => {
                             ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressBegin{root_entity, device, button: 0 });
 
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 1 });
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 2 });
+                            // ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 1 });
+                            // ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 2 });
                         }
-                        MouseButton::Right => {
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressBegin{root_entity, device, button: 2 });
+                        // MouseButton::Right => {
+                        //     ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressBegin{root_entity, device, button: 2 });
 
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 0 });
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 1 });
-                        }
-                        MouseButton::Middle => {
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressBegin{root_entity, device, button: 1 });
+                        //     ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 0 });
+                        //     ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 1 });
+                        // }
+                        // MouseButton::Middle => {
+                        //     ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressBegin{root_entity, device, button: 1 });
 
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 0 });
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 2 });
-                        }
+                        //     ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 0 });
+                        //     ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 2 });
+                        // }
                         MouseButton::Forward => {
                         }
                         MouseButton::Back => {
@@ -519,12 +547,12 @@ fn update_ui_input(
                         MouseButton::Left => {
                             ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressEnd {root_entity, device, button: 0 });
                         }
-                        MouseButton::Right => {
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressEnd {root_entity, device, button: 2 });
-                        }
-                        MouseButton::Middle => {
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressEnd {root_entity, device, button: 1 });
-                        }
+                        // MouseButton::Right => {
+                        //     ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressEnd {root_entity, device, button: 2 });
+                        // }
+                        // MouseButton::Middle => {
+                        //     ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressEnd {root_entity, device, button: 1 });
+                        // }
                         _ => {}
                     }
                 }
@@ -576,14 +604,14 @@ fn update_input(
                     }
                 }
                 KeyCode::Equal => {
-                    println!("plus");
+                    // println!("plus");
 
                     for mut x in root_query.iter_mut() {
                         x.scaling+=0.25;
                     }
                 }
                 KeyCode::Minus => {
-                    println!("minus");
+                    // println!("minus");
                     for mut x in root_query.iter_mut() {
                         x.scaling-=0.25;
                         x.scaling=x.scaling.max(0.0);
@@ -612,7 +640,7 @@ fn update_input(
 
                 _ => {
 
-                    println!("key {ev:?}");
+                    // println!("key {ev:?}");
                 }
             }
         }

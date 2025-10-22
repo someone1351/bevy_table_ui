@@ -33,8 +33,8 @@ use super::super::messages::*;
 use super::super::super::layout::components::{UiLayoutComputed,UiRoot};
 
 fn is_no_entity_pressed(
-    entity_presseds:&HashSet<Option<(i32,bool)>>,
-    device_presseds : &HashMap<(Entity,i32,bool),(Entity,bool)>,
+    entity_presseds:&HashSet<Option<(i32,bool)>>, //[Some((device,is_cursor))]
+    device_presseds : &HashMap<(Entity,i32,bool),(Entity,bool)>, //[(root_entity,device,is_cursor)]=(pressed_entity,pressed)
     root_entity : Entity,
     press_always : bool,
 ) -> bool {
@@ -92,7 +92,7 @@ pub fn update_press_events(
     mut press_states:ResMut<UiPressStates>,
 
     mut device_cursors : Local<HashMap<(Entity,i32),Vec2>>, //[(root_entity,device)]=cursor
-    mut entities_presseds : Local<HashMap<(Entity,Entity),HashSet<Option<(i32,bool)>>>>, //[(root_entity,press_entity)]=set<Some((device,is_cursor))>, the None is a separate device representing pressable.pressed
+    mut entities_presseds : Local<HashMap<(Entity,Entity),HashSet<Option<(i32,bool)>>>>, //[(root_entity,press_entity)]=set<Some((device,is_cursor))>, the None is a separate device representing pressable.pressed (since removed)
 
     mut input_event_reader: MessageReader<UiInteractInputMessage>,
     mut ui_output_event_writer: MessageWriter<UiInteractEvent>,

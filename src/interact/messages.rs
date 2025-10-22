@@ -115,7 +115,9 @@ pub enum UiInteractMessageType {
     HoverEnd{device:i32,},
     PressBegin{device:i32,button:i32}, //,is_cursor:bool //might need hashset of devices?
     PressEnd{device:i32,button:i32}, //is_cursor:bool
-    Click{device:i32,button:i32},
+    Click{device:i32,button:i32,
+        // times:u32, //how many times within the frame, most times will be 0, as press/release happens over multiple frames
+    },
     // DragBegin,
     // DragEnd,
     // DragMove{ h_px:i32,v_px:i32, h_scale:f32,v_scale:f32, },

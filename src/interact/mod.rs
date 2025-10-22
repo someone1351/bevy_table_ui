@@ -18,5 +18,10 @@ TODO
 * add buttons(i32) for drag, focusing, pressing
 
 * have dist and delta for drag
+
+TODO
+* handle when event begins and ends in same frame?
+** add bool to end message?
+*** can implement using a bool that flips every frame, check if matches begin message?
 */
 

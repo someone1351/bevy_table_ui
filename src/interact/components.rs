@@ -12,7 +12,10 @@ pub struct UiHoverable {
 #[require(UiLayoutComputed)]
 pub struct UiPressable {
     pub enable : bool,
-    pub always : bool, // doesn't temporarily release if cursor is moved off while still pressing
+    // doesn't temporarily release if cursor is moved off while still pressing
+    // would want this to handle different for dif buttons eg lmb vs rmb?
+    pub always : bool,
+
     pub physical : bool, //works like a real button, ie stays held down as long as something is pressing it
 
     // pub pressed : bool, //set by both user and interact system

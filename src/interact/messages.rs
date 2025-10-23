@@ -114,7 +114,7 @@ pub enum UiInteractMessageType {
     HoverBegin{device:i32,}, //don't really need device? like press?
     HoverEnd{device:i32,},
     PressBegin{device:i32,button:i32}, //,is_cursor:bool //might need hashset of devices?
-    PressEnd{device:i32,button:i32}, //is_cursor:bool
+    PressEnd{device:Option<i32>,button:i32}, //device can be optional, because some times press is ended due to root/entity being removed etc
     Click{device:i32,button:i32,
         // times:u32, //how many times within the frame, most times will be 0, as press/release happens over multiple frames
     },

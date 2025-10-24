@@ -344,7 +344,6 @@ pub fn update_press_events(
                         // let entity_presseds=entities_presseds.entry((root_entity,entity)).or_default();
                         let pressable=pressable_query.get(pressed_entity).map(|x|x.1).unwrap();
 
-
                         if let Some(&cursor)=device_cursors.get(&(root_entity,device)) {
                             let computed = layout_computed_query.get(pressed_entity).unwrap();
                             let outer_rect=computed.clamped_border_rect();//.clamped_padding_rect();

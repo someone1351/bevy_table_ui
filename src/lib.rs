@@ -65,5 +65,10 @@ TODO
 
 TODO
 * replace all floats with ints and fractions
+
+TODO
+
+* add to hoverable, option to activate through other entities, and/or floating entites
+** so can use with drag drop
 */
 

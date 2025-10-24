@@ -456,6 +456,7 @@ fn update_ui_input(
 
     let device=0;
     let group=0;
+    let device2=1;
 
     //
     for ev in key_events.read() {
@@ -465,29 +466,56 @@ fn update_ui_input(
 
                 for root_entity in ui_root_query.iter() {
                     match ev.key_code {
-                        KeyCode::KeyW|KeyCode::ArrowUp => {
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusUp { root_entity, group });
+                        KeyCode::KeyW => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusUp { root_entity, group, device });
                         }
-                        KeyCode::KeyS|KeyCode::ArrowDown => {
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusDown { root_entity, group });
+                        KeyCode::KeyS => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusDown { root_entity, group, device });
                         }
-                        KeyCode::KeyA|KeyCode::ArrowLeft => {
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusLeft { root_entity, group });
+                        KeyCode::KeyA => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusLeft { root_entity, group, device });
                         }
-                        KeyCode::KeyD|KeyCode::ArrowRight => {
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusRight { root_entity, group });
+                        KeyCode::KeyD => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusRight { root_entity, group, device });
                         }
+
+                        KeyCode::ArrowUp => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusUp { root_entity, group, device:device2 });
+                        }
+                        KeyCode::ArrowDown => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusDown { root_entity, group, device:device2 });
+                        }
+                        KeyCode::ArrowLeft => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusLeft { root_entity, group, device:device2 });
+                        }
+                        KeyCode::ArrowRight => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusRight { root_entity, group, device:device2 });
+                        }
+
                         KeyCode::Tab|KeyCode::KeyE => {
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusNext { root_entity, group });
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusNext { root_entity, group, device });
                         }
                         KeyCode::KeyQ => {
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPrev { root_entity, group });
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPrev { root_entity, group, device });
                         }
-                        KeyCode::Space|KeyCode::Enter => {
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPressBegin{root_entity, group, device: 0,button:0, });
+
+                        KeyCode::BracketRight => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusNext { root_entity, group, device:device2});
+                        }
+                        KeyCode::BracketLeft => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPrev { root_entity, group, device:device2 });
+                        }
+                        KeyCode::Space => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPressBegin{root_entity, group, device,button:0, });
+                        }
+                        KeyCode::Enter => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPressBegin{root_entity, group, device: device2,button:0, });
                         }
                         KeyCode::Escape => {
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPressCancel{root_entity, device: 0,button:0, });
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPressCancel{root_entity, device,button:0, });
+                        }
+                        KeyCode::Backspace => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPressCancel{root_entity, device:device2,button:0, });
                         }
                         _ => {}
                     }
@@ -498,8 +526,11 @@ fn update_ui_input(
 
                 for root_entity in ui_root_query.iter() {
                     match ev.key_code {
-                        KeyCode::Space|KeyCode::Enter => {
+                        KeyCode::Space => {
                             ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPressEnd{root_entity, device, button: 0 });
+                        }
+                        KeyCode::Enter => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPressEnd{root_entity, device:device2, button: 0 });
                         }
                         _ => {}
                     }

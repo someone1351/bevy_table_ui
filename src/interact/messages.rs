@@ -10,15 +10,15 @@ TODO
 #[derive(Debug,Message,Clone)]
 pub enum UiInteractInputMessage {
     //add device to focus, so can have multiple users selecting from same nodes
-    FocusInit{root_entity:Entity, group:i32},
-    FocusLeft{root_entity:Entity, group:i32},
-    FocusRight{root_entity:Entity, group:i32},
-    FocusUp{root_entity:Entity, group:i32},
-    FocusDown{root_entity:Entity, group:i32},
-    FocusPrev{root_entity:Entity, group:i32},
-    FocusNext{root_entity:Entity, group:i32},
-    FocusEnter{root_entity:Entity, group:i32},
-    FocusExit{root_entity:Entity, group:i32},
+    FocusInit{root_entity:Entity, group:i32,device:i32},
+    FocusLeft{root_entity:Entity, group:i32,device:i32},
+    FocusRight{root_entity:Entity, group:i32,device:i32},
+    FocusUp{root_entity:Entity, group:i32,device:i32},
+    FocusDown{root_entity:Entity, group:i32,device:i32},
+    FocusPrev{root_entity:Entity, group:i32,device:i32},
+    FocusNext{root_entity:Entity, group:i32,device:i32},
+    FocusEnter{root_entity:Entity, group:i32,device:i32},
+    FocusExit{root_entity:Entity, group:i32,device:i32},
 
     FocusPressBegin{root_entity:Entity,group:i32,device:i32,button:i32},
     FocusPressEnd{root_entity:Entity,device:i32,button:i32}, //why does this lack group? group is set by begin?

@@ -478,7 +478,7 @@ pub fn update_focus_events(
 
 
         match ev.clone() {
-            UiInteractInputMessage::FocusEnter{root_entity,group} => {
+            UiInteractInputMessage::FocusEnter{root_entity,group, device } => {
                 if let Some(groups)=focus_states.cur_focuses.get_mut(&root_entity) {
                     if let Some((cur_focus_entity,focus_entity_stk, _hist))=groups.get_mut(&group) {
                         if let Some(entity)=*cur_focus_entity {
@@ -489,7 +489,7 @@ pub fn update_focus_events(
                     }
                 }
             }
-            UiInteractInputMessage::FocusExit{root_entity,group} => {
+            UiInteractInputMessage::FocusExit{root_entity,group, device } => {
                 if let Some(groups)=focus_states.cur_focuses.get_mut(&root_entity) {
                     if let Some((cur_focus_entity,focus_entity_stk, _hist))=groups.get_mut(&group) {
                         //already checked above for enabled/unlocked
@@ -520,15 +520,18 @@ pub fn update_focus_events(
         }
 
         //
-        let (top_root_entity, cur_group,(cur_focus_entity,focus_entity_stk, hist))=match ev {
-            UiInteractInputMessage::FocusEnter{root_entity,group}
-                |UiInteractInputMessage::FocusPrev{root_entity,group}|UiInteractInputMessage::FocusNext{root_entity,group}
-                |UiInteractInputMessage::FocusLeft{root_entity,group}|UiInteractInputMessage::FocusRight {root_entity,group}
-                |UiInteractInputMessage::FocusUp{root_entity,group}|UiInteractInputMessage::FocusDown{root_entity,group}
-                |UiInteractInputMessage::FocusInit{root_entity,group}
+        let (top_root_entity, cur_group,cur_device,(cur_focus_entity,focus_entity_stk, hist))=match ev {
+            UiInteractInputMessage::FocusEnter{root_entity,group, device }
+                |UiInteractInputMessage::FocusPrev{root_entity,group, device }
+                |UiInteractInputMessage::FocusNext{root_entity,group, device }
+                |UiInteractInputMessage::FocusLeft{root_entity,group, device }
+                |UiInteractInputMessage::FocusRight {root_entity,group, device }
+                |UiInteractInputMessage::FocusUp{root_entity,group, device }
+                |UiInteractInputMessage::FocusDown{root_entity,group, device }
+                |UiInteractInputMessage::FocusInit{root_entity,group, device }
                 // |UiInputEvent::FocusPressBegin(root_entity,group,..)
             => {
-                (root_entity,group,focus_states.cur_focuses.entry(root_entity).or_default().entry(group).or_default())
+                (root_entity,group,device,focus_states.cur_focuses.entry(root_entity).or_default().entry(group).or_default())
             }
             _=>{continue;}
         };

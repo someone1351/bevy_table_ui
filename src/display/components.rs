@@ -121,7 +121,7 @@ impl Default for UiText {
             halign : Default::default(),
             valign : Default::default(),
 
-            update : false,
+            update : true,
         }
     }
 }

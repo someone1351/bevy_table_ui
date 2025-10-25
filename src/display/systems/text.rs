@@ -4,6 +4,7 @@ TODO:
 */
 
 
+
 use bevy::ecs::prelude::*;
 use bevy::asset::prelude::*;
 // use bevy::hierarchy::prelude::*;
@@ -16,26 +17,21 @@ use bevy::text::{ComputedTextBlock, CosmicFontSystem, Font, FontAtlasSets, FontS
 // use bevy::window::Window;
 
 
-use super::super::layout::components::{UiLayoutComputed, UiInnerSize,UiRoot};
+use super::super::super::layout::components::{UiLayoutComputed, UiInnerSize,UiRoot};
 
-use super::components::*;
+use super::super::components::*;
 // use super::super::resources::*;
 // use super::super::utils::*;
-use super::values::*;
+use super::super::values::*;
 
-pub fn update_text_image(
-    // mut commands: Commands,
-    // windows: Query<&Window>,
 
+pub fn update_text(
     asset_server: Res<AssetServer>,
     fonts: Res<Assets<Font>>,
     mut textures: ResMut<Assets<Image>>,
-    // mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
     mut font_atlas_sets: ResMut<FontAtlasSets>,
     mut text_pipeline: ResMut<TextPipeline>,
-    // text_settings: Res<TextSettings>,
-    // mut font_atlas_warning:ResMut<FontAtlasWarning>,
 
     mut ui_query: Query<(Entity,
         &UiLayoutComputed,
@@ -44,18 +40,11 @@ pub fn update_text_image(
         Option<&mut TextLayoutInfo>,
         Option<&mut UiTextComputed>,
         Option<&mut ComputedTextBlock>,
-        Option<&UiImage>,
     )>,
     root_query: Query<&UiRoot,With<UiLayoutComputed>>,
     mut font_system: ResMut<CosmicFontSystem>,
     mut swash_cache: ResMut<SwashCache>,
 ) {
-    // let window_size=windows.get_single().and_then(|window|Ok((window.width(),window.height()))).unwrap_or((0.0,0.0));
-    //todo need to get window for camera?
-    // let scale_factor = windows.single().and_then(|window|Ok(window.scale_factor() as f64)).unwrap_or(1.0);
-    // println!("scale_factor={scale_factor}");
-    //only on visible, updated?
-    // let scale_factor: f32 = 1.0;
 
     for (entity,
         &layout_computed,
@@ -64,7 +53,7 @@ pub fn update_text_image(
         text_layout_info,
         text_computed,
         computed_text_block,
-        image) in ui_query.iter_mut()
+    ) in ui_query.iter_mut()
     {
         if !layout_computed.enabled {
             // println!("{entity:?} {computed:?}");
@@ -90,26 +79,6 @@ pub fn update_text_image(
         // let mut custom_size.width : f32 = 0.0;
         // let mut custom_size.height : f32 = 0.0;
 
-        //image here
-        if let Some(image) = image {
-            if let Some(texture) = textures.get(&image.handle) {
-                let image_size = texture.size().as_vec2();
-
-                //todo keep aspect ratio
-                let scale_factor=if image.use_scaling {scale_factor}else{1.0};
-                // if image.width_scale>0.0 {
-                    inner_size.width = inner_size.width.max(image.width_scale.max(0.0)*image_size.x*scale_factor);
-                // } else if inner_size.width == 0.0 {
-                //     inner_size.width = inner_size.width.max(image_size.x*scale_factor);
-                // }
-
-                // if image.height_scale>0.0 {
-                    inner_size.height = inner_size.height.max(image.height_scale.max(0.0)*image_size.y*scale_factor);
-                // } else if inner_size.height == 0.0 {
-                //     inner_size.height = inner_size.height.max(image_size.y*scale_factor);
-                // }
-            }
-        }
 
         //text here!
         if let (
@@ -128,8 +97,9 @@ pub fn update_text_image(
 
             let font_size=text.font_size;//*scale_factor*10.0;
 
+            //need to check if layout_computed.size has changed if using it for text wrap?
             let tex_updated= text.update || text_computed.scaling!=text_scale_factor;
-
+            let tex_updated=true;
             //
             if tex_updated && fonts_loaded {
                 let mut bound_width=(layout_computed.size.x>=0.0).then_some(layout_computed.size.x);
@@ -143,7 +113,7 @@ pub fn update_text_image(
                     UiTextHAlign::Right => Justify::Right,
                 };
 
-                //
+                //calc total widht/height for hlen/vlen
                 if text.hlen!=0 || text.vlen!=0 {
                     let mut value = if text.hlen!=0 {
                         " ".repeat(text.hlen as usize)
@@ -156,7 +126,7 @@ pub fn update_text_image(
                     }
 
                     let text_spans=[(entity, 0 /*depth*/, " ", &TextFont{
-                        font: text.font.clone(), font_size, font_smoothing: FontSmoothing::None,
+                        font: text.font.clone(), font_size, font_smoothing: FontSmoothing::AntiAliased,
                         line_height: LineHeight::RelativeToFont(1.2),
                     },text.color)];
 

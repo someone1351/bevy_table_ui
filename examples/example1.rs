@@ -23,6 +23,7 @@ use bevy::prelude::{KeyCode, Msaa, PluginGroup };
 
 
 use bevy_table_ui as table_ui;
+use rand::Rng;
 // use mesh::TestRenderComponent;
 // use render_core::core_my::CameraMy;
 use table_ui::*;
@@ -63,10 +64,12 @@ fn main() {
             setup_ui,
         ))
         .add_systems(Update, (
-            update_input,
-            update_ui_input,
             update_ui_roots,
-            update_ui.after(update_ui_input),
+            update_ui_input,
+            update_ui,
+        ).chain())
+        .add_systems(Update, (
+            update_input,
             show_fps.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(300))),
         ))
         ;
@@ -115,6 +118,8 @@ pub fn update_ui(
     });
 
     for ev in interact_events.read() {
+        println!("event: {ev}");
+
         match &ev.event_type {
             UiInteractMessageType::HoverBegin { .. } => {}
             UiInteractMessageType::HoverEnd { .. } => {}
@@ -161,8 +166,11 @@ pub struct MenuUiRoot;
 
 pub fn setup_ui(
     mut commands: Commands,
-    // asset_server: Res<AssetServer>,
+    asset_server: Res<AssetServer>,
 ) {
+    let mut rng = rand::thread_rng();
+
+    let font: Handle<Font>=asset_server.load("fonts/FiraMono-Medium.ttf");
     // commands.spawn((
     //     MenuUiRoot,
     //
@@ -189,6 +197,7 @@ pub fn setup_ui(
     commands.spawn((
         MenuUiRoot,
         UiRoot::default(),
+        UiSpan{ span: 3 },
 
 
         UiColor{back:Color::srgb(0.5,0.5,0.5),..Default::default()},
@@ -196,189 +205,41 @@ pub fn setup_ui(
         // UiSpan{span:1},
         UiGap{hgap:UiVal::Px(30.0),vgap:UiVal::Px(30.0)},
     )).with_children(|parent|{
-        let cols=[
-            Color::linear_rgb(1.0, 0.0, 0.0),
-            Color::linear_rgb(0.0, 1.0, 0.0),
-            Color::linear_rgb(0.0, 0.0, 1.0),
-        ];
+        // let cols=[
+        //     Color::linear_rgb(1.0, 0.0, 0.0),
+        //     Color::linear_rgb(0.0, 1.0, 0.0),
+        //     Color::linear_rgb(0.0, 0.0, 1.0),
+        // ];
 
-        for i in 0..3 {
+        for _i in 0..9 {
+            let col_scale=0.5;
+            let col=Color::linear_rgb(rng.gen::<f32>()*col_scale,rng.gen::<f32>()*col_scale,rng.gen::<f32>()*col_scale);
 
-            parent.spawn((
-                UiColor{back:cols[i],border:Color::linear_rgb(0.5,0.5,0.5),..Default::default()},
+            let entity=parent.spawn((
+                UiColor{back:col,border:Color::linear_rgb(0.5,0.5,0.5),..Default::default()},
                 UiSize{ width:UiVal::Px(50.0), height:UiVal::Px(50.0), },
                 UiFocusable{ enable: true, ..Default::default() },
                 UiPressable{ enable: true, ..Default::default() },
                 UiHoverable{ enable: true },
                 UiDraggable{ enable: true },
-                UiEdge{  border: UiRectVal::new_scalar(UiVal::Px(5.0)),  ..Default::default() }
-            ));
+                UiEdge{  border: UiRectVal::new_scalar(UiVal::Px(5.0)),  ..Default::default() },
+            )).id();
+
+            parent.commands().entity(entity).insert(UiText{
+                value:format!("{entity}"),
+                font_size: 25.0,
+                halign:UiTextHAlign::Left,
+                valign:UiTextVAlign::Top,
+                // halign:UiTextHAlign::Right,
+                // valign:UiTextVAlign::Bottom,
+                font: font.clone(),
+                color: Color::linear_rgb(1.0,1.0,1.0),
+                ..Default::default()
+            });
+
         }
     });
 
-    return;
-
-    // commands.spawn((
-    //     MenuUiRoot,
-    //     UiRoot::default(),
-
-    //     UiColor{back:Color::srgb(0.2,0.4,0.6),..Default::default()},
-    //     UiSize{
-    //         // width:UiVal::Px(200.0),
-    //         width:UiVal::None,
-    //         // height:UiVal::Px(500.0),
-    //         height:UiVal::None,
-    //     },
-    //     UiSpan{span:1},
-    //     UiGap{hgap:UiVal::Px(30.0),vgap:UiVal::Px(30.0)},
-    // )).with_children(|parent|{
-
-    //     //0
-    //     parent.spawn((
-
-    //         // UiInnerSize::default(),
-    //         UiColor{
-    //             back:Color::BLACK,
-    //             cell:Color::srgb(0.3,0.3,0.3),
-    //             ..Default::default()
-    //         },
-    //         UiImage{
-    //             handle:asset_server.load("bevy_logo_dark_big.png"),
-    //             width_scale:0.5,
-    //             height_scale:0.5,
-    //             ..Default::default()
-    //         },
-    //         UiCongruent {
-    //             row_width_scale: 0.0,
-    //             col_height_scale: 1.0,
-    //         },
-    //     ));
-
-    //     //1
-    //     parent.spawn((
-
-    //         UiColor{
-    //             back:Color::srgb(1.0,0.3,0.1),
-    //             cell:Color::srgb(1.0,0.5,0.1),
-    //             // border:Color::srgb(0.1,0.5,1.0),
-    //             border:Color::srgb(0.1,1.0,0.5),
-    //             ..Default::default()
-    //         },
-    //         UiEdge{border:UiRectVal {
-    //             // left: UiVal::Scale(-10.0),
-    //             right: UiVal::Px(-10.0),
-    //             // top: UiVal::Px(10.0),
-    //             // bottom: UiVal::Px(10.0),
-    //             ..Default::default()
-    //         }, ..Default::default()},
-    //         UiText{
-    //             value:"Hello".to_string(),
-    //             font_size:30.0,
-    //             color:Color::WHITE,
-    //             font:asset_server.load("fonts/FiraMono-Medium.ttf"),
-    //             halign:UiTextHAlign::Right,
-    //             update:true,..Default::default()
-    //         },
-    //         UiFill{
-    //             hfill: UiVal::None,
-    //             // hfill: UiVal::Scale(1.0),
-    //             // vfill: UiVal::None,
-    //             vfill: UiVal::Scale(1.0),
-    //         },
-    //         // UiSize{width:UiVal::Px(200.0),height:UiVal::Px(70.0)},
-    //         UiSize{width:UiVal::Px(200.0),height:UiVal::None},
-    //         // UiAlign{halign:UiVal::Scale(0.0),..Default::default()},
-    //     ));
-
-    //     //2
-    //     parent.spawn((
-
-    //         UiColor{
-    //             back:Color::srgb(1.0,0.3,0.1),
-    //             cell:Color::srgb(1.0,0.5,0.1),
-    //             ..Default::default()
-    //         },
-    //         UiText{
-    //             value:"Hello".to_string(),
-    //             font_size:30.0,
-    //             color:Color::WHITE,
-    //             font:asset_server.load("fonts/FiraMono-Medium.ttf"),
-    //             halign:UiTextHAlign::Left,
-    //             valign:UiTextVAlign::Top,
-    //             update:true,..Default::default()
-    //         },
-    //         UiFill{
-    //             // hfill: UiVal::None,
-    //             hfill: UiVal::Scale(1.0),
-    //             vfill: UiVal::None,
-    //         },
-    //         // UiSize{width:UiVal::Px(200.0),height:UiVal::Px(70.0)},
-    //     ));
-
-    //     //3
-    //     parent.spawn((
-
-    //         UiColor{
-    //             back:Color::srgb(1.0,0.3,0.1),
-    //             cell:Color::srgb(1.0,0.5,0.1),
-    //             ..Default::default()
-    //         },
-    //         UiText{
-    //             value:"Hello".to_string(),
-    //             font_size:30.0,
-    //             color:Color::WHITE,
-    //             font:asset_server.load("fonts/FiraMono-Medium.ttf"),
-    //             halign:UiTextHAlign::Center,
-    //             valign:UiTextVAlign::Center,
-    //             update:true,..Default::default()
-    //         },
-    //         UiFill{
-    //             // hfill: UiVal::None,
-    //             hfill: UiVal::Scale(1.0),
-    //             vfill: UiVal::None,
-    //         },
-    //         // UiSize{width:UiVal::Px(200.0),height:UiVal::None},
-    //     ));
-
-    //     //4
-    //     parent.spawn((
-
-    //         UiColor{
-    //             back:Color::srgb(1.0,0.3,0.1),
-    //             cell:Color::srgb(1.0,0.5,0.1),
-    //             ..Default::default()
-    //         },
-    //         UiText{
-    //             value:"X".to_string(),
-    //             hlen:3,
-    //             vlen:3,
-    //             font_size:30.0,
-    //             color:Color::WHITE,
-    //             font:asset_server.load("fonts/FiraMono-Medium.ttf"),
-    //             halign:UiTextHAlign::Right,
-    //             // halign:UiTextHAlign::Left,
-    //             valign:UiTextVAlign::Bottom,
-    //             // valign:UiTextVAlign::Top,
-    //             update:true,..Default::default()
-    //         },
-    //         UiFill{
-    //             // hfill: UiVal::None,
-    //             // hfill: UiVal::Scale(1.0),
-    //             // vfill: UiVal::None,
-    //             ..Default::default()
-    //         },
-    //         UiSize{
-    //             // width:UiVal::Px(200.0),
-    //             // height:UiVal::Px(70.0),
-    //             ..Default::default()
-    //         },
-    //         UiCongruent {
-    //             // row_width_scale: 0.0,
-    //             // col_height_scale: 1.0,
-    //             ..Default::default()
-    //         },
-    //     ));
-    // });
 
 }
 

@@ -4,23 +4,12 @@ use std::collections::{HashMap, HashSet};
 use bevy::ecs::prelude::*;
 
 #[derive(Resource,Debug, Default)]
-pub struct UiFocuseds(pub HashSet<Entity>); //replaces focusable.focused, is it cleared if entity is deleted?
+pub struct UiFocuseds(pub HashMap<i32,HashSet<Entity>>); //[device][entity_focused] replaces focusable.focused, is it cleared if entity is deleted?
 
 
 #[derive(Resource,Debug, Default)]
 pub struct UiFocusStates {
-    pub cur_focuses:HashMap<
-        Entity, //root_entity
-        HashMap<
-            i32, //group
-            (
-                Option<Entity>, //cur_focus_entity
-                Vec<Entity>, //focus_entity_stk
-                HashMap<Entity,u64>, //hist
-            )
-        >
-    >,
-    // pub focuseds:HashSet<Entity>, //replaces focusable.focused, is it cleared if entity is deleted?
+    pub cur_focuses:HashMap<i32,HashMap<Entity,HashMap<i32,(Option<Entity>,Vec<Entity>,HashMap<Entity,u64>,)>>>, //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk,hist)
 }
 
 #[derive(Debug,Clone, Copy,PartialEq, Eq,Hash)]

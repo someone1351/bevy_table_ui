@@ -75,8 +75,9 @@ impl bevy::app::Plugin for UiDisplayPlugin {
             .add_plugins((CorePipelinePlugin, ))
             .add_systems(PostUpdate,
                 (
-                    systems::update_text_image,
-                ).after(layout::systems::ui_init_computeds)
+                    systems::update_image,
+                    systems::update_text,
+                ).chain().after(layout::systems::ui_init_computeds)
                 .before(
                     // layout::plugin::UiLayoutSystem
                     layout::systems::ui_calc_rows_cols

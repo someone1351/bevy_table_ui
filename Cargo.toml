@@ -22,7 +22,7 @@ radsort = "0.1"
 [dev-dependencies]
 #bevy = { version = "0.17", default-features = false, features = [ "serialize","multi_threaded","bevy_window","x11", "file_watcher","png", } #"dynamic_linking" ,"bevy_ui"
 bevy = { version = "0.17.2", default-features = true, features = [ "serialize","file_watcher",] }
-
+rand = "0.8"
 [lib]
 name = "bevy_table_ui"
 path = "src/lib.rs"

@@ -16,7 +16,7 @@ TODO:
 */
 
 use std::cmp::Ordering;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use bevy::ecs::prelude::*;
 // use bevy::hierarchy::prelude::*;
@@ -123,242 +123,120 @@ pub fn update_focus_events(
 ) {
 
     //in cur_focus_entity, focus_entity_stk, unfocus removed entities, disabled/invisible entities, disabled focusables, focusables changed groups
-    for (&root_entity,groups) in focus_states.cur_focuses.iter_mut() {
-        // let root_entity_alive=computed_query.get(root_entity).is_ok();
-        let root_entity_alive= root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default();
+    for (&device,device_focus_states) in focus_states.cur_focuses.iter_mut() {
+        let device_focuseds = focuseds.0.get_mut(&device).unwrap(); //does exist??
 
-        for (&cur_group,(cur_focus_entity,focus_entity_stk,hist)) in groups.iter_mut() {
-            // //init prev_focused_stk
-            // if prev_focused_stk.len()==0 {
-            //     prev_focused_stk.push(Default::default());
-            // }
+        for (&root_entity,groups) in device_focus_states.iter_mut() {
+            // let root_entity_alive=computed_query.get(root_entity).is_ok();
+            let root_entity_alive= root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default();
 
-            //remove removed entities from prev_focused_stk
-            // for (_,prev_focused) in prev_focused_stk.iter_mut() {
-            //     prev_focused.retain(|&entity|computed_query.contains(entity));
-            // }
-            hist.retain(|&entity,_|computed_query.contains(entity));
+            for (&cur_group,(cur_focus_entity,focus_entity_stk,hist)) in groups.iter_mut() {
+                // //init prev_focused_stk
+                // if prev_focused_stk.len()==0 {
+                //     prev_focused_stk.push(Default::default());
+                // }
 
-            //remove from cur_focus/focus_stk any invisible, changed group, no longer focusable or focusable.enabled
-            for i in 0..focus_entity_stk.len() {
-                let entity=focus_entity_stk[i];
-                let unlocked = computed_query.get(entity).map(|x|x.unlocked).unwrap_or_default();
-                let focusable=focusable_query.get(entity).ok();
-                // let focusable_enabled = focusable.map(|x|x.enable && x.focused).unwrap_or_default();
-                let focusable_enabled = focusable.map(|x|x.enable && focuseds.0.contains(&entity)).unwrap_or_default();
-                let node_focus_group = focusable.map(|x|x.group).unwrap_or_default();
+                //remove removed entities from prev_focused_stk
+                // for (_,prev_focused) in prev_focused_stk.iter_mut() {
+                //     prev_focused.retain(|&entity|computed_query.contains(entity));
+                // }
+                hist.retain(|&entity,_|computed_query.contains(entity));
 
-                if !root_entity_alive || !focusable_enabled || !unlocked || node_focus_group!=cur_group {
-                    //should not unfocus if invisible under some situations?
+                //remove from cur_focus/focus_stk any invisible, changed group, no longer focusable or focusable.enabled
+                for i in 0..focus_entity_stk.len() {
+                    let entity=focus_entity_stk[i];
+                    let unlocked = computed_query.get(entity).map(|x|x.unlocked).unwrap_or_default();
+                    let focusable=focusable_query.get(entity).ok();
+                    // let focusable_enabled = focusable.map(|x|x.enable && x.focused).unwrap_or_default();
+                    // let is_focused=device_focuseds.map(|device_focuseds|device_focuseds.contains(&entity)).unwrap_or_default();
+                    let is_focused= device_focuseds.contains(&entity);
+                    let focusable_enabled = focusable.map(|x|x.enable).unwrap_or_default() && is_focused;
+                    let node_focus_group = focusable.map(|x|x.group).unwrap_or_default();
 
-                    //also end this
-                    if let Some(entity)=*cur_focus_entity {
-                        ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: 77 }});
+                    if !root_entity_alive || !focusable_enabled || !unlocked || node_focus_group!=cur_group {
+                        //should not unfocus if invisible under some situations?
+
+                        //also end this
+                        if let Some(entity)=*cur_focus_entity {
+                            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device }});
+                            *cur_focus_entity=None;
+
+                            // //comment out?
+                            // if let Ok(mut focusable)=focusable_query.get_mut(entity) {
+                            //     focusable.focused=false;
+                            // }
+                            // let device_focuseds=device_focuseds.unwrap();
+                            device_focuseds.remove(&entity).then_some(()).unwrap();
+                        }
+
+                        //
+                        for j in (i..focus_entity_stk.len()).rev() {
+                            let entity=focus_entity_stk[j];
+                            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device }});
+
+                            // //comment out?
+                            // if let Ok(mut focusable)=focusable_query.get_mut(entity) {
+                            //     focusable.focused=false;
+                            // }
+
+                            // let device_focuseds=device_focuseds.unwrap();
+                            device_focuseds.remove(&entity).then_some(()).unwrap();
+                        }
+
+                        //
+                        focus_entity_stk.truncate(i);
+                        // prev_focused_stk.truncate(i+1);
+                        break;
+                    }
+                }
+
+                //remove from cur_focus disabled/invisible, changed group, no longer focusable
+                if let Some(entity)=*cur_focus_entity {
+                    let unlocked = computed_query.get(entity).map(|x|x.unlocked).unwrap_or_default();
+
+                    let focusable = focusable_query.get_mut(entity).ok();
+                    // let focusable_enabled=focusable.as_ref().map(|x|x.enable && x.focused).unwrap_or_default();
+                    // let is_focused=device_focuseds.map(|device_focuseds|device_focuseds.contains(&entity)).unwrap_or_default();
+                    let is_focused=device_focuseds.contains(&entity);
+                    let focusable_enabled=focusable.as_ref().map(|x|x.enable).unwrap_or_default() && is_focused;
+
+
+                    let node_focus_group = focusable.as_ref().map(|x|x.group).unwrap_or_default();
+
+                    if !root_entity_alive || !focusable_enabled || !unlocked || node_focus_group != cur_group {
+                        ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device }});
                         *cur_focus_entity=None;
 
                         // //comment out?
-                        // if let Ok(mut focusable)=focusable_query.get_mut(entity) {
+                        // if let Some(mut focusable)=focusable {
                         //     focusable.focused=false;
                         // }
-                        focuseds.0.remove(&entity).then_some(()).unwrap();
+
+                        // let device_focuseds=device_focuseds.unwrap();
+                        device_focuseds.remove(&entity).then_some(()).unwrap();
                     }
-
-                    //
-                    for j in (i..focus_entity_stk.len()).rev() {
-                        let entity=focus_entity_stk[j];
-                        ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: 77 }});
-
-                        // //comment out?
-                        // if let Ok(mut focusable)=focusable_query.get_mut(entity) {
-                        //     focusable.focused=false;
-                        // }
-                        focuseds.0.remove(&entity).then_some(()).unwrap();
-                    }
-
-                    //
-                    focus_entity_stk.truncate(i);
-                    // prev_focused_stk.truncate(i+1);
-                    break;
-                }
-            }
-
-            //remove from cur_focus disabled/invisible, changed group, no longer focusable
-            if let Some(entity)=*cur_focus_entity {
-                let unlocked = computed_query.get(entity).map(|x|x.unlocked).unwrap_or_default();
-
-                let focusable = focusable_query.get_mut(entity).ok();
-                // let focusable_enabled=focusable.as_ref().map(|x|x.enable && x.focused).unwrap_or_default();
-                let focusable_enabled=focusable.as_ref().map(|x|x.enable && focuseds.0.contains(&entity)).unwrap_or_default();
-
-
-                let node_focus_group = focusable.as_ref().map(|x|x.group).unwrap_or_default();
-
-                if !root_entity_alive || !focusable_enabled || !unlocked || node_focus_group != cur_group {
-                    ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: 77 }});
-                    *cur_focus_entity=None;
-
-                    // //comment out?
-                    // if let Some(mut focusable)=focusable {
-                    //     focusable.focused=false;
-                    // }
-                    focuseds.0.remove(&entity).then_some(()).unwrap();
                 }
             }
         }
-
     }
 
-    //remove dead roots
-    for root_entity in focus_states.cur_focuses.keys().cloned().collect::<Vec<_>>() {
-        // let root_entity_alive=computed_query.get(root_entity).is_ok();
-        let root_entity_alive= root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default();
 
-        if !root_entity_alive {
-            focus_states.cur_focuses.remove(&root_entity);
-        }
-    }
+    //remove dead devices, roots
+    focus_states.cur_focuses.retain(|&_device,device_focus_states|{
+        device_focus_states.retain(|&root_entity,_root_focus_states|{
+            let root_entity_alive= root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default();
+            root_entity_alive
+        });
 
-    //handle focused==true, but not in focus_entity_stk/cur_focus_entity
-    {
-        for entity in focus_query.iter() {
+        !device_focus_states.is_empty()
+    });
 
-            let Ok(computed) = computed_query.get(entity) else { continue; };
-            let focusable=focusable_query.get(entity).unwrap();
-            let focused=focuseds.0.contains(&entity);
-
-            //don't need to check if focusable entity has ancestor with ui_root, as its computed.unlocked will be false if it doesn't
-            if !computed.unlocked || !focusable.enable || !focused // !focusable.focused
-            {
-                continue;
-            }
-
-            //
-            let cur_group=focusable.group;
-            // let root_entity=parent_query.iter_ancestors(entity).last().unwrap_or(entity);
-
-            // let Some(root_entity)=[entity].into_iter().chain(parent_query.iter_ancestors(entity)).find(|&ancestor_entity|root_query.contains(ancestor_entity)) else {
-            //     continue;
-            // };
-
-            //
-            let (cur_focus_entity,focus_entity_stk,hist)=focus_states.cur_focuses
-                .entry(computed.root_entity).or_default()
-                .entry(cur_group).or_default();
-
-            //
-            if Some(entity)==*cur_focus_entity { //&& focus_ancestor_entities == focus_entity_stk
-                continue;
-            }
-
-            //
-            // let mut focus_ancestor_entities: Vec<Entity> = parent_query.iter_ancestors(entity).filter_map(|ancestor_entity|{
-            //     focusable_query.get(ancestor_entity).ok().and_then(|ancestor_focusable|{
-            //         (ancestor_focusable.enable&&ancestor_focusable.group==cur_group).then_some(ancestor_entity)
-            //     })
-            // }).collect::<Vec<_>>();
-
-            let mut focus_ancestor_entities: Vec<Entity> = Vec::new();
-
-            for ancestor_entity in parent_query.iter_ancestors(entity) {
-                let is_focusable = focusable_query.get(ancestor_entity).ok().map(|ancestor_focusable|{
-                    ancestor_focusable.enable&&ancestor_focusable.group==cur_group
-                }).unwrap_or_default();
-
-                if is_focusable {
-                    focus_ancestor_entities.push(ancestor_entity);
-                }
-
-                if root_query.contains(entity)
-                // if computed.root_entity==ancestor_entity
-                {
-                    break;
-                }
-            }
-
-            //
-
-            focus_ancestor_entities.reverse();
-
-            //
-            if Some(entity) == focus_entity_stk.get(focus_ancestor_entities.len()).cloned() {
-                continue;
-            }
-
-            //
-            if focus_ancestor_entities.len()>focus_entity_stk.len() &&
-                focus_ancestor_entities.get(focus_entity_stk.len()).cloned() == *cur_focus_entity
-            {
-                //move cur_focus_entity to focus_entity_stk
-                focus_entity_stk.push(cur_focus_entity.unwrap());
-                // prev_focused_stk.push(Default::default());
-                *cur_focus_entity=None;
-            } else if let Some(entity)=*cur_focus_entity {
-                //unfocus cur_focus_entity
-                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: 77 }});
-                // focusable_query.get_mut(entity).unwrap().focused=false;
-                focuseds.0.remove(&entity).then_some(()).unwrap();
-                *cur_focus_entity=None;
-            }
-
-            //unfocus some/all of focus_entity_stk
-            for i in 0..focus_entity_stk.len() {
-                if focus_ancestor_entities.get(i)==focus_entity_stk.get(i) {
-                    continue;
-                }
-
-                //send focus ends
-                for j in (i .. focus_entity_stk.len()).rev() {
-                    let entity=focus_entity_stk[j];
-                    ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: 77 }});
-                    // focusable_query.get_mut(entity).unwrap().focused=false;
-                    focuseds.0.remove(&entity).then_some(()).unwrap();
-                }
-
-                //remove from focus_entity_stk
-                focus_entity_stk.truncate(i);
-                // prev_focused_stk.truncate(i+1);
-
-                //
-                break;
-            }
-
-            //fill focus_entity_stk with focus_ancestor_entities
-            for i in focus_entity_stk.len() .. focus_ancestor_entities.len() {
-                let entity=focus_ancestor_entities[i];
-                focus_entity_stk.push(entity);
-                // prev_focused_stk.push(Default::default());
-                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group:cur_group, device: 77 }});
-
-                // if let Ok(mut focusable2)=focusable_query.get_mut(entity)
-                if focusable_query.contains(entity)
-                {
-                    // focusable2.focused=true;
-                    focuseds.0.insert(entity);
-
-                    //is in right order? ie root => parent
-                    *hist_incr+=1;
-                    hist.insert(entity, *hist_incr);
-                }
-            }
-
-            //
-            *cur_focus_entity=Some(entity);
-            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group:cur_group, device: 77 }});
-
-            // focusable_query.get_mut(entity).unwrap().focused=true;
-            focuseds.0.insert(entity);
-
-
-            *hist_incr+=1;
-            hist.insert(entity, *hist_incr);
-        }
-    }
 
     //
-    // let mut focusable_entity_visiteds = HashSet::new();
-    let mut focusable_entity_roots = HashSet::new();
-    let mut root_focus_group_focuses=HashMap::<(Entity,i32),(Entity,u32)>::new(); //[(root_entity,focus_group)]=(entity,order)
-
+    // // let mut focusable_entity_visiteds = HashSet::new();
+    // let mut focusable_entity_roots = HashSet::new();
+    let mut device_focus_group_focuses:HashMap<i32,HashMap<(Entity,i32),(Entity,u32)>>=HashMap::new(); //[device][(root_entity,focus_group)]=(entity,order)
+    //root_focus_group_focuses
     //create set of focusable entities?
     for entity in focus_query.iter() {
         let computed=computed_query.get(entity).unwrap();
@@ -374,90 +252,105 @@ pub fn update_focus_events(
         //     continue;
         // };
 
-        let (_cur_focus_entity,_focus_entity_stk,hist)=focus_states.cur_focuses
-            .entry(computed.root_entity).or_default()
-            .entry(focusable.group).or_default()
-            ;
+        for (&device,device_focus_states) in focus_states.cur_focuses.iter_mut() {
+            let ( _cur_focus_entity, _focus_entity_stk, hist)=device_focus_states
+                .entry(computed.root_entity).or_default()
+                .entry(focusable.group).or_default()
+                ;
 
 
-        focusable_entity_roots.insert(entity);
+            // focusable_entity_roots.insert(entity);
+            let root_focus_group_focuses=device_focus_group_focuses.entry(device).or_default();
 
-        let prev=root_focus_group_focuses.entry((computed.root_entity,focusable.group)).or_insert((entity,computed.order));
+            let prev=root_focus_group_focuses.entry((computed.root_entity,focusable.group)).or_insert((entity,computed.order));
 
 
-        let cur_hist=hist.get(&entity).cloned().unwrap_or_default();
-        let prev_hist=hist.get(&prev.0).cloned().unwrap_or_default();
+            let cur_hist=hist.get(&entity).cloned().unwrap_or_default();
+            let prev_hist=hist.get(&prev.0).cloned().unwrap_or_default();
 
-        if cur_hist>prev_hist || ((cur_hist==prev_hist)&&computed.order < prev.1 )
-        {
-            prev.0=entity;
-            prev.1=computed.order;
+            if cur_hist>prev_hist || ((cur_hist==prev_hist)&&computed.order < prev.1 )
+            {
+                prev.0=entity;
+                prev.1=computed.order;
+            }
+        }
+
+
+    }
+
+
+    //
+    for (&device,root_focus_group_focuses) in device_focus_group_focuses.iter() {
+        let device_focus_states=focus_states.cur_focuses.entry(device).or_default();
+
+        let device_focuseds = focuseds.0.entry(device).or_default(); //does exist??
+
+        for (&(root_entity,focus_group),&(entity,_order)) in root_focus_group_focuses.iter() {
+            let (cur_focus_entity,focus_entity_stk,_hist)=device_focus_states
+                .entry(root_entity).or_default()
+                .entry(focus_group).or_default()
+                ;
+
+            if cur_focus_entity.is_none() && focus_entity_stk.is_empty() {
+
+                //
+                // let mut focus_ancestor_entities = parent_query.iter_ancestors(entity).filter_map(|ancestor_entity|{
+                //     focusable_query.get(ancestor_entity).ok().and_then(|ancestor_focusable|{
+                //         (ancestor_focusable.enable&&ancestor_focusable.group==focus_group).then_some(ancestor_entity)
+                //     })
+                // }).collect::<Vec<_>>();
+
+                let mut focus_ancestor_entities: Vec<Entity> = Vec::new();
+
+                for ancestor_entity in parent_query.iter_ancestors(entity) {
+                    let is_focusable = focusable_query.get(ancestor_entity).ok().map(|ancestor_focusable|{
+                        ancestor_focusable.enable&&ancestor_focusable.group==focus_group
+                    }).unwrap_or_default();
+
+                    if is_focusable {
+                        focus_ancestor_entities.push(ancestor_entity);
+                    }
+
+                    if root_query.contains(entity)
+                    // if computed.root_entity==ancestor_entity
+                    {
+                        break;
+                    }
+                }
+                focus_ancestor_entities.reverse();
+
+                //fill focus_entity_stk with focus_ancestor_entities
+                for i in focus_entity_stk.len() .. focus_ancestor_entities.len() {
+                    let entity=focus_ancestor_entities[i];
+                    focus_entity_stk.push(entity);
+                    ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group:focus_group, device }});
+
+                    // if let Ok(mut focusable2)=focusable_query.get_mut(entity)
+                    if focusable_query.contains(entity)
+                    {
+                        // focusable2.focused=true;
+                        device_focuseds.insert(entity);
+
+                        // *hist_incr+=1;
+                        // hist.insert(entity, *hist_incr);
+                    }
+                }
+
+                // let mut focusable=focusable_query.get_mut(entity).unwrap();
+                // focusable.focused=true;
+                device_focuseds.insert(entity);
+
+                //not necessary, since it was selected because it had the highest last visit hist
+                // *hist_incr+=1;
+                // hist.insert(entity, *hist_incr);
+
+
+                *cur_focus_entity=Some(entity);
+                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group:focus_group, device }});
+            }
         }
     }
 
-    for (&(root_entity,focus_group),&(entity,_order)) in root_focus_group_focuses.iter() {
-        let (cur_focus_entity,focus_entity_stk,_hist)=focus_states.cur_focuses
-            .entry(root_entity).or_default()
-            .entry(focus_group).or_default()
-            ;
-        if cur_focus_entity.is_none() && focus_entity_stk.is_empty() {
-
-            //
-            // let mut focus_ancestor_entities = parent_query.iter_ancestors(entity).filter_map(|ancestor_entity|{
-            //     focusable_query.get(ancestor_entity).ok().and_then(|ancestor_focusable|{
-            //         (ancestor_focusable.enable&&ancestor_focusable.group==focus_group).then_some(ancestor_entity)
-            //     })
-            // }).collect::<Vec<_>>();
-
-            let mut focus_ancestor_entities: Vec<Entity> = Vec::new();
-
-            for ancestor_entity in parent_query.iter_ancestors(entity) {
-                let is_focusable = focusable_query.get(ancestor_entity).ok().map(|ancestor_focusable|{
-                    ancestor_focusable.enable&&ancestor_focusable.group==focus_group
-                }).unwrap_or_default();
-
-                if is_focusable {
-                    focus_ancestor_entities.push(ancestor_entity);
-                }
-
-                if root_query.contains(entity)
-                // if computed.root_entity==ancestor_entity
-                {
-                    break;
-                }
-            }
-            focus_ancestor_entities.reverse();
-
-            //fill focus_entity_stk with focus_ancestor_entities
-            for i in focus_entity_stk.len() .. focus_ancestor_entities.len() {
-                let entity=focus_ancestor_entities[i];
-                focus_entity_stk.push(entity);
-                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group:focus_group, device: 77 }});
-
-                // if let Ok(mut focusable2)=focusable_query.get_mut(entity)
-                if focusable_query.contains(entity)
-                {
-                    // focusable2.focused=true;
-                    focuseds.0.insert(entity);
-
-                    // *hist_incr+=1;
-                    // hist.insert(entity, *hist_incr);
-                }
-            }
-
-            // let mut focusable=focusable_query.get_mut(entity).unwrap();
-            // focusable.focused=true;
-            focuseds.0.insert(entity);
-
-            //not necessary, since it was selected because it had the highest last visit hist
-            // *hist_incr+=1;
-            // hist.insert(entity, *hist_incr);
-
-
-            *cur_focus_entity=Some(entity);
-            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group:focus_group, device: 77 }});
-        }
-    }
 
 
     //
@@ -472,14 +365,23 @@ pub fn update_focus_events(
     //
     while let Some(ev)=ev_stk.pop() {
 
-        if !root_query.get(ev.get_root_entity()).map(|(_,computed)|computed.unlocked).unwrap_or_default() {
+        // if !root_query.get(ev.get_root_entity()).map(|(_,computed)|computed.unlocked).unwrap_or_default() {
+        //     continue;
+        // }
+
+        if !ev.get_root_entity()
+            .and_then(|root_entity|root_query.get(root_entity).ok())
+            .map(|(_,computed)|computed.unlocked)
+            .unwrap_or_default()
+        {
             continue;
         }
 
-
         match ev.clone() {
             UiInteractInputMessage::FocusEnter{root_entity,group, device } => {
-                if let Some(groups)=focus_states.cur_focuses.get_mut(&root_entity) {
+                let device_focus_states=focus_states.cur_focuses.entry(device).or_default();
+
+                if let Some(groups)=device_focus_states.get_mut(&root_entity) {
                     if let Some((cur_focus_entity,focus_entity_stk, _hist))=groups.get_mut(&group) {
                         if let Some(entity)=*cur_focus_entity {
                             focus_entity_stk.push(entity);
@@ -490,11 +392,13 @@ pub fn update_focus_events(
                 }
             }
             UiInteractInputMessage::FocusExit{root_entity,group, device } => {
-                if let Some(groups)=focus_states.cur_focuses.get_mut(&root_entity) {
+                let device_focus_states=focus_states.cur_focuses.entry(device).or_default();
+
+                if let Some(groups)=device_focus_states.get_mut(&root_entity) {
                     if let Some((cur_focus_entity,focus_entity_stk, _hist))=groups.get_mut(&group) {
                         //already checked above for enabled/unlocked
                         if let Some(entity)=*cur_focus_entity {
-                            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group, device: 77 }});
+                            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group, device }});
 
                             *cur_focus_entity=focus_entity_stk.pop();
 
@@ -507,7 +411,9 @@ pub fn update_focus_events(
                             if focusable_query.contains(entity)
                             {
                                 // focusable.focused=false;
-                                focuseds.0.remove(&entity).then_some(()).unwrap();
+
+                                let device_focuseds=focuseds.0.get_mut(&device).unwrap(); //should exist?
+                                device_focuseds.remove(&entity).then_some(()).unwrap();
                             }
                         }
                     }
@@ -520,7 +426,10 @@ pub fn update_focus_events(
         }
 
         //
-        let (top_root_entity, cur_group,cur_device,(cur_focus_entity,focus_entity_stk, hist))=match ev {
+        let (
+            top_root_entity, cur_group,cur_device,
+            (cur_focus_entity,focus_entity_stk, hist)
+        )=match ev {
             UiInteractInputMessage::FocusEnter{root_entity,group, device }
                 |UiInteractInputMessage::FocusPrev{root_entity,group, device }
                 |UiInteractInputMessage::FocusNext{root_entity,group, device }
@@ -531,7 +440,12 @@ pub fn update_focus_events(
                 |UiInteractInputMessage::FocusInit{root_entity,group, device }
                 // |UiInputEvent::FocusPressBegin(root_entity,group,..)
             => {
-                (root_entity,group,device,focus_states.cur_focuses.entry(root_entity).or_default().entry(group).or_default())
+                (
+                    root_entity,group,device,
+                    focus_states.cur_focuses.entry(device).or_default()
+                    // device_focus_states.cur_focuses
+                        .entry(root_entity).or_default().entry(group).or_default()
+                )
             }
             _=>{continue;}
         };
@@ -886,13 +800,14 @@ pub fn update_focus_events(
                 if let Some(focusable) = focusable_query.get(entity).ok() {
                     if cur_group==focusable.group && focusable.enable {
                         if let Some(cur_focus_entity) = *cur_focus_entity {
-                            ui_event_writer.write(UiInteractEvent{entity:cur_focus_entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: 77 }});
+                            ui_event_writer.write(UiInteractEvent{entity:cur_focus_entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: cur_device }});
 
                             // if let Ok(mut focusable)=focusable_query.get_mut(cur_focus_entity)
                             if focusable_query.contains(cur_focus_entity)
                             {
                                 // focusable.focused=false;
-                                focuseds.0.remove(&cur_focus_entity).then_some(()).unwrap();
+                                let device_focuseds=focuseds.0.get_mut(&cur_device).unwrap(); //should exist?
+                                device_focuseds.remove(&cur_focus_entity).then_some(()).unwrap();
                             }
                         }
 
@@ -901,13 +816,14 @@ pub fn update_focus_events(
                                 let entity=focus_entity_stk.pop().unwrap();
                                 // prev_focused_stk.pop().unwrap();
 
-                                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: 77 }});
+                                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: cur_device }});
 
                                 // if let Ok(mut focusable)=focusable_query.get_mut(entity)
                                 if focusable_query.contains(entity)
                                 {
                                     // focusable.focused=false;
-                                    focuseds.0.remove(&entity).then_some(()).unwrap();
+                                    let device_focuseds=focuseds.0.get_mut(&cur_device).unwrap(); //should exist?
+                                    device_focuseds.remove(&entity).then_some(()).unwrap();
                                 }
                             }
                         }
@@ -916,7 +832,7 @@ pub fn update_focus_events(
                         //
 
                         *cur_focus_entity = Some(entity);
-                        ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group:cur_group, device: 77 }});
+                        ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group:cur_group, device:cur_device }});
 
 
                         // if let Ok(mut focusable)=focusable_query.get_mut(entity) {
@@ -924,7 +840,8 @@ pub fn update_focus_events(
                         // }
 
                         // focusable_query.get_mut(entity).unwrap().focused=true;
-                        focuseds.0.insert(entity);
+                        let device_focuseds=focuseds.0.entry(cur_device).or_default(); //should exist? no
+                        device_focuseds.insert(entity);
 
                         //println!("focus found {entity:?}, valid={valid}");
 

@@ -107,9 +107,18 @@ pub fn update_drag_events(
     //
     for ev in input_event_reader.read() {
 
-        if !root_query.get(ev.get_root_entity()).map(|(_,computed)|computed.unlocked).unwrap_or_default() {
+        // if !root_query.get(ev.get_root_entity()).map(|(_,computed)|computed.unlocked).unwrap_or_default() {
+        //     continue;
+        // }
+
+        if !ev.get_root_entity()
+            .and_then(|root_entity|root_query.get(root_entity).ok())
+            .map(|(_,computed)|computed.unlocked)
+            .unwrap_or_default()
+        {
             continue;
         }
+
         match ev.clone() {
             UiInteractInputMessage::CursorMoveTo{root_entity,device,cursor} => {
                 // println!("cursor {cursor:?}");

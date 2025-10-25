@@ -302,7 +302,7 @@ pub fn update_press_events(
                 }
                 DeviceType::Focus(device) => {
                     // let focused = focusable_query.get(entity).map(|x|x.focused).unwrap_or_default();
-                    let focused = focuseds.0.contains(&pressed_entity);
+                    let focused = focuseds.0.get(&device).map(|device_focuseds|device_focuseds.contains(&pressed_entity)).unwrap_or_default();
 
                     if focused && *is_pressed==false {
                         if !pressable.always {
@@ -326,7 +326,15 @@ pub fn update_press_events(
     //
     for ev in input_event_reader.read() {
 
-        if !root_query.get(ev.get_root_entity()).map(|(_,computed)|computed.unlocked).unwrap_or_default() {
+        // if !root_query.get(ev.get_root_entity()).map(|(_,computed)|computed.unlocked).unwrap_or_default() {
+        //     continue;
+        // }
+
+        if !ev.get_root_entity()
+            .and_then(|root_entity|root_query.get(root_entity).ok())
+            .map(|(_,computed)|computed.unlocked)
+            .unwrap_or_default()
+        {
             continue;
         }
 
@@ -417,7 +425,11 @@ pub fn update_press_events(
             UiInteractInputMessage::FocusPressBegin{root_entity,group,device, button } => {
                 let device_type=DeviceType::Focus(device);
 
-                let Some(entity)=focus_states.cur_focuses.get(&root_entity).and_then(|x|x.get(&group)).and_then(|x|x.0) else {
+                let Some(entity)=focus_states.cur_focuses.get(&device)
+                    .and_then(|device_focuses|device_focuses.get(&root_entity))
+                    .and_then(|root_focuses|root_focuses.get(&group))
+                    .and_then(|(focused_entity,_,_)|focused_entity.clone())
+                else {
                     continue;
                 };
 

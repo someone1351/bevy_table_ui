@@ -1,4 +1,6 @@
 
+use std::fmt::Display;
+
 use bevy::ecs::prelude::*;
 
 /*
@@ -9,6 +11,7 @@ TODO
 */
 #[derive(Debug,Message,Clone)]
 pub enum UiInteractInputMessage {
+    FocusOn{entity:Entity,device:i32},
     //add device to focus, so can have multiple users selecting from same nodes
     FocusInit{root_entity:Entity, group:i32,device:i32},
     FocusLeft{root_entity:Entity, group:i32,device:i32},
@@ -42,8 +45,9 @@ pub enum UiInteractInputMessage {
 }
 
 impl UiInteractInputMessage {
-    pub fn get_root_entity(&self) -> Entity {
+    pub fn get_root_entity(&self) -> Option<Entity> {
         match & self {
+            Self::FocusOn{..}=>None,
             Self::FocusInit{root_entity,..}|
             Self::FocusLeft{root_entity,..}|
             Self::FocusRight{root_entity,..}|
@@ -63,9 +67,7 @@ impl UiInteractInputMessage {
             Self::CursorPressCancel{root_entity,..}|
             Self::CursorMoveTo{root_entity,..}
 
-            => {
-                *root_entity
-            }
+            => Some(*root_entity)
         }
     }
 }
@@ -218,3 +220,8 @@ pub struct UiInteractEvent {
     // pub ids : Vec<String>,
 }
 
+impl Display for UiInteractEvent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} : {:?}", self.entity,self.event_type)
+    }
+}

@@ -90,7 +90,15 @@ pub fn update_hover_events(
 
     //
     for ev in input_event_reader.read() {
-        if !root_query.get(ev.get_root_entity()).map(|(_,computed)|computed.unlocked).unwrap_or_default() {
+        // if !root_query.get(ev.get_root_entity()).map(|(_,computed)|computed.unlocked).unwrap_or_default() {
+        //     continue;
+        // }
+
+        if !ev.get_root_entity()
+            .and_then(|root_entity|root_query.get(root_entity).ok())
+            .map(|(_,computed)|computed.unlocked)
+            .unwrap_or_default()
+        {
             continue;
         }
 

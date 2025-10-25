@@ -580,21 +580,31 @@ pub fn extract_uinodes2(
 
                 //something wrong with vertical tex coords
                 if clamped_inner_rect.intersects(&glyph_rect) {
-                    let dx = (clamped_inner_rect.left-glyph_rect.left).max(0.0);
-                    let dx2 = (glyph_rect.right-clamped_inner_rect.right).max(0.0);
+                    // let dx = (clamped_inner_rect.left-glyph_rect.left).max(0.0);
+                    // let dx2 = (glyph_rect.right-clamped_inner_rect.right).max(0.0);
+                    // let dy =  (clamped_inner_rect.top-glyph_rect.top).max(0.0);
+                    // let dy2 = (glyph_rect.bottom-clamped_inner_rect.bottom).max(0.0);
 
-                    let dy =  (clamped_inner_rect.top-glyph_rect.top).max(0.0);
-                    let dy2 = (glyph_rect.bottom-clamped_inner_rect.bottom).max(0.0);
+                    let dx = 0.0;
+                    let dx2 = 0.0;
+                    let dy =  0.0;
+                    let dy2 = 0.0;
 
-                    let x=glyph_rect.left.max(clamped_inner_rect.left);
-                    let y=glyph_rect.top.max(clamped_inner_rect.top);
-                    let x2=glyph_rect.right.min(clamped_inner_rect.right);
-                    let y2=glyph_rect.bottom.min(clamped_inner_rect.bottom);
+                    // let x=glyph_rect.left.max(clamped_inner_rect.left);
+                    // let y=glyph_rect.top.max(clamped_inner_rect.top);
+                    // let x2=glyph_rect.right.min(clamped_inner_rect.right);
+                    // let y2=glyph_rect.bottom.min(clamped_inner_rect.bottom);
+
+                    // println!("hmm {:?}",inner_rect.size());
+
+                    let x=glyph_rect.left;//.max(inner_rect.left);
+                    let y=glyph_rect.top;//.max(inner_rect.top);
+                    let x2=glyph_rect.right;//.min(inner_rect.right);
+                    let y2=glyph_rect.bottom;//.min(inner_rect.bottom);
 
                     let tx = (atlas_glyph_rect.min.x+dx)/atlas_size.x;
-                    let tx2 = (atlas_glyph_rect.max.x-dx2)/atlas_size.x;
-
                     let ty = (atlas_glyph_rect.min.y+dy)/atlas_size.y;
+                    let tx2 = (atlas_glyph_rect.max.x-dx2)/atlas_size.x;
                     let ty2 = (atlas_glyph_rect.max.y-dy2)/atlas_size.y;
 
                     let tl=Vec2::new(x,y);
@@ -615,8 +625,10 @@ pub fn extract_uinodes2(
                         // z:text_z,
                         bl_uv,br_uv,tl_uv,tr_uv,
                         color : color.clone(),
+                        // color:Color::linear_rgb(1.0, 0.0, 0.0),
                         depth:text_depth,
                         image:Some(texture.clone()),
+                        // image:None,
                         entity:commands.spawn((TemporaryRenderEntity,)).id(),
                         // camera_entity,
                         main_entity: entity.into(),

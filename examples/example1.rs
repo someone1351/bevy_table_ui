@@ -217,7 +217,7 @@ pub fn setup_ui(
 
             let entity=parent.spawn((
                 UiColor{back:col,border:Color::linear_rgb(0.5,0.5,0.5),..Default::default()},
-                UiSize{ width:UiVal::Px(50.0), height:UiVal::Px(50.0), },
+                UiSize{ width:UiVal::Px(-100.0), height:UiVal::Px(120.0), },
                 UiFocusable{ enable: true, ..Default::default() },
                 UiPressable{ enable: true, ..Default::default() },
                 UiHoverable{ enable: true },
@@ -227,11 +227,11 @@ pub fn setup_ui(
 
             parent.commands().entity(entity).insert(UiText{
                 value:format!("{entity}"),
-                font_size: 25.0,
-                halign:UiTextHAlign::Left,
-                valign:UiTextVAlign::Top,
-                // halign:UiTextHAlign::Right,
-                // valign:UiTextVAlign::Bottom,
+                font_size: 15.0,
+                // halign:UiTextHAlign::Left,
+                // valign:UiTextVAlign::Top,
+                halign:UiTextHAlign::Right,
+                valign:UiTextVAlign::Bottom,
                 font: font.clone(),
                 color: Color::linear_rgb(1.0,1.0,1.0),
                 ..Default::default()

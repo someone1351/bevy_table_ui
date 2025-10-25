@@ -538,38 +538,52 @@ pub fn extract_uinodes2(
         }
 
         //text
-        if let (Some(text), Some(text_layout),Some(text_computed) ) = (text, text_layout_info,text_computed,
-            // text_pipeline.get_glyphs(&entity)
+        if let (Some(text), Some(text_layout_info),Some(text_computed) ) = (
+            text, text_layout_info,text_computed,
         ) {
-            let glyph_offset=text_computed.bounds-text_layout.size; //only needed for x, since because bevy now handles halign positioning
 
-            for text_glyph in text_layout.glyphs.iter() {
+            // let glyph_offset=text_computed.bounds-text_layout_info.size; //only needed for x, since because bevy now handles halign positioning
+            // println!("hmm comp={:?} text={:?}, dif={:?},tcomp={:?}",
+            //     layout_computed.size,
+            //     text_layout_info.size,
+            //     layout_computed.size-text_layout_info.size,
+            //     text_computed.bounds
+            // );
+            for text_glyph in text_layout_info.glyphs.iter() {
                 let color = text.color;
-                let atlas = texture_atlases.get(text_glyph.atlas_info.texture_atlas
-                    .clone() //necessary?
-                ).unwrap();
+                let atlas = texture_atlases.get(text_glyph.atlas_info.texture_atlas).unwrap(); // .clone() //necessary?
                 let glyph_index = text_glyph.atlas_info.location.glyph_index as usize;
                 let atlas_glyph_rect = atlas.textures[glyph_index].as_rect();
+                let glyph_size=atlas_glyph_rect.size();
 
-                let glyph_size=atlas_glyph_rect.max-atlas_glyph_rect.min;
-                let mut glyph_pos=layout_computed.pos + text_glyph.position - glyph_offset - glyph_size*0.5;
+                let mut glyph_pos=layout_computed.pos + text_glyph.position - glyph_size*0.5;//  - glyph_offset;
 
                 let atlas_size=atlas.size.as_vec2();
 
-                if text_layout.size.x<=layout_computed.size.x {
+                if text_computed.bounds.x<=layout_computed.size.x
+                {
                     glyph_pos.x+=match text.halign {
-                        UiTextHAlign::Right => layout_computed.size.x-text_layout.size.x,
-                        UiTextHAlign::Center => (layout_computed.size.x-text_layout.size.x)*0.5,
-                        UiTextHAlign::Left => 0.0
+                        UiTextHAlign::Left => 0.0,
+                        UiTextHAlign::Center => (layout_computed.size.x-text_computed.bounds.x)*0.5,
+                        UiTextHAlign::Right => layout_computed.size.x-text_computed.bounds.x,
                     };
+
                 }
 
 
-                if text_layout.size.y<=layout_computed.size.y {
+                // if text_computed.bounds.y<=layout_computed.size.y {
+                //     glyph_pos.y+=match text.valign {
+                //         UiTextVAlign::Top => 0.0,
+                //         UiTextVAlign::Center => (layout_computed.size.y-text_computed.bounds.y)*0.5,
+                //         UiTextVAlign::Bottom => layout_computed.size.y-text_computed.bounds.y,
+                //     }; //ydir
+                // }
+
+                if text_layout_info.size.y<=layout_computed.size.y {
                     glyph_pos.y+=match text.valign {
                         UiTextVAlign::Top => 0.0,
-                        UiTextVAlign::Center => (layout_computed.size.y-text_layout.size.y)*0.5,
-                        UiTextVAlign::Bottom => layout_computed.size.y-text_layout.size.y
+                        UiTextVAlign::Center => (layout_computed.size.y-text_layout_info.size.y)*0.5,
+                        UiTextVAlign::Bottom => layout_computed.size.y-text_layout_info.size.y,
                     }; //ydir
                 }
 
@@ -579,43 +593,30 @@ pub fn extract_uinodes2(
                 let glyph_rect=UiRect { left: glyph_pos.x, right: glyph_pos2.x, top: glyph_pos.y, bottom: glyph_pos2.y };
 
                 //something wrong with vertical tex coords
-                if clamped_inner_rect.intersects(&glyph_rect) {
-                    // let dx = (clamped_inner_rect.left-glyph_rect.left).max(0.0);
-                    // let dx2 = (glyph_rect.right-clamped_inner_rect.right).max(0.0);
-                    // let dy =  (clamped_inner_rect.top-glyph_rect.top).max(0.0);
-                    // let dy2 = (glyph_rect.bottom-clamped_inner_rect.bottom).max(0.0);
+                // if clamped_inner_rect.intersects(&glyph_rect)
+                {
+                    let d1=Vec2::new(clamped_inner_rect.left-glyph_rect.left,clamped_inner_rect.top-glyph_rect.top).max(Vec2::ZERO);
+                    let d2=Vec2::new(glyph_rect.right-clamped_inner_rect.right,glyph_rect.bottom-clamped_inner_rect.bottom).max(Vec2::ZERO);
+                    let p1=Vec2::new(glyph_rect.left.max(clamped_inner_rect.left),glyph_rect.top.max(clamped_inner_rect.top));
+                    let p2=Vec2::new(glyph_rect.right.min(clamped_inner_rect.right),glyph_rect.bottom.min(clamped_inner_rect.bottom));
 
-                    let dx = 0.0;
-                    let dx2 = 0.0;
-                    let dy =  0.0;
-                    let dy2 = 0.0;
+                    // let d1=Vec2::ZERO;
+                    // let d2=Vec2::ZERO;
+                    // let p1=Vec2::new(glyph_rect.left,glyph_rect.top);
+                    // let p2=Vec2::new(glyph_rect.right,glyph_rect.bottom);
 
-                    // let x=glyph_rect.left.max(clamped_inner_rect.left);
-                    // let y=glyph_rect.top.max(clamped_inner_rect.top);
-                    // let x2=glyph_rect.right.min(clamped_inner_rect.right);
-                    // let y2=glyph_rect.bottom.min(clamped_inner_rect.bottom);
+                    let t1=(atlas_glyph_rect.min+d1)/atlas_size;
+                    let t2 = (atlas_glyph_rect.max-d2)/atlas_size;
 
-                    // println!("hmm {:?}",inner_rect.size());
+                    let tl=p1;
+                    let tr=Vec2::new(p2.x,p1.y);
+                    let bl=Vec2::new(p1.x,p2.y);
+                    let br=p2;
 
-                    let x=glyph_rect.left;//.max(inner_rect.left);
-                    let y=glyph_rect.top;//.max(inner_rect.top);
-                    let x2=glyph_rect.right;//.min(inner_rect.right);
-                    let y2=glyph_rect.bottom;//.min(inner_rect.bottom);
-
-                    let tx = (atlas_glyph_rect.min.x+dx)/atlas_size.x;
-                    let ty = (atlas_glyph_rect.min.y+dy)/atlas_size.y;
-                    let tx2 = (atlas_glyph_rect.max.x-dx2)/atlas_size.x;
-                    let ty2 = (atlas_glyph_rect.max.y-dy2)/atlas_size.y;
-
-                    let tl=Vec2::new(x,y);
-                    let tr=Vec2::new(x2,y);
-                    let bl=Vec2::new(x,y2);
-                    let br=Vec2::new(x2,y2);
-
-                    let tl_uv=Vec2::new(tx, ty);
-                    let tr_uv=Vec2::new(tx2,ty);
-                    let bl_uv=Vec2::new(tx,  ty2);
-                    let br_uv=Vec2::new(tx2,  ty2);
+                    let tl_uv=t1;
+                    let tr_uv=Vec2::new(t2.x,t1.y);
+                    let bl_uv=Vec2::new(t1.x, t2.y);
+                    let br_uv=t2;
 
                     let texture=text_glyph.atlas_info.texture.clone();
 
@@ -626,6 +627,7 @@ pub fn extract_uinodes2(
                         bl_uv,br_uv,tl_uv,tr_uv,
                         color : color.clone(),
                         // color:Color::linear_rgb(1.0, 0.0, 0.0),
+                        // depth:text_depth*100,
                         depth:text_depth,
                         image:Some(texture.clone()),
                         // image:None,

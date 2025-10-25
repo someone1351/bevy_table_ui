@@ -98,8 +98,10 @@ pub fn update_text(
             let font_size=text.font_size;//*scale_factor*10.0;
 
             //need to check if layout_computed.size has changed if using it for text wrap?
-            let tex_updated= text.update || text_computed.scaling!=text_scale_factor;
-            let tex_updated=true;
+            let tex_updated= text.update || text_computed.scaling!=text_scale_factor
+                // ||text_computed.bounds!=
+                ;
+            // let tex_updated=true;
             //
             if tex_updated && fonts_loaded {
                 let mut bound_width=(layout_computed.size.x>=0.0).then_some(layout_computed.size.x);
@@ -166,7 +168,7 @@ pub fn update_text(
                     line_height: LineHeight::RelativeToFont(1.2),
                 },text.color)];
 
-
+                // println!("b {bound_width:?} {bound_height:?}");
                 match text_pipeline.queue_text(
                     &mut text_layout_info,
                     &fonts,
@@ -194,6 +196,7 @@ pub fn update_text(
                         panic!("Fatal error when processing text: {}.", e);
                     },
                     Ok(()) => {
+                                        // println!("t {:?}",text_layout_info.size);
                         new_text_max_size.x=new_text_max_size.x.max(text_layout_info.size.x);
                         new_text_max_size.y=new_text_max_size.y.max(text_layout_info.size.y);
                     }

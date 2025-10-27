@@ -1,6 +1,8 @@
 use bevy::{asset::Handle, color::Color, ecs::prelude::*, math::Vec2, prelude::Image, reflect::Reflect, text::{ComputedTextBlock, Font, TextLayoutInfo}};
 
 
+use crate::UiVal;
+
 use super::super::layout::components::{UiInnerSize,UiLayoutComputed};
 // use bevy::prelude::*;
 use super::values::*;
@@ -64,9 +66,14 @@ impl Default for UiImage {
 #[derive(Component, Clone, Default, Debug)]
 #[require(UiLayoutComputed)]
 pub struct UiTextComputed{
-    pub max_size: Vec2,
+    pub max_size: Vec2, //what is this for?
     pub bounds: Vec2, //box size that text sits in including empty space, unlike text_layout.logical_size which is only for text itself
     pub scaling:f32,
+
+
+    //from ui_size, to check if they have changed
+    pub width_used:UiVal,
+    pub height_used:UiVal,
 }
 
 // #[derive(Debug,  Clone, Default)]

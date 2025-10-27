@@ -17,6 +17,8 @@ use bevy::text::{ComputedTextBlock, CosmicFontSystem, Font, FontAtlasSets, FontS
 // use bevy::window::Window;
 
 
+use crate::UiSize;
+
 use super::super::super::layout::components::{UiLayoutComputed, UiInnerSize,UiRoot};
 
 use super::super::components::*;
@@ -34,6 +36,7 @@ pub fn update_text(
     mut text_pipeline: ResMut<TextPipeline>,
 
     mut ui_query: Query<(Entity,
+        &UiSize,
         &UiLayoutComputed,
         &mut UiInnerSize,
         Option<&mut UiText>,
@@ -47,6 +50,7 @@ pub fn update_text(
 ) {
 
     for (entity,
+        layout_size,
         &layout_computed,
         mut inner_size,
         text,
@@ -98,9 +102,19 @@ pub fn update_text(
             let font_size=text.font_size;//*scale_factor*10.0;
 
             //need to check if layout_computed.size has changed if using it for text wrap?
+            //  eg what if you change the size from 0 to -50
+            //    can store ui_size's width/height in text_computed
+            //  eg what about if image of dif size is used, and changes inner size (with ui_size being <0)?
             let tex_updated= text.update || text_computed.scaling!=text_scale_factor
+                || text_computed.width_used!=layout_size.width
+                || text_computed.height_used!=layout_size.height
                 // ||text_computed.bounds!=
                 ;
+
+            //update
+            text_computed.width_used=layout_size.width;
+            text_computed.height_used=layout_size.height;
+
             // let tex_updated=true;
             //
             if tex_updated && fonts_loaded {

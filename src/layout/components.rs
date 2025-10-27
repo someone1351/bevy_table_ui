@@ -159,6 +159,7 @@ pub struct UiSize {
 pub struct UiInnerSize { //used for external things like text and images
     pub width : f32,
     pub height : f32,
+
 }
 
 #[derive(Reflect,Component, Debug, Copy, Clone)]

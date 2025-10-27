@@ -28,6 +28,22 @@ use rand::Rng;
 // use render_core::core_my::CameraMy;
 use table_ui::*;
 
+
+enum InputState {
+    Focused,
+
+}
+#[derive(Component,Default)]
+struct InputComputedComponent {
+    focuseds:HashSet<i32>, //[device]
+}
+#[derive(Component,Default)]
+#[require(InputComputedComponent)]
+struct InputComponent {
+    state_cols : HashMap<i32,Color>,//[device]=col
+    unfocused_col : Color,
+}
+
 fn main() {
     let mut app = App::new();
 
@@ -102,6 +118,8 @@ pub fn update_ui(
     mut click_counter:Local<u32>,
     mut bla:Local<HashMap<Entity,u32>>,
     // mut bla : Local<Vec<>>
+
+    mut input_query: Query<(&InputComponent,&mut InputComputedComponent,)>,
 ) {
 
     // enum OnState {Press,}
@@ -116,6 +134,8 @@ pub fn update_ui(
 
         c>0
     });
+
+    let mut focuseds: HashSet<i32>=HashSet::new();
 
     for ev in interact_events.read() {
         println!("event: {ev}");
@@ -145,16 +165,13 @@ pub fn update_ui(
             UiInteractMessageType::DragY { .. } => {}
             UiInteractMessageType::SelectBegin => {}
             UiInteractMessageType::SelectEnd => {}
-            UiInteractMessageType::FocusBegin { .. } => {
-                if let Ok(mut col)=ui_color_query.get_mut(ev.entity) {
-                    prev_border_col.entry(ev.entity).or_insert(col.border);
-                    col.border= Color::linear_rgb(0.8,0.8,0.2)
-                }
+            &UiInteractMessageType::FocusBegin {device, .. } => {
+                let (input,mut input_computed)=input_query.get_mut(ev.entity).unwrap();
+                input_computed.focuseds.insert(device);
             }
-            UiInteractMessageType::FocusEnd { .. } => {
-                if let Ok(mut col)=ui_color_query.get_mut(ev.entity) {
-                    col.border= prev_border_col.get(&ev.entity).cloned().unwrap_or_default();
-                }
+            &UiInteractMessageType::FocusEnd { device,.. } => {
+                let (input,mut input_computed)=input_query.get_mut(ev.entity).unwrap();
+                input_computed.focuseds.remove(&device);
             }
         }
     }
@@ -204,6 +221,7 @@ pub fn setup_ui(
 
         // UiSpan{span:1},
         UiGap{hgap:UiVal::Px(30.0),vgap:UiVal::Px(30.0)},
+        UiEdge{ padding: UiRectVal::new_px(30.0), ..Default::default() },
     )).with_children(|parent|{
         // let cols=[
         //     Color::linear_rgb(1.0, 0.0, 0.0),
@@ -216,13 +234,20 @@ pub fn setup_ui(
             let col=Color::linear_rgb(rng.gen::<f32>()*col_scale,rng.gen::<f32>()*col_scale,rng.gen::<f32>()*col_scale);
 
             let entity=parent.spawn((
-                UiColor{back:col,border:Color::linear_rgb(0.5,0.5,0.5),..Default::default()},
-                UiSize{ width:UiVal::Px(-100.0), height:UiVal::Px(120.0), },
+                UiColor{back:col,..Default::default()}, //border:Color::linear_rgb(0.5,0.5,0.5),
+                UiSize{ width:UiVal::Px(-20.0), height:UiVal::Px(-30.0), },
                 UiFocusable{ enable: true, ..Default::default() },
                 UiPressable{ enable: true, ..Default::default() },
-                UiHoverable{ enable: true },
-                UiDraggable{ enable: true },
+                // UiHoverable{ enable: true },
+                // UiDraggable{ enable: true },
                 UiEdge{  border: UiRectVal::new_scalar(UiVal::Px(5.0)),  ..Default::default() },
+                // InputComponent{
+                //     focused_cols: [
+                //         (0,Color::linear_rgb(0.8,0.8,0.2)),
+                //         (1,Color::linear_rgb(0.2,0.8,0.8)),
+                //     ].into(),
+                //     unfocused_col: Color::linear_rgb(0.5,0.5,0.5),
+                // },
             )).id();
 
             parent.commands().entity(entity).insert(UiText{

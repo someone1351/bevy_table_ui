@@ -25,7 +25,7 @@ impl UiRect {
         }
     }
     pub fn contains_point(&self, point:Vec2) -> bool {
-        point.x >= self.left && point.x <=self.right && 
+        point.x >= self.left && point.x <=self.right &&
             point.y >= self.top && point.y <=self.bottom //y is down
     }
 
@@ -57,7 +57,7 @@ impl UiRect {
     }
     pub fn right_bottom(&self) -> Vec2 {
         Vec2::new(self.right,self.bottom)
-    }    
+    }
     pub fn right_top(&self) -> Vec2 {
         Vec2::new(self.right,self.top)
     }
@@ -68,7 +68,7 @@ impl UiRect {
     pub fn vsum(&self) -> f32 {
         self.top+self.bottom
     }
-    
+
     pub fn sum(&self) -> Vec2 {
         Vec2::new(self.hsum(),self.vsum())
     }
@@ -77,7 +77,7 @@ impl UiRect {
     }
 
     pub fn intersects(&self,other:&Self) -> bool {
-        !(other.left > self.right || other.right < self.left || other.bottom < self.top || other.top > self.bottom)        
+        !(other.left > self.right || other.right < self.left || other.bottom < self.top || other.top > self.bottom)
     }
 }
 
@@ -110,6 +110,12 @@ impl UiRectVal {
             top:all,
             bottom:all,
         }
+    }
+    pub fn new_px(all:f32) ->Self {
+        Self::new_scalar(UiVal::Px(all))
+    }
+    pub fn new_scale(all:f32) ->Self {
+        Self::new_scalar(UiVal::Scale(all))
     }
     pub fn new_size(w:UiVal,h:UiVal) ->Self {
         Self {
@@ -192,7 +198,7 @@ impl Mul<f32> for UiVal {
 //     Left, Right
 // }
 
-// impl Default for HFlowDir { 
+// impl Default for HFlowDir {
 //     fn default() -> Self {
 //         Self::Right
 //     }
@@ -221,7 +227,7 @@ impl Mul<f32> for UiVal {
 //     Up, Down
 // }
 
-// impl Default for VFlowDir { 
+// impl Default for VFlowDir {
 //     fn default() -> Self {
 //         Self::Down
 //     }
@@ -251,7 +257,7 @@ impl Mul<f32> for UiVal {
 //     Vertical {v : VFlowDir, h : HFlowDir},
 // }
 
-// impl Default for FlowVal { 
+// impl Default for FlowVal {
 //     fn default() -> Self {
 //         Self::Horizontal {
 //             h:HFlowDir::Right,
@@ -272,8 +278,8 @@ impl Mul<f32> for UiVal {
 //     LeftUp,LeftDown,RightUp,RightDown,UpLeft,UpRight,DownLeft,DownRight,
 // }
 
-// impl Default for UiFlowVal { 
-//     fn default() -> Self {Self::RightDown} 
+// impl Default for UiFlowVal {
+//     fn default() -> Self {Self::RightDown}
 // }
 
 // impl std::str::FromStr for UiFlowVal {

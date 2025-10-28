@@ -16,7 +16,7 @@ pub struct UiPressable {
     // would want this to handle different for dif buttons eg lmb vs rmb?
     pub always : bool,
 
-    pub physical : bool, //works like a real button, ie stays held down as long as something is pressing it
+    // pub physical : bool, //works like a real button, ie stays held down as long as something is pressing it
 
     // pub pressed : bool, //set by both user and interact system
     // pub released : bool, //set by both user and interact system

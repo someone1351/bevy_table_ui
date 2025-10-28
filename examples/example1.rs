@@ -166,12 +166,12 @@ pub fn update_ui(
             UiInteractMessageType::SelectBegin => {}
             UiInteractMessageType::SelectEnd => {}
             &UiInteractMessageType::FocusBegin {device, .. } => {
-                let (input,mut input_computed)=input_query.get_mut(ev.entity).unwrap();
-                input_computed.focuseds.insert(device);
+                // let (input,mut input_computed)=input_query.get_mut(ev.entity).unwrap();
+                // input_computed.focuseds.insert(device);
             }
             &UiInteractMessageType::FocusEnd { device,.. } => {
-                let (input,mut input_computed)=input_query.get_mut(ev.entity).unwrap();
-                input_computed.focuseds.remove(&device);
+                // let (input,mut input_computed)=input_query.get_mut(ev.entity).unwrap();
+                // input_computed.focuseds.remove(&device);
             }
         }
     }
@@ -438,12 +438,12 @@ fn update_ui_input(
                             // ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 1 });
                             // ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 2 });
                         }
-                        // MouseButton::Right => {
+                        MouseButton::Right => {
                         //     ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressBegin{root_entity, device, button: 2 });
 
-                        //     ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 0 });
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 0 });
                         //     ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressCancel{root_entity, device, button: 1 });
-                        // }
+                        }
                         // MouseButton::Middle => {
                         //     ui_interact_input_event_writer.write(UiInteractInputMessage::CursorPressBegin{root_entity, device, button: 1 });
 

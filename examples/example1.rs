@@ -149,12 +149,12 @@ pub fn update_ui(
                     col.back= Color::linear_rgb(0.8,0.5,0.2);
                 }
 
-                *bla.entry(ev.entity).or_default()+=1;
+                // *bla.entry(ev.entity).or_default()+=1;
             }
             UiInteractMessageType::PressEnd{ .. } => {
 
 
-                *bla.get_mut(&ev.entity).unwrap()-=1;
+                // *bla.get_mut(&ev.entity).unwrap()-=1;
 
             }
             UiInteractMessageType::Click{ .. } => {

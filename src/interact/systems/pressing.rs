@@ -20,7 +20,7 @@ TODO
 * separate press begin/end/click by device, don't have "physical" type buttons
 */
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use bevy::ecs::prelude::*;
 // use bevy::hierarchy::prelude::*;
@@ -37,7 +37,7 @@ use super::super::super::layout::components::{UiLayoutComputed,UiRoot};
 
 
 pub fn update_press_events(
-    root_query: Query<(Entity,&UiLayoutComputed), With<UiRoot>>,
+    root_query: Query<&UiLayoutComputed, With<UiRoot>>,
     layout_computed_query: Query<&UiLayoutComputed>,
     pressable_query: Query<(Entity,& UiPressable)>,
 
@@ -54,7 +54,7 @@ pub fn update_press_events(
 ) {
     //device_cursors: remove dead roots/pressed entities from device_cursors
     device_cursors.retain(|&(root_entity,_device),_|{
-        let root_unlocked= root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default();
+        let root_unlocked= root_query.get(root_entity).map(|computed|computed.unlocked).unwrap_or_default();
         root_unlocked
     });
 
@@ -62,7 +62,7 @@ pub fn update_press_events(
     //remove dead roots/pressed entities from device_presseds
     device_presseds.retain(|&button,button_device_presseds|{
         button_device_presseds.retain(|&(root_entity,device_type),&mut (pressed_entity,is_pressed)|{
-            let root_alive= root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default();
+            let root_alive= root_query.get(root_entity).map(|computed|computed.unlocked).unwrap_or_default();
             let (computed_root_entity,unlocked)=layout_computed_query.get(pressed_entity).map(|c|(c.root_entity,c.unlocked)).unwrap_or((Entity::PLACEHOLDER,false));
             let pressable_enabled=pressable_query.get(pressed_entity).map(|(_,c)|c.enable).unwrap_or_default();
 
@@ -70,9 +70,7 @@ pub fn update_press_events(
                 ui_output_event_writer.write(UiInteractEvent{entity:pressed_entity,event_type:UiInteractMessageType::PressEnd{ device:device_type.device(), button }});
             }
 
-
             root_alive && unlocked && pressable_enabled && computed_root_entity==root_entity //&& entities_presseds_contains
-
         });
 
         !button_device_presseds.is_empty()
@@ -119,7 +117,7 @@ pub fn update_press_events(
         //
         if !ev.get_root_entity()
             .and_then(|root_entity|root_query.get(root_entity).ok())
-            .map(|(_,computed)|computed.unlocked)
+            .map(|computed|computed.unlocked)
             .unwrap_or_default()
         {
             continue;
@@ -195,8 +193,7 @@ pub fn update_press_events(
                 if let Some(entity)=pressable_entity {
                     ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::PressBegin{ device, button }});
 
-                    device_presseds.entry(button).or_default()
-                        .insert((root_entity,device_type),(entity,true));
+                    device_presseds.entry(button).or_default().insert((root_entity,device_type),(entity,true));
 
                 }
             }

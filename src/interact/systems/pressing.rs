@@ -87,11 +87,14 @@ pub fn update_press_events(
 
     //remove dead roots/pressed entities from device_presseds
     device_presseds.retain(|&button,button_device_presseds|{
-        button_device_presseds.retain(|&(root_entity,device_type),&mut (pressed_entity,_pressed)|{
+        button_device_presseds.retain(|&(root_entity,device_type),&mut (pressed_entity,is_pressed)|{
             let root_alive= root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default();
             let (computed_root_entity,unlocked)=layout_computed_query.get(pressed_entity).map(|c|(c.root_entity,c.unlocked)).unwrap_or((Entity::PLACEHOLDER,false));
             let pressable_enabled=pressable_query.get(pressed_entity).map(|(_,c)|c.enable).unwrap_or_default();
 
+            if is_pressed {
+                ui_output_event_writer.write(UiInteractEvent{entity:pressed_entity,event_type:UiInteractMessageType::PressEnd{ device:device_type.device(), button }});
+            }
             // let button_entities_presseds=entities_presseds.get(&button);
             // let entities_presseds_contains=button_entities_presseds.and_then(|button_entities_presseds|button_entities_presseds.get(&pressed_entity))
             //     .map(|device_types|device_types.contains(&device_type)).unwrap_or_default();

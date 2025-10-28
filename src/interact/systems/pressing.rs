@@ -57,12 +57,13 @@ pub fn update_press_events(
     mut device_cursors : Local<HashMap<(Entity,i32),Vec2>>, //[(root_entity,device)]=cursor
 
     mut device_presseds :   Local<HashMap<i32,HashMap<(Entity,DeviceType),(Entity,bool)>>>, //[button][(root_entity,device_type)]=(pressed_entity,is_pressed)
-    mut entities_presseds : Local<HashMap<i32,HashMap<Entity,HashSet<DeviceType>>>>,      //[button][press_entity][device_type]
+    // mut entities_presseds : Local<HashMap<i32,HashMap<Entity,HashSet<DeviceType>>>>,      //[button][press_entity][device_type]
 
     // mut device_presseds : Local<HashMap<i32,HashMap<(Entity,DeviceType),Entity>>>,     //[button][(root_entity,device_type)]=pressed_entity
     // mut entities_presseds : Local<HashMap<i32,HashMap<Entity,HashMap<DeviceType,bool>>>>, //[button][press_entity][device_type]=cur_pressed
 
     mut input_event_reader: MessageReader<UiInteractInputMessage>,
+    // mut input_focus_event_reader: MessageReader<UiInteractInputFocusMessage>,
     mut ui_output_event_writer: MessageWriter<UiInteractEvent>,
 ) {
     //device_cursors: remove dead roots/pressed entities from device_cursors
@@ -72,31 +73,35 @@ pub fn update_press_events(
     });
 
     //entities_presseds: remove dead roots or disabled/locked pressable entities
-    entities_presseds.retain(|&_button,button_entities_presseds|{
-        button_entities_presseds.retain(|&pressed_entity,_device_types|{ //(root_entity,pressed_entity)
-            let root_entity=layout_computed_query.get(pressed_entity).map(|c|c.root_entity);
-            let root_unlocked= root_entity.and_then(|root_entity|root_query.get(root_entity)).map(|(_root_entity,c)|c.unlocked).unwrap_or_default();
-            let unlocked=layout_computed_query.get(pressed_entity).map(|c|c.unlocked).unwrap_or_default();
-            let pressable=pressable_query.get(pressed_entity).map(|(_,pressable)|pressable.enable).unwrap_or_default();
-            root_unlocked && pressable && unlocked
-        });
+    // entities_presseds.retain(|&_button,button_entities_presseds|{
+    //     button_entities_presseds.retain(|&pressed_entity,_device_types|{ //(root_entity,pressed_entity)
+    //         let root_entity=layout_computed_query.get(pressed_entity).map(|c|c.root_entity);
+    //         let root_unlocked= root_entity.and_then(|root_entity|root_query.get(root_entity)).map(|(_root_entity,c)|c.unlocked).unwrap_or_default();
+    //         let unlocked=layout_computed_query.get(pressed_entity).map(|c|c.unlocked).unwrap_or_default();
+    //         let pressable=pressable_query.get(pressed_entity).map(|(_,pressable)|pressable.enable).unwrap_or_default();
+    //         root_unlocked && pressable && unlocked
+    //     });
 
-        !button_entities_presseds.is_empty()
-    });
+    //     !button_entities_presseds.is_empty()
+    // });
 
     //remove dead roots/pressed entities from device_presseds
     device_presseds.retain(|&button,button_device_presseds|{
         button_device_presseds.retain(|&(root_entity,device_type),&mut (pressed_entity,_pressed)|{
             let root_alive= root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default();
-            let button_entities_presseds=entities_presseds.get(&button);
-            let entities_presseds_contains=button_entities_presseds.and_then(|button_entities_presseds|button_entities_presseds.get(&pressed_entity))
-                .map(|device_types|device_types.contains(&device_type)).unwrap_or_default();
+            let (computed_root_entity,unlocked)=layout_computed_query.get(pressed_entity).map(|c|(c.root_entity,c.unlocked)).unwrap_or((Entity::PLACEHOLDER,false));
+            let pressable_enabled=pressable_query.get(pressed_entity).map(|(_,c)|c.enable).unwrap_or_default();
+
+            // let button_entities_presseds=entities_presseds.get(&button);
+            // let entities_presseds_contains=button_entities_presseds.and_then(|button_entities_presseds|button_entities_presseds.get(&pressed_entity))
+            //     .map(|device_types|device_types.contains(&device_type)).unwrap_or_default();
 
             // let is_pressable=pressable_query.get(pressed_entity).map(|(_,pressable)|pressable.enable).unwrap_or_default();
             // let q=button_entities_presseds.get(&pressed_entity).map(|x|x.contains(&device_type)).unwrap_or_default();
             // && is_pressable
 
-            root_alive && entities_presseds_contains
+            root_alive && unlocked && pressable_enabled && computed_root_entity==root_entity //&& entities_presseds_contains
+
         });
 
         !button_device_presseds.is_empty()
@@ -105,43 +110,43 @@ pub fn update_press_events(
     //entities_presseds
 
     //unpress
-    for (&button,button_entities_presseds) in entities_presseds.iter_mut() {
-    //     button_entities_presseds.retain(|&(root_entity,pressed_entity),device_types|{
+    // for (&button,button_entities_presseds) in entities_presseds.iter_mut() {
+    // //     button_entities_presseds.retain(|&(root_entity,pressed_entity),device_types|{
 
-    //         !device_types.is_empty()
-    //     });
-        for pressed_entity in button_entities_presseds.keys().cloned().collect::<Vec<_>>() //(root_entity,pressed_entity)
-        {
-            let pressable=pressable_query.get_mut(pressed_entity).map(|x|x.1);
-            // focuseds.
-            //focus pressed but unfocused
-            //  ... removed
+    // //         !device_types.is_empty()
+    // //     });
+    //     for pressed_entity in button_entities_presseds.keys().cloned().collect::<Vec<_>>() //(root_entity,pressed_entity)
+    //     {
+    //         let pressable=pressable_query.get_mut(pressed_entity).map(|x|x.1);
+    //         // focuseds.
+    //         //focus pressed but unfocused
+    //         //  ... removed
 
-            // let root_entity=layout_computed_query.get(pressed_entity).unwrap().root_entity;
-            //layout_computed couldve been removed from entity in meantime
-            let (root_entity,unlocked)=layout_computed_query.get(pressed_entity).map(|x|(Some(x.root_entity),x.unlocked)).unwrap_or_default();
+    //         // let root_entity=layout_computed_query.get(pressed_entity).unwrap().root_entity;
+    //         //layout_computed couldve been removed from entity in meantime
+    //         let (root_entity,unlocked)=layout_computed_query.get(pressed_entity).map(|x|(Some(x.root_entity),x.unlocked)).unwrap_or_default();
 
-            //inactive/disabled/invisible/no_devices/
-            let root_entity_alive=root_entity.and_then(|root_entity|root_query.get(root_entity).ok()).map(|(_,computed)|computed.unlocked).unwrap_or_default();
-            // let unlocked=layout_computed_query.get(pressed_entity).map(|x|x.unlocked).unwrap_or_default();
-            let pressable_enable=pressable.as_ref().map(|x|x.enable).unwrap_or_default();
+    //         //inactive/disabled/invisible/no_devices/
+    //         let root_entity_alive=root_entity.and_then(|root_entity|root_query.get(root_entity).ok()).map(|(_,computed)|computed.unlocked).unwrap_or_default();
+    //         // let unlocked=layout_computed_query.get(pressed_entity).map(|x|x.unlocked).unwrap_or_default();
+    //         let pressable_enable=pressable.as_ref().map(|x|x.enable).unwrap_or_default();
 
-            if !root_entity_alive || !unlocked || !pressable_enable //|| no_devices_pressed
-            {
-                let entity_presseds= button_entities_presseds.remove(&pressed_entity).unwrap(); //(root_entity,pressed_entity)
+    //         if !root_entity_alive || !unlocked || !pressable_enable //|| no_devices_pressed
+    //         {
+    //             let entity_presseds= button_entities_presseds.remove(&pressed_entity).unwrap(); //(root_entity,pressed_entity)
 
-                if !entity_presseds.is_empty() {
-                    ui_output_event_writer.write(UiInteractEvent{entity:pressed_entity,event_type:UiInteractMessageType::PressEnd{ device:99, button }});
-                }
+    //             if !entity_presseds.is_empty() {
+    //                 ui_output_event_writer.write(UiInteractEvent{entity:pressed_entity,event_type:UiInteractMessageType::PressEnd{ device:99, button }});
+    //             }
 
-                // if let Ok(mut pressable)=pressable {
-                //     pressable.pressed=false;
-                // }
+    //             // if let Ok(mut pressable)=pressable {
+    //             //     pressable.pressed=false;
+    //             // }
 
-                //does device_presseds need to be cleared too?
-            }
-        }
-    }
+    //             //does device_presseds need to be cleared too?
+    //         }
+    //     }
+    // }
 
 
     // //when pressable.pressed=true
@@ -262,7 +267,22 @@ pub fn update_press_events(
 
 
     //
-    for ev in input_event_reader.read() {
+    for ev in input_event_reader.read()
+    // for ev in input_focus_event_reader.read()
+
+    {
+        // match ev {
+        //     UiInteractInputFocusMessage::FocusBegin { entity, device } => {}
+        //     UiInteractInputFocusMessage::FocusEnd { entity, device } => {}
+        //     UiInteractInputFocusMessage::Input(ui_interact_input_message) => {}
+        // }
+
+        // if let UiInteractInputFocusMessage::FocusEnd { entity, device }=ev {
+
+        // }
+
+        // let UiInteractInputFocusMessage::Input(ev) = ev else {continue;};
+
         //
         if !ev.get_root_entity()
             .and_then(|root_entity|root_query.get(root_entity).ok())
@@ -345,9 +365,9 @@ pub fn update_press_events(
                     device_presseds.entry(button).or_default()
                         .insert((root_entity,device_type),(entity,true));
 
-                    entities_presseds.entry(button).or_default()
-                        .entry(entity).or_default()
-                        .insert(device_type);
+                    // entities_presseds.entry(button).or_default()
+                    //     .entry(entity).or_default()
+                    //     .insert(device_type);
                 }
             }
 
@@ -373,9 +393,9 @@ pub fn update_press_events(
                     device_presseds.entry(button).or_default()
                         .insert((root_entity,device_type),(entity,true));
 
-                    entities_presseds.entry(button).or_default()
-                        .entry(entity).or_default()
-                        .insert(device_type);
+                    // entities_presseds.entry(button).or_default()
+                    //     .entry(entity).or_default()
+                    //     .insert(device_type);
                 }
             }
             UiInteractInputMessage::CursorPressEnd{root_entity,device, button }
@@ -386,10 +406,10 @@ pub fn update_press_events(
                 if let Some((pressed_entity,is_pressed))=device_presseds.get_mut(&button)
                     .and_then(|button_device_presseds|button_device_presseds.remove(&(root_entity,device_type)))
                 {
-                    entities_presseds.get_mut(&button)
-                        .and_then(|button_entities_presseds|button_entities_presseds.get_mut(&pressed_entity))
-                        .and_then(|entity_presseds|entity_presseds.remove(&device_type).then_some(()))
-                        .unwrap();
+                    // entities_presseds.get_mut(&button)
+                    //     .and_then(|button_entities_presseds|button_entities_presseds.get_mut(&pressed_entity))
+                    //     .and_then(|entity_presseds|entity_presseds.remove(&device_type).then_some(()))
+                    //     .unwrap();
 
                     //
                     let pressable=pressable_query.get(pressed_entity).map(|x|x.1).unwrap(); //can use unwrap, wouldn't be in device_presseds otherwise
@@ -412,10 +432,10 @@ pub fn update_press_events(
                 let device_type=ev.device_type();
 
                 if let Some((pressed_entity,is_pressed))=device_presseds.get_mut(&button).and_then(|button_device_presseds|button_device_presseds.remove(&(root_entity,device_type))) {
-                    entities_presseds.get_mut(&button)
-                        .and_then(|button_entities_presseds|button_entities_presseds.get_mut(&pressed_entity))
-                        .and_then(|entity_presseds|entity_presseds.remove(&device_type).then_some(()))
-                        .unwrap();
+                    // entities_presseds.get_mut(&button)
+                    //     .and_then(|button_entities_presseds|button_entities_presseds.get_mut(&pressed_entity))
+                    //     .and_then(|entity_presseds|entity_presseds.remove(&device_type).then_some(()))
+                    //     .unwrap();
 
                     //
                     let pressable=pressable_query.get(pressed_entity).map(|x|x.1).unwrap(); //can use unwrap, wouldn't be in device_presseds otherwise

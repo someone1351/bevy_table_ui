@@ -4,6 +4,7 @@
 // #![allow(unreachable_code)]
 
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
 use bevy::app::*;
 use bevy::asset::prelude::*;
@@ -29,20 +30,6 @@ use rand::Rng;
 use table_ui::*;
 
 
-enum InputState {
-    Focused,
-
-}
-#[derive(Component,Default)]
-struct InputComputedComponent {
-    focuseds:HashSet<i32>, //[device]
-}
-#[derive(Component,Default)]
-#[require(InputComputedComponent)]
-struct InputComponent {
-    state_cols : HashMap<i32,Color>,//[device]=col
-    unfocused_col : Color,
-}
 
 fn main() {
     let mut app = App::new();
@@ -108,6 +95,189 @@ pub fn update_ui_roots(
     }
 }
 
+pub enum InputState {
+    Focused,
+
+}
+// #[derive(Component,Default)]
+// pub struct InputComputedComponent {
+//     focuseds:HashSet<i32>, //[device]
+// }
+// #[derive(Component,Default)]
+// #[require(InputComputedComponent)]
+// pub struct InputComponent {
+//     state_cols : HashMap<i32,Color>,//[device]=col
+//     unfocused_col : Color,
+// }
+
+#[derive(PartialEq,Eq,Hash)]
+pub enum DeviceType{None,Cursor(i32),Focus(i32),}
+#[derive(Debug,Hash,PartialEq,Eq,Copy,Clone,PartialOrd, Ord)]
+pub enum UiAffectState {
+    // None,
+    Select,
+    Hover,
+    Focus,
+    Press,
+    Drag,
+}
+#[derive(Component,Default)]
+pub struct UixAffectComputed {
+    pub states : HashMap<UiAffectState,HashSet<DeviceType>>, //[state][device]
+}
+#[derive(Component,Default)]
+#[require(UixAffectComputed)]
+pub struct UixAffect {
+    // col:Color,
+    // focus_col:Color,
+    // press_col:Color,
+
+    // cols:HashMap<UiAffectState,Color>,
+
+    attribs:Vec<AttribFunc>,
+
+    //attribs:HashMap<AttribENum,UiAffectState> //[attrib][state]=val
+}
+
+// pub type AttribFuncType = Arc<dyn Fn(Entity,&mut World)+Send+Sync>;
+
+// fn make_attrib_func<T:Component<Mutability = bevy::ecs::component::Mutable>+Default>(func : impl Fn(&mut T)+Send+Sync+'static) -> AttribFuncType {
+//     Arc::new(move |entity:Entity,world: &mut World| {
+//         let mut e=world.entity_mut(entity);
+//         let mut c=e.entry::<T>().or_default();
+//         let mut c=c.get_mut();
+//         func(&mut c);
+//     })
+// }
+
+// fn make_attrib_default_func<
+//     T:Component<Mutability = bevy::ecs::component::Mutable>+Default
+//     >(func : impl Fn(&mut T,T)+Send+Sync+'static) -> AttribFuncType {
+//     make_attrib_func::<T>(move|c|func(c,T::default()))
+// }
+
+type AttribFunc=Arc<dyn Fn(&mut World,Entity,&HashSet<UiAffectState>) + Sync+Send>;
+
+fn attrib_setter<C,V,S,F>(func:F,default_val:V,state_vals:S,) -> AttribFunc
+where
+    C : Component<Mutability = bevy::ecs::component::Mutable>+Default,
+    V : Clone + 'static+Send+Sync,
+    S : IntoIterator<Item=(UiAffectState,V)>,
+    F : Fn(&mut C,V) + 'static+Send+Sync,
+{
+    let attrib_states:HashMap<UiAffectState,V>=state_vals.into_iter().collect();
+
+    Arc::new(move|world:&mut World,entity:Entity,cur_states:&HashSet<UiAffectState>|{
+        let mut states:Vec<_>=cur_states.intersection(&attrib_states.keys().cloned().collect()).cloned().collect();
+        states.sort();
+        let v=states.last().map(|state|attrib_states.get(state).cloned().unwrap()).unwrap_or(default_val.clone());
+
+        let mut e=world.entity_mut(entity);
+        let mut c=e.entry::<C>().or_default();
+        let mut c=c.get_mut();
+
+        func(&mut c,v);
+    })
+}
+
+pub fn on_affects<'a>(
+    mut affect_query: Query<(Entity,&UixAffect,&mut UixAffectComputed)>,
+    mut commands: Commands,
+    mut interact_event_reader: MessageReader<UiInteractEvent>,
+) {
+    let mut new_states: HashMap<Entity,HashMap<UiAffectState,HashSet<DeviceType>>>=Default::default(); //[entity][state][device]
+
+    //
+    for ev in interact_event_reader.read() {
+        let Ok((_,_,mut affect_computed))=affect_query.get_mut(ev.entity) else {continue;};
+
+        match ev.event_type {
+            UiInteractMessageType::FocusBegin {device, .. } => {
+                affect_computed.states.entry(UiAffectState::Focus).or_default().insert(DeviceType::Focus(device));
+                new_states.entry(ev.entity).or_default().entry(UiAffectState::Focus).or_default().insert(DeviceType::Focus(device));
+            }
+            UiInteractMessageType::FocusEnd { device,.. } => {
+                affect_computed.states.get_mut(&UiAffectState::Focus).map(|x|x.remove(&DeviceType::Focus(device)));
+            }
+            UiInteractMessageType::PressBegin{device,..} => {
+                affect_computed.states.entry(UiAffectState::Press).or_default().insert(DeviceType::Focus(device));
+                new_states.entry(ev.entity).or_default().entry(UiAffectState::Press).or_default().insert(DeviceType::Cursor(device));
+            }
+            UiInteractMessageType::PressEnd{device,..} => {
+                affect_computed.states.get_mut(&UiAffectState::Press).map(|x|x.remove(&DeviceType::Cursor(device)));
+            }
+            UiInteractMessageType::SelectBegin => {
+                affect_computed.states.entry(UiAffectState::Select).or_default().insert(DeviceType::None);
+                new_states.entry(ev.entity).or_default().entry(UiAffectState::Select).or_default().insert(DeviceType::None);
+            }
+            UiInteractMessageType::SelectEnd => {
+                affect_computed.states.get_mut(&UiAffectState::Select).map(|x|x.remove(&DeviceType::None));
+            }
+            UiInteractMessageType::HoverBegin{device,..} => {
+                affect_computed.states.entry(UiAffectState::Hover).or_default().insert(DeviceType::Focus(device));
+                new_states.entry(ev.entity).or_default().entry(UiAffectState::Hover).or_default().insert(DeviceType::Focus(device));
+            }
+            UiInteractMessageType::HoverEnd{..} => {
+                affect_computed.states.get_mut(&UiAffectState::Hover).map(|x|x.remove(&DeviceType::None));
+            }
+            UiInteractMessageType::Click{..}=> {}
+            UiInteractMessageType::DragX{..} => {}
+            UiInteractMessageType::DragY{..} => {}
+        }
+    }
+
+    //
+    for (entity, affect,affect_computed) in affect_query.iter() {
+
+        let states:HashSet<UiAffectState>=new_states.get(&entity).map(|x|x.iter()).unwrap_or_default().chain(affect_computed.states.iter())
+            .filter_map(|(&k,v)|(!v.is_empty()).then_some(k))
+            .collect();
+
+        for attrib in affect.attribs.iter() {
+            // let attrib=attrib.clone();
+            // let func=attrib(world,entity,&states);
+            // commands.queue(move|world: &mut World|{
+            //     attrib(world,entity,&states);
+            // });
+        //     commands.queue(|world: &mut World|{
+        //     match state {
+        //         UiAffectState::Select => {
+
+        //         }
+        //         UiAffectState::Hover => {
+
+        //         }
+        //         UiAffectState::Focus => {
+        //             // let c=world.entity_mut(entity).entry::<UiColor>().or_default();
+        //             // c.get_mut().border
+
+        //         }
+        //         UiAffectState::Press => {
+
+        //         }
+        //         UiAffectState::Drag => {
+
+        //         }
+        //     }
+        //     });
+
+        }
+        // for (default_func,attrib_states) in affect_computed.attribs.iter() {
+        //     let mut last: Option<(AttribFuncType, i32)> = None;
+
+
+
+        //     for state in states {
+        //         if let Some((func,priority))=attrib_states.get(&state).cloned() {
+        //             if last.as_ref().is_none() || priority > last.as_ref().unwrap().1 {
+        //                 last=Some((func,priority));
+        //             }
+        //         }
+        //     }
+
+        // }
+    }
+}
 pub fn update_ui(
 
     mut interact_events: MessageReader<UiInteractEvent>,
@@ -119,62 +289,62 @@ pub fn update_ui(
     mut bla:Local<HashMap<Entity,u32>>,
     // mut bla : Local<Vec<>>
 
-    mut input_query: Query<(&InputComponent,&mut InputComputedComponent,)>,
+    // mut input_query: Query<(&InputComponent,&mut InputComputedComponent,)>,
 ) {
 
     // enum OnState {Press,}
     // let mut new_states: HashMap<Entity,HashSet<OnState>>=Default::default();
 
-    bla.retain(|&entity,&mut c|{
-        if c==0 {
-            if let Ok(mut col)=ui_color_query.get_mut(entity) {
-                col.back= prev_back_col.get(&entity).cloned().unwrap_or_default();
-            }
-        }
+    // bla.retain(|&entity,&mut c|{
+    //     if c==0 {
+    //         if let Ok(mut col)=ui_color_query.get_mut(entity) {
+    //             col.back= prev_back_col.get(&entity).cloned().unwrap_or_default();
+    //         }
+    //     }
 
-        c>0
-    });
+    //     c>0
+    // });
 
-    let mut focuseds: HashSet<i32>=HashSet::new();
+    // let mut focuseds: HashSet<i32>=HashSet::new();
 
-    for ev in interact_events.read() {
-        println!("event: {ev}");
+    // for ev in interact_events.read() {
+    //     println!("event: {ev}");
 
-        match &ev.event_type {
-            UiInteractMessageType::HoverBegin { .. } => {}
-            UiInteractMessageType::HoverEnd { .. } => {}
-            UiInteractMessageType::PressBegin{ .. } => {
-                if let Ok(mut col)=ui_color_query.get_mut(ev.entity) {
-                    prev_back_col.entry(ev.entity).or_insert( col.back);
-                    col.back= Color::linear_rgb(0.8,0.5,0.2);
-                }
+    //     match &ev.event_type {
+    //         UiInteractMessageType::HoverBegin { .. } => {}
+    //         UiInteractMessageType::HoverEnd { .. } => {}
+    //         UiInteractMessageType::PressBegin{ .. } => {
+    //             if let Ok(mut col)=ui_color_query.get_mut(ev.entity) {
+    //                 prev_back_col.entry(ev.entity).or_insert( col.back);
+    //                 col.back= Color::linear_rgb(0.8,0.5,0.2);
+    //             }
 
-                // *bla.entry(ev.entity).or_default()+=1;
-            }
-            UiInteractMessageType::PressEnd{ .. } => {
+    //             // *bla.entry(ev.entity).or_default()+=1;
+    //         }
+    //         UiInteractMessageType::PressEnd{ .. } => {
 
 
-                // *bla.get_mut(&ev.entity).unwrap()-=1;
+    //             // *bla.get_mut(&ev.entity).unwrap()-=1;
 
-            }
-            UiInteractMessageType::Click{ .. } => {
-                *click_counter+=1;
-                println!("clicked {}",*click_counter);
-            }
-            UiInteractMessageType::DragX { .. } => {}
-            UiInteractMessageType::DragY { .. } => {}
-            UiInteractMessageType::SelectBegin => {}
-            UiInteractMessageType::SelectEnd => {}
-            &UiInteractMessageType::FocusBegin {device, .. } => {
-                // let (input,mut input_computed)=input_query.get_mut(ev.entity).unwrap();
-                // input_computed.focuseds.insert(device);
-            }
-            &UiInteractMessageType::FocusEnd { device,.. } => {
-                // let (input,mut input_computed)=input_query.get_mut(ev.entity).unwrap();
-                // input_computed.focuseds.remove(&device);
-            }
-        }
-    }
+    //         }
+    //         UiInteractMessageType::Click{ .. } => {
+    //             *click_counter+=1;
+    //             println!("clicked {}",*click_counter);
+    //         }
+    //         UiInteractMessageType::DragX { .. } => {}
+    //         UiInteractMessageType::DragY { .. } => {}
+    //         UiInteractMessageType::SelectBegin => {}
+    //         UiInteractMessageType::SelectEnd => {}
+    //         &UiInteractMessageType::FocusBegin {device, .. } => {
+    //             // let (input,mut input_computed)=input_query.get_mut(ev.entity).unwrap();
+    //             // input_computed.focuseds.insert(device);
+    //         }
+    //         &UiInteractMessageType::FocusEnd { device,.. } => {
+    //             // let (input,mut input_computed)=input_query.get_mut(ev.entity).unwrap();
+    //             // input_computed.focuseds.remove(&device);
+    //         }
+    //     }
+    // }
     //
 
 }
@@ -231,10 +401,19 @@ pub fn setup_ui(
 
         for _i in 0..9 {
             let col_scale=0.5;
-            let col=Color::linear_rgb(rng.gen::<f32>()*col_scale,rng.gen::<f32>()*col_scale,rng.gen::<f32>()*col_scale);
+            let c=[rng.gen::<f32>()*col_scale,rng.gen::<f32>()*col_scale,rng.gen::<f32>()*col_scale];
+
+            // let col=Color::linear_rgb(rng.gen::<f32>()*col_scale,rng.gen::<f32>()*col_scale,rng.gen::<f32>()*col_scale);
+            let col=Color::srgb_from_array(c);
+            let col2=Color::srgb_from_array(c.map(|c|(c*1.3).max(1.0)));
+            let col3=Color::linear_rgb(1.0,1.0,0.3);
 
             let entity=parent.spawn((
-                UiColor{back:col,..Default::default()}, //border:Color::linear_rgb(0.5,0.5,0.5),
+                UixAffect{ attribs: vec![
+                    attrib_setter(|c:&mut UiColor,v|c.back=v, col, [(UiAffectState::Press,col2)]),
+                    attrib_setter(|c:&mut UiColor,v|c.border=v, col, [(UiAffectState::Focus,col3)]),
+                ] },
+                // UiColor{back:col,..Default::default()}, //border:Color::linear_rgb(0.5,0.5,0.5),
                 UiSize{ width:UiVal::Px(-20.0), height:UiVal::Px(-30.0), },
                 UiFocusable{ enable: true, ..Default::default() },
                 UiPressable{ enable: true, ..Default::default() },

@@ -94,7 +94,7 @@ pub fn update_hover_events(
         //     continue;
         // }
 
-        if !ev.get_root_entity()
+        if !ev.root_entity()
             .and_then(|root_entity|root_query.get(root_entity).ok())
             .map(|(_,computed)|computed.unlocked)
             .unwrap_or_default()

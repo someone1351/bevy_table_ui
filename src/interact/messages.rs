@@ -19,7 +19,7 @@ pub enum UiInteractInputFocusMessage {
     Input(UiInteractInputMessage),
 }
 
-#[derive(Debug,Message,Clone)]
+#[derive(Debug,Message,Clone,Copy)]
 pub enum UiInteractInputMessage {
     FocusOn{entity:Entity,device:i32},
     // FocusClear{root_entity:Entity, group:i32,device:i32},
@@ -57,31 +57,72 @@ pub enum UiInteractInputMessage {
 }
 
 impl UiInteractInputMessage {
-    pub fn get_root_entity(&self) -> Option<Entity> {
-        match & self {
-            Self::FocusOn{..}=>None,
-            Self::FocusInit{root_entity,..}|
-            Self::FocusLeft{root_entity,..}|
-            Self::FocusRight{root_entity,..}|
-            Self::FocusUp{root_entity,..}|
-            Self::FocusDown{root_entity,..}|
-            Self::FocusPrev{root_entity,..}|
-            Self::FocusNext{root_entity,..}|
-            Self::FocusEnter{root_entity,..}|
-            Self::FocusExit{root_entity,..}|
-
-            Self::FocusPressBegin{root_entity,..}|
-            Self::FocusPressEnd{root_entity,..}|
-            Self::FocusPressCancel{root_entity,..}|
-
-            Self::CursorPressBegin{root_entity,..}|
-            Self::CursorPressEnd{root_entity,..}|
-            Self::CursorPressCancel{root_entity,..}|
-            Self::CursorMoveTo{root_entity,..}
-
-            => Some(*root_entity)
+    pub fn root_entity(&self) -> Option<Entity> {
+        match *self {
+            UiInteractInputMessage::FocusOn { .. } => None,
+            UiInteractInputMessage::FocusInit { root_entity, ..} => Some(root_entity),
+            UiInteractInputMessage::FocusLeft { root_entity, ..} => Some(root_entity),
+            UiInteractInputMessage::FocusRight { root_entity, ..} => Some(root_entity),
+            UiInteractInputMessage::FocusUp { root_entity, ..} => Some(root_entity),
+            UiInteractInputMessage::FocusDown { root_entity, ..} => Some(root_entity),
+            UiInteractInputMessage::FocusPrev { root_entity, ..} => Some(root_entity),
+            UiInteractInputMessage::FocusNext { root_entity, ..} => Some(root_entity),
+            UiInteractInputMessage::FocusEnter { root_entity, ..} => Some(root_entity),
+            UiInteractInputMessage::FocusExit { root_entity, ..} => Some(root_entity),
+            UiInteractInputMessage::FocusPressBegin { root_entity, ..} => Some(root_entity),
+            UiInteractInputMessage::FocusPressEnd { root_entity, ..} => Some(root_entity),
+            UiInteractInputMessage::FocusPressCancel { root_entity, ..} => Some(root_entity),
+            UiInteractInputMessage::CursorPressBegin { root_entity, ..} => Some(root_entity),
+            UiInteractInputMessage::CursorPressEnd { root_entity, ..} => Some(root_entity),
+            UiInteractInputMessage::CursorPressCancel { root_entity, ..} => Some(root_entity),
+            UiInteractInputMessage::CursorMoveTo { root_entity, ..} => Some(root_entity),
         }
     }
+
+    pub fn focus_group(&self) -> Option<i32> {
+        match *self {
+            UiInteractInputMessage::FocusOn { .. } => None,
+            UiInteractInputMessage::FocusInit { group, .. } => Some(group),
+            UiInteractInputMessage::FocusLeft { group, .. } => Some(group),
+            UiInteractInputMessage::FocusRight { group, .. } => Some(group),
+            UiInteractInputMessage::FocusUp { group, .. } => Some(group),
+            UiInteractInputMessage::FocusDown { group, .. } => Some(group),
+            UiInteractInputMessage::FocusPrev { group, .. } => Some(group),
+            UiInteractInputMessage::FocusNext { group, .. } => Some(group),
+            UiInteractInputMessage::FocusEnter { group, .. } => Some(group),
+            UiInteractInputMessage::FocusExit { group, .. } => Some(group),
+            UiInteractInputMessage::FocusPressBegin { group, .. } => Some(group),
+            UiInteractInputMessage::FocusPressEnd { .. } => None,
+            UiInteractInputMessage::FocusPressCancel { .. } => None,
+            UiInteractInputMessage::CursorPressBegin { .. } => None,
+            UiInteractInputMessage::CursorPressEnd { .. } => None,
+            UiInteractInputMessage::CursorPressCancel { .. } => None,
+            UiInteractInputMessage::CursorMoveTo { .. } => None,
+        }
+    }
+    pub fn device(&self) -> i32 {
+        match *self {
+            UiInteractInputMessage::FocusOn { device, .. } => device,
+            UiInteractInputMessage::FocusInit { device, .. } => device,
+            UiInteractInputMessage::FocusLeft { device, .. } => device,
+            UiInteractInputMessage::FocusRight { device, .. } => device,
+            UiInteractInputMessage::FocusUp { device, .. } => device,
+            UiInteractInputMessage::FocusDown { device, .. } => device,
+            UiInteractInputMessage::FocusPrev { device, .. } => device,
+            UiInteractInputMessage::FocusNext { device, .. } => device,
+            UiInteractInputMessage::FocusEnter { device, .. } => device,
+            UiInteractInputMessage::FocusExit { device, .. } => device,
+            UiInteractInputMessage::FocusPressBegin { device, .. } => device,
+            UiInteractInputMessage::FocusPressEnd { device, .. } => device,
+            UiInteractInputMessage::FocusPressCancel { device, .. } => device,
+            UiInteractInputMessage::CursorPressBegin { device, .. } => device,
+            UiInteractInputMessage::CursorPressEnd { device, .. } => device,
+            UiInteractInputMessage::CursorPressCancel { device, .. } => device,
+            UiInteractInputMessage::CursorMoveTo { device, .. } => device,
+        }
+    }
+
+
     pub fn device_type(&self) -> DeviceType {
         match *self {
             UiInteractInputMessage::FocusOn {device,..} => DeviceType::Focus(device),
@@ -149,7 +190,7 @@ TODO
 * have focus/cursor press begin/end/click?
 */
 
-#[derive(Debug,Clone)] //
+#[derive(Debug,Clone,Copy)] //
 pub enum UiInteractMessageType {
     HoverBegin{device:i32,}, //don't really need device? like press?
     HoverEnd{device:i32,},

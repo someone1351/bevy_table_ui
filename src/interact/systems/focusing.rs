@@ -371,7 +371,7 @@ pub fn update_focus_events(
 
         if let UiInteractInputMessage::FocusOn { entity, device }=ev {
             //todo
-        } else if !ev.get_root_entity()
+        } else if !ev.root_entity()
             .and_then(|root_entity|root_query.get(root_entity).ok())
             .map(|(_,computed)|computed.unlocked)
             .unwrap_or_default()
@@ -428,55 +428,31 @@ pub fn update_focus_events(
         }
 
         //
-        let (
-            top_root_entity, cur_group,cur_device,
-            (cur_focus_entity,focus_entity_stk, hist)
-        )=match ev {
-            UiInteractInputMessage::FocusEnter{root_entity,group, device }
-                |UiInteractInputMessage::FocusPrev{root_entity,group, device }
-                |UiInteractInputMessage::FocusNext{root_entity,group, device }
-                |UiInteractInputMessage::FocusLeft{root_entity,group, device }
-                |UiInteractInputMessage::FocusRight {root_entity,group, device }
-                |UiInteractInputMessage::FocusUp{root_entity,group, device }
-                |UiInteractInputMessage::FocusDown{root_entity,group, device }
-                |UiInteractInputMessage::FocusInit{root_entity,group, device }
-                // |UiInputEvent::FocusPressBegin(root_entity,group,..)
-            => {
-                (
-                    root_entity,group,device,
-                    focus_states.cur_focuses.entry(device).or_default()
-                    // device_focus_states.cur_focuses
-                        .entry(root_entity).or_default().entry(group).or_default()
-                )
-            }
-            _=>{continue;}
-        };
+        let Some(top_root_entity)= ev.root_entity() else {continue;};
+        let Some(cur_group)= ev.focus_group() else {continue;};
+        let cur_device=ev.device();
+
+        //,
+        let (cur_focus_entity,focus_entity_stk, hist)=focus_states.cur_focuses.entry(cur_device).or_default()
+            // device_focus_states.cur_focuses
+            .entry(top_root_entity).or_default().entry(cur_group).or_default();
 
         //
-        let move_dir: FocusMove=match ev.clone() {
-            UiInteractInputMessage::FocusEnter{..}|UiInteractInputMessage::FocusNext{..}
-            |UiInteractInputMessage::FocusRight{..}|UiInteractInputMessage::FocusDown{..}
-            |UiInteractInputMessage::FocusInit{..}
-                // |UiInputEvent::FocusPressBegin(..)
-                if cur_focus_entity.is_none() => FocusMove::Next,
-            UiInteractInputMessage::FocusPrev{..}|UiInteractInputMessage::FocusLeft{..}|UiInteractInputMessage::FocusUp{..} if cur_focus_entity.is_none()  =>  {
+        if let UiInteractInputMessage::FocusPrev{..}|UiInteractInputMessage::FocusLeft{..}|UiInteractInputMessage::FocusUp{..}=ev {
+            if cur_focus_entity.is_none() {
                 if !was_resent {
                     ev_stk.push(ev.clone());
                     was_resent=true;
                 } else {
                     was_resent=false;
                 }
+            }
+        }
 
-                FocusMove::Next
-            },
-            UiInteractInputMessage::FocusPrev{..} => FocusMove::Prev,
-            UiInteractInputMessage::FocusNext{..} => FocusMove::Next,
-            UiInteractInputMessage::FocusLeft{..} => FocusMove::Left,
-            UiInteractInputMessage::FocusRight{..} => FocusMove::Right,
-            UiInteractInputMessage::FocusUp{..} => FocusMove::Up,
-            UiInteractInputMessage::FocusDown{..} => FocusMove::Down,
-            _ => {continue;}
+        let Some(move_dir)=get_focus_move_dir(&ev,cur_focus_entity.is_none()) else {
+            continue;
         };
+
         // let x: Query<&ChildOf, With<UiLayoutComputed>>=parent_query;
         go(
             move_dir,
@@ -509,6 +485,35 @@ pub fn update_focus_events(
     }
 }
 
+fn get_focus_move_dir(ev : &UiInteractInputMessage, b:bool) -> Option<FocusMove> {
+    match ev {
+        UiInteractInputMessage::FocusInit{..}
+        |UiInteractInputMessage::FocusEnter{..}
+
+        |UiInteractInputMessage::FocusPrev{..}
+        |UiInteractInputMessage::FocusNext{..}
+
+        |UiInteractInputMessage::FocusLeft{..}
+        |UiInteractInputMessage::FocusRight{..}
+
+        |UiInteractInputMessage::FocusUp{..}
+        |UiInteractInputMessage::FocusDown{..}
+            if b => Some(FocusMove::Next),
+
+
+        UiInteractInputMessage::FocusPrev{..} => Some(FocusMove::Prev),
+        UiInteractInputMessage::FocusNext{..} => Some(FocusMove::Next),
+
+        UiInteractInputMessage::FocusLeft{..} => Some(FocusMove::Left),
+        UiInteractInputMessage::FocusRight{..} => Some(FocusMove::Right),
+
+        UiInteractInputMessage::FocusUp{..} => Some(FocusMove::Up),
+        UiInteractInputMessage::FocusDown{..} => Some(FocusMove::Down),
+
+        _ => None,
+    }
+}
+
 fn go(
     move_dir: FocusMove,
     top_root_entity:Entity,
@@ -524,7 +529,7 @@ fn go(
     children_query: Query<&Children,(With<UiLayoutComputed>,)>,
     float_query: Query<&UiFloat,With<UiLayoutComputed>>,
     focusable_query : &Query<&mut UiFocusable>,
-    mut focuseds : &mut UiFocuseds,
+    focuseds : &mut UiFocuseds,
     ui_event_writer: &mut MessageWriter<UiInteractEvent>,
 ) {
 

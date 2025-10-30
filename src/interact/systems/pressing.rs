@@ -115,7 +115,7 @@ pub fn update_press_events(
     {
 
         //
-        if !ev.get_root_entity()
+        if !ev.root_entity()
             .and_then(|root_entity|root_query.get(root_entity).ok())
             .map(|computed|computed.unlocked)
             .unwrap_or_default()

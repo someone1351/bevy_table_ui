@@ -70,6 +70,7 @@ fn main() {
             update_ui_roots,
             update_ui_input,
             update_ui,
+            on_affects,
         ).chain())
         .add_systems(Update, (
             update_input,
@@ -156,27 +157,30 @@ pub struct UixAffect {
 //     make_attrib_func::<T>(move|c|func(c,T::default()))
 // }
 
-type AttribFunc=Arc<dyn Fn(&mut World,Entity,&HashSet<UiAffectState>) + Sync+Send>;
+type AttribQueueFunc=Box<dyn Fn(&mut World) + Sync+Send>;
+type AttribFunc=Arc<dyn Fn(Entity,&HashSet<UiAffectState>)->AttribQueueFunc + Sync+Send>;
 
-fn attrib_setter<C,V,S,F>(func:F,default_val:V,state_vals:S,) -> AttribFunc
+fn attrib_setter<C,V,S>(func:fn(&mut C,V) ,default_val:V,state_vals:S,) -> AttribFunc
 where
     C : Component<Mutability = bevy::ecs::component::Mutable>+Default,
     V : Clone + 'static+Send+Sync,
     S : IntoIterator<Item=(UiAffectState,V)>,
-    F : Fn(&mut C,V) + 'static+Send+Sync,
+    // F : Fn(&mut C,V) + 'static+Send+Sync,
 {
     let attrib_states:HashMap<UiAffectState,V>=state_vals.into_iter().collect();
 
-    Arc::new(move|world:&mut World,entity:Entity,cur_states:&HashSet<UiAffectState>|{
+    Arc::new(move|entity:Entity,cur_states:&HashSet<UiAffectState>|{
         let mut states:Vec<_>=cur_states.intersection(&attrib_states.keys().cloned().collect()).cloned().collect();
         states.sort();
         let v=states.last().map(|state|attrib_states.get(state).cloned().unwrap()).unwrap_or(default_val.clone());
 
-        let mut e=world.entity_mut(entity);
-        let mut c=e.entry::<C>().or_default();
-        let mut c=c.get_mut();
+        Box::new(move|world:&mut World|{
+            let mut e=world.entity_mut(entity);
+            let mut c=e.entry::<C>().or_default();
+            let mut c=c.get_mut();
 
-        func(&mut c,v);
+            func(&mut c,v.clone());
+        })
     })
 }
 
@@ -200,10 +204,12 @@ pub fn on_affects<'a>(
                 affect_computed.states.get_mut(&UiAffectState::Focus).map(|x|x.remove(&DeviceType::Focus(device)));
             }
             UiInteractMessageType::PressBegin{device,..} => {
-                affect_computed.states.entry(UiAffectState::Press).or_default().insert(DeviceType::Focus(device));
+                println!("press begin {device}");
+                affect_computed.states.entry(UiAffectState::Press).or_default().insert(DeviceType::Cursor(device));
                 new_states.entry(ev.entity).or_default().entry(UiAffectState::Press).or_default().insert(DeviceType::Cursor(device));
             }
             UiInteractMessageType::PressEnd{device,..} => {
+                println!("press end {device}");
                 affect_computed.states.get_mut(&UiAffectState::Press).map(|x|x.remove(&DeviceType::Cursor(device)));
             }
             UiInteractMessageType::SelectBegin => {
@@ -234,10 +240,10 @@ pub fn on_affects<'a>(
             .collect();
 
         for attrib in affect.attribs.iter() {
-            // let attrib=attrib.clone();
-            // let func=attrib(world,entity,&states);
-            // commands.queue(move|world: &mut World|{
-            //     attrib(world,entity,&states);
+
+            commands.queue(attrib(entity,&states));
+            // commands.queue(|world: &mut World|{
+
             // });
         //     commands.queue(|world: &mut World|{
         //     match state {
@@ -276,6 +282,18 @@ pub fn on_affects<'a>(
         //     }
 
         // }
+    }
+
+    if !new_states.is_empty() {
+        println!("==");
+
+        for (entity, affect,affect_computed) in affect_query.iter() {
+            let states:HashSet<UiAffectState>=new_states.get(&entity).map(|x|x.iter()).unwrap_or_default().chain(affect_computed.states.iter())
+                .filter_map(|(&k,v)|(!v.is_empty()).then_some(k))
+                .collect();
+
+            println!("{entity}: {states:?}");
+        }
     }
 }
 pub fn update_ui(
@@ -400,18 +418,18 @@ pub fn setup_ui(
         // ];
 
         for _i in 0..9 {
-            let col_scale=0.5;
-            let c=[rng.gen::<f32>()*col_scale,rng.gen::<f32>()*col_scale,rng.gen::<f32>()*col_scale];
+            let c=[rng.gen::<f32>(),rng.gen::<f32>(),rng.gen::<f32>()];
 
             // let col=Color::linear_rgb(rng.gen::<f32>()*col_scale,rng.gen::<f32>()*col_scale,rng.gen::<f32>()*col_scale);
-            let col=Color::srgb_from_array(c);
-            let col2=Color::srgb_from_array(c.map(|c|(c*1.3).max(1.0)));
-            let col3=Color::linear_rgb(1.0,1.0,0.3);
+            let col=Color::srgb_from_array(c.map(|c|c*0.7));
+            let col2=Color::srgb_from_array(c.map(|c|c*0.9));
+            let col3=Color::srgb_from_array(c.map(|c|c*0.6));
+            let col4=Color::linear_rgb(0.8,0.6,0.3);
 
             let entity=parent.spawn((
                 UixAffect{ attribs: vec![
                     attrib_setter(|c:&mut UiColor,v|c.back=v, col, [(UiAffectState::Press,col2)]),
-                    attrib_setter(|c:&mut UiColor,v|c.border=v, col, [(UiAffectState::Focus,col3)]),
+                    attrib_setter(|c:&mut UiColor,v|c.border=v, col3, [(UiAffectState::Focus,col4)]),
                 ] },
                 // UiColor{back:col,..Default::default()}, //border:Color::linear_rgb(0.5,0.5,0.5),
                 UiSize{ width:UiVal::Px(-20.0), height:UiVal::Px(-30.0), },

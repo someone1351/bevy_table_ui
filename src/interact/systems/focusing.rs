@@ -124,7 +124,7 @@ pub fn update_focus_events(
 
     //in cur_focus_entity, focus_entity_stk, unfocus removed entities, disabled/invisible entities, disabled focusables, focusables changed groups
     for (&device,device_focus_states) in focus_states.cur_focuses.iter_mut() {
-        let device_focuseds = focuseds.0.get_mut(&device).unwrap(); //does exist??
+
 
         for (&root_entity,groups) in device_focus_states.iter_mut() {
             // let root_entity_alive=computed_query.get(root_entity).is_ok();
@@ -148,8 +148,9 @@ pub fn update_focus_events(
                     let unlocked = computed_query.get(entity).map(|x|x.unlocked).unwrap_or_default();
                     let focusable=focusable_query.get(entity).ok();
                     // let focusable_enabled = focusable.map(|x|x.enable && x.focused).unwrap_or_default();
-                    // let is_focused=device_focuseds.map(|device_focuseds|device_focuseds.contains(&entity)).unwrap_or_default();
-                    let is_focused= device_focuseds.contains(&entity);
+                    let device_focuseds = focuseds.0.get_mut(&device); //does exist?? no?
+                    let is_focused=device_focuseds.as_ref().map(|device_focuseds|device_focuseds.contains(&entity)).unwrap_or_default();
+                    // let is_focused= device_focuseds.contains(&entity);
                     let focusable_enabled = focusable.map(|x|x.enable).unwrap_or_default() && is_focused;
                     let node_focus_group = focusable.map(|x|x.group).unwrap_or_default();
 
@@ -166,7 +167,8 @@ pub fn update_focus_events(
                             //     focusable.focused=false;
                             // }
                             // let device_focuseds=device_focuseds.unwrap();
-                            device_focuseds.remove(&entity).then_some(()).unwrap();
+                            device_focuseds.and_then(|x|x.remove(&entity).then_some(())).unwrap();
+                            // device_focuseds.remove(&entity).then_some(()).unwrap();
                         }
 
                         //
@@ -180,7 +182,9 @@ pub fn update_focus_events(
                             // }
 
                             // let device_focuseds=device_focuseds.unwrap();
-                            device_focuseds.remove(&entity).then_some(()).unwrap();
+                            // device_focuseds.remove(&entity).then_some(()).unwrap();
+                            let device_focuseds = focuseds.0.get_mut(&device); //does exist?? no?
+                            device_focuseds.and_then(|x|x.remove(&entity).then_some(())).unwrap();
                         }
 
                         //
@@ -196,8 +200,9 @@ pub fn update_focus_events(
 
                     let focusable = focusable_query.get_mut(entity).ok();
                     // let focusable_enabled=focusable.as_ref().map(|x|x.enable && x.focused).unwrap_or_default();
-                    // let is_focused=device_focuseds.map(|device_focuseds|device_focuseds.contains(&entity)).unwrap_or_default();
-                    let is_focused=device_focuseds.contains(&entity);
+                    let device_focuseds = focuseds.0.get_mut(&device); //does exist?? no?
+                    let is_focused=device_focuseds.map(|device_focuseds|device_focuseds.contains(&entity)).unwrap_or_default();
+                    // let is_focused=device_focuseds.contains(&entity);
                     let focusable_enabled=focusable.as_ref().map(|x|x.enable).unwrap_or_default() && is_focused;
 
 
@@ -213,7 +218,9 @@ pub fn update_focus_events(
                         // }
 
                         // let device_focuseds=device_focuseds.unwrap();
-                        device_focuseds.remove(&entity).then_some(()).unwrap();
+                        // device_focuseds.remove(&entity).then_some(()).unwrap();
+                        let device_focuseds = focuseds.0.get_mut(&device); //does exist?? no?
+                        device_focuseds.and_then(|x|x.remove(&entity).then_some(())).unwrap();
                     }
                 }
             }

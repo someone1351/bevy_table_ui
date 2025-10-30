@@ -66,11 +66,13 @@ pub fn update_press_events(
             let (computed_root_entity,unlocked)=layout_computed_query.get(pressed_entity).map(|c|(c.root_entity,c.unlocked)).unwrap_or((Entity::PLACEHOLDER,false));
             let pressable_enabled=pressable_query.get(pressed_entity).map(|(_,c)|c.enable).unwrap_or_default();
 
-            if is_pressed {
+            let b=root_alive && unlocked && pressable_enabled && computed_root_entity==root_entity; //&& entities_presseds_contains
+
+            if !b && is_pressed {
                 ui_output_event_writer.write(UiInteractEvent{entity:pressed_entity,event_type:UiInteractMessageType::PressEnd{ device:device_type.device(), button }});
             }
 
-            root_alive && unlocked && pressable_enabled && computed_root_entity==root_entity //&& entities_presseds_contains
+            b
         });
 
         !button_device_presseds.is_empty()

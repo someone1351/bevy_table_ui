@@ -203,6 +203,11 @@ pub enum UiInteractMessageType {
     // DragEnd,
     // DragMove{ h_px:i32,v_px:i32, h_scale:f32,v_scale:f32, },
 
+    //DragCursorX
+    //DragCursorY
+    //DragScrollX
+    //DragScrollY
+
     //add drag_begin/drag_end
     DragX{dist:f32,delta:f32,device:i32,button:i32,}, //scale:f32
     DragY{dist:f32,delta:f32,device:i32,button:i32,}, //scale:f32

@@ -9,7 +9,10 @@ pub struct UiFocuseds(pub HashMap<i32,HashSet<Entity>>); //[device][entity_focus
 
 #[derive(Resource,Debug, Default)]
 pub struct UiFocusStates {
-    pub cur_focuses:HashMap<i32,HashMap<Entity,HashMap<i32,(Option<Entity>,Vec<Entity>,HashMap<Entity,u64>,)>>>, //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk,hist)
+    pub cur_focuses:HashMap<i32,HashMap<Entity,HashMap<i32,(Option<Entity>,Vec<Entity>,
+        HashMap<Entity,u64>, //replace with left/right/top/bottom eg [Option<Entity>;4] or [(Option<Entity>,u64);4]
+    )>>>,
+        //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk,hist)
 }
 
 #[derive(Debug,Clone, Copy,PartialEq, Eq,Hash)]

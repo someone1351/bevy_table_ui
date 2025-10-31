@@ -42,7 +42,7 @@ pub fn update_press_events(
     pressable_query: Query<(Entity,& UiPressable)>,
 
     focus_states : Res<UiFocusStates>,
-    focuseds : Res<UiFocuseds>,
+    // focuseds : Res<UiFocuseds>,
 
     mut device_cursors : Local<HashMap<(Entity,i32),Vec2>>, //[(root_entity,device)]=cursor
 

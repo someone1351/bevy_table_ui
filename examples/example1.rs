@@ -69,7 +69,7 @@ fn main() {
         .add_systems(Update, (
             update_ui_roots,
             update_ui_input,
-            update_ui,
+            // update_ui,
             on_affects,
         ).chain())
         .add_systems(Update, (
@@ -96,20 +96,7 @@ pub fn update_ui_roots(
     }
 }
 
-pub enum InputState {
-    Focused,
 
-}
-// #[derive(Component,Default)]
-// pub struct InputComputedComponent {
-//     focuseds:HashSet<i32>, //[device]
-// }
-// #[derive(Component,Default)]
-// #[require(InputComputedComponent)]
-// pub struct InputComponent {
-//     state_cols : HashMap<i32,Color>,//[device]=col
-//     unfocused_col : Color,
-// }
 
 #[derive(PartialEq,Eq,Hash)]
 pub enum DeviceType{None,Cursor(i32),Focus(i32),}
@@ -128,34 +115,7 @@ pub struct UixAffectComputed {
 }
 #[derive(Component,Default)]
 #[require(UixAffectComputed)]
-pub struct UixAffect {
-    // col:Color,
-    // focus_col:Color,
-    // press_col:Color,
-
-    // cols:HashMap<UiAffectState,Color>,
-
-    attribs:Vec<AttribFunc>,
-
-    //attribs:HashMap<AttribENum,UiAffectState> //[attrib][state]=val
-}
-
-// pub type AttribFuncType = Arc<dyn Fn(Entity,&mut World)+Send+Sync>;
-
-// fn make_attrib_func<T:Component<Mutability = bevy::ecs::component::Mutable>+Default>(func : impl Fn(&mut T)+Send+Sync+'static) -> AttribFuncType {
-//     Arc::new(move |entity:Entity,world: &mut World| {
-//         let mut e=world.entity_mut(entity);
-//         let mut c=e.entry::<T>().or_default();
-//         let mut c=c.get_mut();
-//         func(&mut c);
-//     })
-// }
-
-// fn make_attrib_default_func<
-//     T:Component<Mutability = bevy::ecs::component::Mutable>+Default
-//     >(func : impl Fn(&mut T,T)+Send+Sync+'static) -> AttribFuncType {
-//     make_attrib_func::<T>(move|c|func(c,T::default()))
-// }
+pub struct UixAffect(Vec<AttribFunc>);
 
 type AttribQueueFunc=Box<dyn Fn(&mut World) + Sync+Send>;
 type AttribFunc=Arc<dyn Fn(Entity,&HashSet<UiAffectState>)->AttribQueueFunc + Sync+Send>;
@@ -239,55 +199,18 @@ pub fn on_affects<'a>(
             .filter_map(|(&k,v)|(!v.is_empty()).then_some(k))
             .collect();
 
-        for attrib in affect.attribs.iter() {
+        for attrib in affect.0.iter() {
 
             commands.queue(attrib(entity,&states));
-            // commands.queue(|world: &mut World|{
 
-            // });
-        //     commands.queue(|world: &mut World|{
-        //     match state {
-        //         UiAffectState::Select => {
-
-        //         }
-        //         UiAffectState::Hover => {
-
-        //         }
-        //         UiAffectState::Focus => {
-        //             // let c=world.entity_mut(entity).entry::<UiColor>().or_default();
-        //             // c.get_mut().border
-
-        //         }
-        //         UiAffectState::Press => {
-
-        //         }
-        //         UiAffectState::Drag => {
-
-        //         }
-        //     }
-        //     });
 
         }
-        // for (default_func,attrib_states) in affect_computed.attribs.iter() {
-        //     let mut last: Option<(AttribFuncType, i32)> = None;
-
-
-
-        //     for state in states {
-        //         if let Some((func,priority))=attrib_states.get(&state).cloned() {
-        //             if last.as_ref().is_none() || priority > last.as_ref().unwrap().1 {
-        //                 last=Some((func,priority));
-        //             }
-        //         }
-        //     }
-
-        // }
     }
 
     if !new_states.is_empty() {
         println!("==");
 
-        for (entity, affect,affect_computed) in affect_query.iter() {
+        for (entity, _affect,affect_computed) in affect_query.iter() {
             let states:HashSet<UiAffectState>=new_states.get(&entity).map(|x|x.iter()).unwrap_or_default().chain(affect_computed.states.iter())
                 .filter_map(|(&k,v)|(!v.is_empty()).then_some(k))
                 .collect();
@@ -296,76 +219,7 @@ pub fn on_affects<'a>(
         }
     }
 }
-pub fn update_ui(
 
-    mut interact_events: MessageReader<UiInteractEvent>,
-    mut ui_color_query: Query<&mut UiColor,>,
-
-    mut prev_border_col:Local<HashMap<Entity,Color>>,
-    mut prev_back_col:Local<HashMap<Entity,Color>>,
-    mut click_counter:Local<u32>,
-    mut bla:Local<HashMap<Entity,u32>>,
-    // mut bla : Local<Vec<>>
-
-    // mut input_query: Query<(&InputComponent,&mut InputComputedComponent,)>,
-) {
-
-    // enum OnState {Press,}
-    // let mut new_states: HashMap<Entity,HashSet<OnState>>=Default::default();
-
-    // bla.retain(|&entity,&mut c|{
-    //     if c==0 {
-    //         if let Ok(mut col)=ui_color_query.get_mut(entity) {
-    //             col.back= prev_back_col.get(&entity).cloned().unwrap_or_default();
-    //         }
-    //     }
-
-    //     c>0
-    // });
-
-    // let mut focuseds: HashSet<i32>=HashSet::new();
-
-    // for ev in interact_events.read() {
-    //     println!("event: {ev}");
-
-    //     match &ev.event_type {
-    //         UiInteractMessageType::HoverBegin { .. } => {}
-    //         UiInteractMessageType::HoverEnd { .. } => {}
-    //         UiInteractMessageType::PressBegin{ .. } => {
-    //             if let Ok(mut col)=ui_color_query.get_mut(ev.entity) {
-    //                 prev_back_col.entry(ev.entity).or_insert( col.back);
-    //                 col.back= Color::linear_rgb(0.8,0.5,0.2);
-    //             }
-
-    //             // *bla.entry(ev.entity).or_default()+=1;
-    //         }
-    //         UiInteractMessageType::PressEnd{ .. } => {
-
-
-    //             // *bla.get_mut(&ev.entity).unwrap()-=1;
-
-    //         }
-    //         UiInteractMessageType::Click{ .. } => {
-    //             *click_counter+=1;
-    //             println!("clicked {}",*click_counter);
-    //         }
-    //         UiInteractMessageType::DragX { .. } => {}
-    //         UiInteractMessageType::DragY { .. } => {}
-    //         UiInteractMessageType::SelectBegin => {}
-    //         UiInteractMessageType::SelectEnd => {}
-    //         &UiInteractMessageType::FocusBegin {device, .. } => {
-    //             // let (input,mut input_computed)=input_query.get_mut(ev.entity).unwrap();
-    //             // input_computed.focuseds.insert(device);
-    //         }
-    //         &UiInteractMessageType::FocusEnd { device,.. } => {
-    //             // let (input,mut input_computed)=input_query.get_mut(ev.entity).unwrap();
-    //             // input_computed.focuseds.remove(&device);
-    //         }
-    //     }
-    // }
-    //
-
-}
 #[derive(Component)]
 pub struct MenuUiRoot;
 
@@ -376,28 +230,6 @@ pub fn setup_ui(
     let mut rng = rand::thread_rng();
 
     let font: Handle<Font>=asset_server.load("fonts/FiraMono-Medium.ttf");
-    // commands.spawn((
-    //     MenuUiRoot,
-    //
-    //     UiColor{back:Color::srgb(0.2,0.4,0.9),..Default::default()},
-    //     UiSize{
-    //          width:UiVal::Px(200.0),
-    //          height:UiVal::Px(500.0),
-    //     },
-    // ));
-
-    // commands.spawn((
-    //     MenuUiRoot,
-    //     UiRoot::default(),
-    //
-    //     UiColor{back:Color::srgb(0.2,0.4,0.6),..Default::default()},
-    //     UiSize{
-    //         width:UiVal::Px(200.0),
-    //         height:UiVal::Px(500.0),
-    //     },
-    //     // UiSpan{span:1},
-    //     // UiGap{hgap:UiVal::Px(30.0),vgap:UiVal::Px(30.0)},
-    // ));
 
     commands.spawn((
         MenuUiRoot,
@@ -411,26 +243,25 @@ pub fn setup_ui(
         UiGap{hgap:UiVal::Px(30.0),vgap:UiVal::Px(30.0)},
         UiEdge{ padding: UiRectVal::new_px(30.0), ..Default::default() },
     )).with_children(|parent|{
-        // let cols=[
-        //     Color::linear_rgb(1.0, 0.0, 0.0),
-        //     Color::linear_rgb(0.0, 1.0, 0.0),
-        //     Color::linear_rgb(0.0, 0.0, 1.0),
-        // ];
-
+        let border_col= attrib_setter(|c:&mut UiColor,v|c.border=v,
+            Color::linear_rgb(0.5,0.5,0.5),
+        [
+            (UiAffectState::Focus,Color::linear_rgb(0.8,0.6,0.3)),
+            (UiAffectState::Press,Color::linear_rgb(0.9,0.4,0.3))
+        ]);
         for _i in 0..9 {
             let c=[rng.gen::<f32>(),rng.gen::<f32>(),rng.gen::<f32>()];
 
-            // let col=Color::linear_rgb(rng.gen::<f32>()*col_scale,rng.gen::<f32>()*col_scale,rng.gen::<f32>()*col_scale);
             let col=Color::srgb_from_array(c.map(|c|c*0.7));
-            let col2=Color::srgb_from_array(c.map(|c|c*0.9));
-            let col3=Color::srgb_from_array(c.map(|c|c*0.6));
-            let col4=Color::linear_rgb(0.8,0.6,0.3);
+            // let col2=Color::srgb_from_array(c.map(|c|c*0.9));
+            // let col3=Color::srgb_from_array(c.map(|c|c*0.6));
+            // let col4=Color::linear_rgb(0.8,0.6,0.3);
 
             let entity=parent.spawn((
-                UixAffect{ attribs: vec![
-                    attrib_setter(|c:&mut UiColor,v|c.back=v, col, [(UiAffectState::Press,col2)]),
-                    attrib_setter(|c:&mut UiColor,v|c.border=v, col3, [(UiAffectState::Focus,col4)]),
-                ] },
+                UixAffect(vec![
+                    attrib_setter(|c:&mut UiColor,v|c.back=v, col, []),
+                    border_col.clone(),
+                ]),
                 // UiColor{back:col,..Default::default()}, //border:Color::linear_rgb(0.5,0.5,0.5),
                 UiSize{ width:UiVal::Px(-20.0), height:UiVal::Px(-30.0), },
                 UiFocusable{ enable: true, ..Default::default() },

@@ -504,6 +504,7 @@ fn move_focus(
 
                 let to_bound=(0,to_len);
 
+                //
                 if is_after {
                     if focus_depth>0 {
                         stk_past_afters.push((child_entity,from_bounds.clone(),to_bound,focus_depth,true));
@@ -524,6 +525,7 @@ fn move_focus(
                 let x_computed=layout_computed_query.get(x.0).unwrap();
                 let y_computed=layout_computed_query.get(y.0).unwrap();
 
+                //
                 let q = if move_tab {
                     x_computed.order.cmp(&y_computed.order)
                 } else if move_vert {
@@ -532,6 +534,7 @@ fn move_focus(
                     x_computed.col.cmp(&y_computed.col)
                 };
 
+                //
                 let q=if q == Ordering::Equal {
                     let x_float=float_query.get(x.0).map(|f|f.float).unwrap_or_default();
                     let y_float=float_query.get(y.0).map(|f|f.float).unwrap_or_default();
@@ -549,13 +552,16 @@ fn move_focus(
                     q
                 };
 
+                //
                 if move_pos { q } else { q.reverse() }
             });
 
+            //
             stk_befores[stk_befores_len..].sort_by(|x,y|{
                 let x_computed=layout_computed_query.get(x.0).unwrap();
                 let y_computed=layout_computed_query.get(y.0).unwrap();
 
+                //
                 let q = if move_tab {
                     x_computed.order.cmp(&y_computed.order)
                 } else if move_vert {
@@ -564,6 +570,7 @@ fn move_focus(
                     x_computed.col.cmp(&y_computed.col)
                 };
 
+                //
                 let q=if q == Ordering::Equal {
                     let x_float=float_query.get(x.0).map(|f|f.float).unwrap_or_default();
                     let y_float=float_query.get(y.0).map(|f|f.float).unwrap_or_default();
@@ -581,6 +588,7 @@ fn move_focus(
                     q
                 };
 
+                //
                 if move_pos { q.reverse() } else { q }
             });
 
@@ -589,6 +597,7 @@ fn move_focus(
                 let x_computed=layout_computed_query.get(x.0).unwrap();
                 let y_computed=layout_computed_query.get(y.0).unwrap();
 
+                //
                 let q = if move_tab {
                     x_computed.order.cmp(&y_computed.order)
                 } else if move_vert {
@@ -597,10 +606,12 @@ fn move_focus(
                     x_computed.col.cmp(&y_computed.col)
                 };
 
+                //
                 let q=if q == Ordering::Equal {
                     let x_float=float_query.get(x.0).map(|f|f.float).unwrap_or_default();
                     let y_float=float_query.get(y.0).map(|f|f.float).unwrap_or_default();
 
+                    //
                     if !x_float && !y_float {
                         x_computed.order.cmp(&y_computed.order)
                     } else if !x_float && y_float {
@@ -614,13 +625,16 @@ fn move_focus(
                     q
                 };
 
+                //
                 if move_pos { q } else { q.reverse() }
             });
 
+            //
             stk_past_befores[stk_past_befores_len..].sort_by(|x,y|{
                 let x_computed=layout_computed_query.get(x.0).unwrap();
                 let y_computed=layout_computed_query.get(y.0).unwrap();
 
+                //
                 let q = if move_tab {
                     x_computed.order.cmp(&y_computed.order)
                 } else if move_vert {
@@ -629,6 +643,7 @@ fn move_focus(
                     x_computed.col.cmp(&y_computed.col)
                 };
 
+                //
                 let q=if q == Ordering::Equal {
                     let x_float=float_query.get(x.0).map(|f|f.float).unwrap_or_default();
                     let y_float=float_query.get(y.0).map(|f|f.float).unwrap_or_default();
@@ -646,6 +661,7 @@ fn move_focus(
                     q
                 };
 
+                //
                 if move_pos { q.reverse() } else { q }
             });
 
@@ -679,6 +695,7 @@ fn move_focus(
         stk.extend(stk_befores);
         stk.reverse();
     } else if move_tab {
+        //
         if let Some(&focus_stk_last_entity)=focus_entity_stk.last() {
             if let Ok(children)=children_query.get(focus_stk_last_entity) {
                 stk.extend(children.iter().map(|child_entity|( child_entity, vec![], (0,0), 0, true, )));
@@ -687,6 +704,7 @@ fn move_focus(
             stk.push(( top_root_entity, vec![], (0,0), 0, true, ));
         }
 
+        //
         stk.sort_by(|x,y|{
             let x_computed=layout_computed_query.get(x.0).unwrap();
             let y_computed=layout_computed_query.get(y.0).unwrap();
@@ -705,8 +723,10 @@ fn move_focus(
     while let Some((entity, from_bounds, to_bound, focus_depth,_valid))=stk.pop() {
         // println!("while stk: entity={entity:?}, from_bounds={from_bounds:?}, to_bound={to_bound:?}, focus_depth={focus_depth}, stk_len={}",stk.len());
 
+        //
         let Ok(layout_computed) = layout_computed_query.get(entity) else {continue;};
 
+        //
         if !layout_computed.unlocked {
             continue;
         }
@@ -714,10 +734,12 @@ fn move_focus(
         //when coming across a focusable, focus on it
         if let Some(focusable) = focusable_query.get(entity).ok() {
             if cur_group==focusable.group && focusable.enable {
+                //
                 if let Some(cur_focus_entity) = *cur_focus_entity {
                     ui_event_writer.write(UiInteractEvent{entity:cur_focus_entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: cur_device }});
                 }
 
+                //
                 if focus_depth>0 {
                     for _ in 0 .. focus_depth {
                         let entity=focus_entity_stk.pop().unwrap();
@@ -741,6 +763,7 @@ fn move_focus(
 
                 // println!("\tfound focusable {entity:?},");
 
+                //
                 _found = true;
                 break;
             }
@@ -753,7 +776,6 @@ fn move_focus(
         //only add children from correct cols
 
         //
-
         if (move_vert && layout_computed.cols <= 1)
             || (move_hori && layout_computed.rows <= 1)
             || from_bounds.len()==0 //or move_tab
@@ -764,12 +786,14 @@ fn move_focus(
                 for child_entity in children.iter() {
                     let child_computed = layout_computed_query.get(child_entity).unwrap();
 
+                    //
                     let new_to_len=if move_vert {
                         child_computed.cols
                     } else {
                         child_computed.rows
                     };
 
+                    //
                     let new_to_bound = (0,new_to_len);
                     stk.push(( child_entity, from_bounds.clone(), new_to_bound, focus_depth, true, ));
                 }
@@ -799,6 +823,7 @@ fn move_focus(
 
                 // println!("\twhile from_to_stk: (from_start,from_end)={:?},(to_start,to_end)={:?}, from_to_stk_len={}", (from_start,from_end),(to_start,to_end),from_to_stk.len(), );
 
+                //
                 if from_len == 1 {
                     // println!("\t\tfrom_len == 1");
 
@@ -831,6 +856,7 @@ fn move_focus(
                     // println!("\t\tto_len!=0 && from_len > to_len && from_len%to_len == 0");
                     // println!("\t\t\tdiv={div}");
 
+                    //
                     for to in to_start .. to_end {
                         let i = to-to_start;
                         let from_range=&mut to_from_map[to as usize];
@@ -849,6 +875,7 @@ fn move_focus(
                     // println!("\t\tfrom_len!=0 && from_len < to_len && to_len%from_len == 0");
                     // println!("\t\t\tdiv={div}");
 
+                    //
                     for to in to_start .. to_end {
                         let i = to-to_start;
                         let from_range=&mut to_from_map[to as usize];
@@ -864,6 +891,7 @@ fn move_focus(
                     // println!("\t\tfrom_len == to_len");
                     // println!("\t\t\tto_start {to_start}, to_end {to_end}");
 
+                    //
                     for to in to_start .. to_end {
                         let i = to-to_start;
                         let from=i+from_start;
@@ -890,11 +918,13 @@ fn move_focus(
                     // //// println!("= from_to_stk_push {:?}",( (from_start,from_start+from_len_half2), (to_start,to_start+to_len_half2), ));
                     // //// println!("= from_to_stk_push {:?}",( (from_start+from_len_half,from_start+from_len_half+from_len_half2), (to_start+to_len_half,to_start+to_len_half+to_len_half2), ));
 
+                    //
                     from_to_stk.push((
                         (from_start,from_start+from_len_half2),
                         (to_start,to_start+to_len_half2),
                     ));
 
+                    //
                     from_to_stk.push((
                         (from_start+from_len_half,from_start+from_len_half+from_len_half2),
                         (to_start+to_len_half,to_start+to_len_half+to_len_half2),
@@ -919,10 +949,12 @@ fn move_focus(
 
                 let mut from_to_map =  (0 .. from_bound_len2).map(|_|(to_bound_end,0)).collect::<Vec<_>>(); //[from_ind]=(to_min,to_max)
 
+                //
                 for (to,&(from_start,from_end)) in to_from_map.iter().enumerate() {
                     let to = to as u32;
                     // let from_len = from_end-from_start;
 
+                    //
                     for from in from_start .. from_end {
                         // let from=from_start+i;
                         let to_range=&mut from_to_map[from as usize];
@@ -933,9 +965,11 @@ fn move_focus(
 
                 // println!("\t\tfrom_to_map={:?}",from_to_map.iter().enumerate().map(|(from,(to_start,to_end))|format!("{from} => {to_start}..{to_end}")) .collect::<Vec<_>>());
 
+                //
                 let (to_start,to_end)=from_to_map[from_bound_start as usize];
                 let to_len=to_end-to_start;
 
+                //
                 if to_len > 1 && from_bounds.len()>0 {
                     let new_to_bound=(to_start,to_start+to_len);
                     // let mut from_bounds =from_bounds.clone();
@@ -950,6 +984,7 @@ fn move_focus(
                     // println!("\t\tto_len <= 1");
 
                     if let Ok(children)=children_query.get(entity) {
+                        //
                         for child_entity in children.iter() {
                             let child_computed = layout_computed_query.get(child_entity).unwrap();
 
@@ -1064,12 +1099,14 @@ fn move_focus(
                 if move_pos { q.reverse() } else { q }
             };
 
+            //
             let r= if move_vert {
                 x_computed.col.cmp(&y_computed.col).reverse()
             } else { //move_hori
                 x_computed.row.cmp(&y_computed.row).reverse()
             };
 
+            //
             let mut c1=0;
             let mut c2=0;
 
@@ -1088,6 +1125,7 @@ fn move_focus(
             //     }
             // }
 
+            //
             match v {
                 Ordering::Equal=> {
                 }
@@ -1099,6 +1137,7 @@ fn move_focus(
                 }
             }
 
+            //
             match q {
                 Ordering::Equal=> {
                 }
@@ -1110,6 +1149,7 @@ fn move_focus(
                 }
             }
 
+            //
             match r {
                 Ordering::Equal=> {
                 }
@@ -1121,17 +1161,21 @@ fn move_focus(
                 }
             }
 
+            //
+            c1.cmp(&c2)
+
+            //
             // let q=if q==Ordering::Equal { h } else { q };
             // let q=if q==Ordering::Equal { v } else { q };
             // let q=if q==Ordering::Equal { r } else { q };
-
             // q
-            c1.cmp(&c2)
         });
-        // println!("\tstk2={stk:?}");
-    } //while
 
+        // println!("\tstk2={stk:?}");
+    } //end while
 }
+
+
 /*
 
 //handle focused==true, but not in focus_entity_stk/cur_focus_entity

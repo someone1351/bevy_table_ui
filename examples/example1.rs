@@ -24,7 +24,8 @@ use bevy::prelude::{KeyCode, Msaa, PluginGroup };
 
 
 use bevy_table_ui as table_ui;
-use rand::Rng;
+use rand::{Rng,rngs::ThreadRng};
+// use rand::Rng;
 // use mesh::TestRenderComponent;
 // use render_core::core_my::CameraMy;
 use table_ui::*;
@@ -127,18 +128,20 @@ where
     S : IntoIterator<Item=(UiAffectState,V)>,
     // F : Fn(&mut C,V) + 'static+Send+Sync,
 {
-    let attrib_states:HashMap<UiAffectState,V>=state_vals.into_iter().collect();
+    // let attrib_states:HashMap<UiAffectState,V>=state_vals.into_iter().collect();
+    let attrib_states:Vec<(UiAffectState,V)>=state_vals.into_iter().collect();
 
     Arc::new(move|entity:Entity,cur_states:&HashSet<UiAffectState>|{
-        let mut states:Vec<_>=cur_states.intersection(&attrib_states.keys().cloned().collect()).cloned().collect();
-        states.sort();
-        let v=states.last().map(|state|attrib_states.get(state).cloned().unwrap()).unwrap_or(default_val.clone());
+        // let mut states:Vec<_>=cur_states.intersection(&attrib_states.keys().cloned().collect()).cloned().collect();
+        // states.sort();
+        // let v=states.last().map(|state|attrib_states.get(state).cloned().unwrap()).unwrap_or(default_val.clone());
+
+        let v=attrib_states.iter().rev().find_map(|(s,v)|cur_states.contains(s).then_some(v)).unwrap_or(&default_val).clone();
 
         Box::new(move|world:&mut World|{
             let mut e=world.entity_mut(entity);
             let mut c=e.entry::<C>().or_default();
             let mut c=c.get_mut();
-
             func(&mut c,v.clone());
         })
     })
@@ -227,73 +230,80 @@ pub fn setup_ui(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
-    let mut rng = rand::thread_rng();
+    let mut rng: ThreadRng = rand::thread_rng();
 
     let font: Handle<Font>=asset_server.load("fonts/FiraMono-Medium.ttf");
 
-    commands.spawn((
+    let root_entity= commands.spawn((
         MenuUiRoot,
         UiRoot::default(),
-        UiSpan{ span: 3 },
+        UiGap{hgap:UiVal::Px(20.0),vgap:UiVal::None},
+    )).id();
 
-
+    let left_container_entity=commands.spawn((
+        UiSpan{ span: 1 },
         UiColor{back:Color::srgb(0.5,0.5,0.5),..Default::default()},
-
-        // UiSpan{span:1},
         UiGap{hgap:UiVal::Px(30.0),vgap:UiVal::Px(30.0)},
         UiEdge{ padding: UiRectVal::new_px(30.0), ..Default::default() },
-    )).with_children(|parent|{
-        let border_col= attrib_setter(|c:&mut UiColor,v|c.border=v,
-            Color::linear_rgb(0.5,0.5,0.5),
-        [
-            (UiAffectState::Focus,Color::linear_rgb(0.8,0.6,0.3)),
-            (UiAffectState::Press,Color::linear_rgb(0.9,0.4,0.3))
-        ]);
-        for _i in 0..9 {
-            let c=[rng.gen::<f32>(),rng.gen::<f32>(),rng.gen::<f32>()];
+        UiFill{ hfill: UiVal::None, vfill: UiVal::Scale(1.0) }
+    )).id();
 
-            let col=Color::srgb_from_array(c.map(|c|c*0.7));
-            // let col2=Color::srgb_from_array(c.map(|c|c*0.9));
-            // let col3=Color::srgb_from_array(c.map(|c|c*0.6));
-            // let col4=Color::linear_rgb(0.8,0.6,0.3);
+    let right_container_entity=commands.spawn((
+        UiSpan{ span: 3 },
+        UiColor{back:Color::srgb(0.5,0.5,0.5),..Default::default()},
+        UiGap{hgap:UiVal::Px(30.0),vgap:UiVal::Px(30.0)},
+        UiEdge{ padding: UiRectVal::new_px(30.0), ..Default::default() },
+    )).id();
 
-            let entity=parent.spawn((
-                UixAffect(vec![
-                    attrib_setter(|c:&mut UiColor,v|c.back=v, col, []),
-                    border_col.clone(),
-                ]),
-                // UiColor{back:col,..Default::default()}, //border:Color::linear_rgb(0.5,0.5,0.5),
-                UiSize{ width:UiVal::Px(-20.0), height:UiVal::Px(-30.0), },
-                UiFocusable{ enable: true, ..Default::default() },
-                UiPressable{ enable: true, ..Default::default() },
-                // UiHoverable{ enable: true },
-                // UiDraggable{ enable: true },
-                UiEdge{  border: UiRectVal::new_scalar(UiVal::Px(5.0)),  ..Default::default() },
-                // InputComponent{
-                //     focused_cols: [
-                //         (0,Color::linear_rgb(0.8,0.8,0.2)),
-                //         (1,Color::linear_rgb(0.2,0.8,0.8)),
-                //     ].into(),
-                //     unfocused_col: Color::linear_rgb(0.5,0.5,0.5),
-                // },
-            )).id();
+    commands.entity(root_entity).add_children(&[left_container_entity,right_container_entity]);
 
-            parent.commands().entity(entity).insert(UiText{
-                value:format!("{entity}"),
-                font_size: 15.0,
-                // halign:UiTextHAlign::Left,
-                // valign:UiTextVAlign::Top,
-                halign:UiTextHAlign::Right,
-                valign:UiTextVAlign::Bottom,
-                font: font.clone(),
-                color: Color::linear_rgb(1.0,1.0,1.0),
-                ..Default::default()
-            });
-
+    commands.entity(left_container_entity).with_children(|parent|{
+        for _ in 0..2 {
+            let entity=parent.spawn(()).id();
+            create_ui_box(&mut parent.commands(), &mut rng, font.clone(),entity);
+        }
+    });
+    commands.entity(right_container_entity).with_children(|parent|{
+        for _ in 0..9 {
+            let entity=parent.spawn(()).id();
+            create_ui_box(&mut parent.commands(), &mut rng, font.clone(),entity);
         }
     });
 
+}
 
+fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<Font>,entity:Entity) {
+    let border_col= attrib_setter(|c:&mut UiColor,v|c.border=v,Color::linear_rgb(0.5,0.5,0.5),[
+        (UiAffectState::Focus,Color::linear_rgb(0.8,0.6,0.3)),
+        (UiAffectState::Press,Color::linear_rgb(1.0,0.8,0.1))
+    ]);
+
+    let c=[rng.gen::<f32>(),rng.gen::<f32>(),rng.gen::<f32>()];
+    let col=Color::srgb_from_array(c.map(|c|c*0.8));
+
+    commands.entity(entity).insert((
+        UixAffect(vec![
+            attrib_setter(|c:&mut UiColor,v|c.back=v, col, []),
+            border_col.clone(),
+        ]),
+        UiSize{ width:UiVal::Px(-20.0), height:UiVal::Px(-30.0), },
+        UiFocusable{ enable: true, ..Default::default() },
+        UiPressable{ enable: true, ..Default::default() },
+        // UiHoverable{ enable: true },
+        // UiDraggable{ enable: true },
+        UiEdge{  border: UiRectVal::new_scalar(UiVal::Px(5.0)),  ..Default::default() },
+        UiText{
+            value:format!("{entity}"),
+            font_size: 15.0,
+            // halign:UiTextHAlign::Left,
+            // valign:UiTextVAlign::Top,
+            // halign:UiTextHAlign::Right,
+            // valign:UiTextVAlign::Bottom,
+            font: font.clone(),
+            color: Color::linear_rgb(1.0,1.0,1.0),
+            ..Default::default()
+        },
+    ));
 }
 
 fn setup_camera(mut commands: Commands) {

@@ -20,8 +20,27 @@ tracing = { version = "0.1", default-features = false, features = ["std"] }
 radsort = "0.1"
 
 [dev-dependencies]
-#bevy = { version = "0.17", default-features = false, features = [ "serialize","multi_threaded","bevy_window","x11", "file_watcher","png", } #"dynamic_linking" ,"bevy_ui"
-bevy = { version = "0.17.2", default-features = true, features = [ "serialize","file_watcher",] }
+#bevy = { version = "0.17", default-features = false, features = [ "serialize","multi_threaded","bevy_window","x11", "file_watcher","png",  ] } #"dynamic_linking" ,"bevy_ui"
+bevy = { version = "0.17", default-features = false, features = [
+    "bevy_asset",
+    "bevy_camera","bevy_color","bevy_core_pipeline","bevy_gilrs",
+    "bevy_image",
+    #"bevy_log",
+    "bevy_render",
+    "bevy_shader",
+    "bevy_state","bevy_text",
+    "bevy_window","bevy_winit","custom_cursor",
+    #"debug",
+    #"default_font",
+    "multi_threaded","png",
+    #"reflect_auto_register",
+    "std",
+    #"sysinfo_plugin",
+    #"wayland","webgl2","x11",
+    "dynamic_linking",
+]}
+
+#bevy = { version = "0.17.2", default-features = true, features = [ "serialize","file_watcher",] }
 rand = "0.8"
 [lib]
 name = "bevy_table_ui"

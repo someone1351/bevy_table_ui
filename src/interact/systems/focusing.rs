@@ -106,6 +106,12 @@ pub fn update_focus_events(
                  //necessary? better to check when using it?
                 // hist.retain(|&entity,_|{  computed_query.contains(entity) }); //the hist!
 
+                for h in hist {
+                    if h.map(|entity|!computed_query.contains(entity)).unwrap_or_default() {
+                        *h=None;
+                    }
+                }
+
                 //remove from cur_focus/focus_stk any invisible, changed group, no longer focusable or focusable.enabled
                 for i in 0..focus_entity_stk.len() {
                     let entity=focus_entity_stk[i];

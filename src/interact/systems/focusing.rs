@@ -79,7 +79,7 @@ pub fn update_focus_events(
     parent_query : Query<&ChildOf,With<UiLayoutComputed>>,
     root_query: Query<(Entity,&UiLayoutComputed), With<UiRoot>>,
     children_query: Query<&Children,(With<UiLayoutComputed>,)>,
-    focus_query : Query<Entity, (With<UiFocusable>,)>,
+    // focus_query : Query<Entity, (With<UiFocusable>,)>,
     mut focusable_query : Query<&mut UiFocusable>,
 
     mut input_event_reader: MessageReader<UiInteractInputMessage>,
@@ -89,11 +89,12 @@ pub fn update_focus_events(
 
         // HashMap<Entity,u64>, //replace with left/right/top/bottom eg [Option<Entity>;4] or [(Option<Entity>,u64);4]
         // [(Option<Entity>,u64);4]
-        i32 //the hist!
+        // i32 //the hist!
+        [Option<Entity>;4] //left,top,right,bottom
 
     )>>>>, //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk,hist)
 
-    mut hist_incr : Local<u64>,
+    // mut hist_incr : Local<u64>,
 ) {
 
     //in cur_focus_entity, focus_entity_stk, unfocus removed entities, disabled/invisible entities, disabled focusables, focusables changed groups
@@ -326,7 +327,7 @@ pub fn update_focus_events(
             cur_focus_entity,
             focus_entity_stk,
             // hist, //the hist!
-            &mut hist_incr,
+            // &mut hist_incr, //the hist!
             parent_query,
             computed_query,
             children_query,
@@ -386,7 +387,7 @@ fn go(
     cur_focus_entity:&mut Option<Entity>,
     focus_entity_stk:&mut Vec<Entity>,
     // hist:  &mut HashMap<Entity, u64>, //the hist!
-    hist_incr:&mut u64,
+    // hist_incr:&mut u64, //the hist!
     parent_query:Query<&ChildOf, With<UiLayoutComputed>>,
 
     computed_query: Query<&UiLayoutComputed,With<UiLayoutComputed>>,
@@ -769,7 +770,7 @@ fn go(
 
                     //println!("focus found {entity:?}, valid={valid}");
 
-                            *hist_incr+=1;
+                            // *hist_incr+=1; //the hist!
                             // hist.insert(entity, *hist_incr); //the hist!
                     // println!("\tfound focusable {entity:?},");
 

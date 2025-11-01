@@ -416,15 +416,14 @@ fn go(
     //  that are in same row/col (for hori/vert) or all if using order (for prev/enxt)
 
     if let Some(cur_focus_entity)=*cur_focus_entity {
-        // let mut prev_entity = cur_focus_entity;
 
         //calculated from curfocus+focus_stk, used on "to" nodes,
-        let mut from_bounds = Vec::new(); //[depth_len-depth-1]=(focus_nodes[depth].col,.focus_nodes[depth].parent.cols)
         //[(cur_focus.col,parent.cols),(parent.col,gparent.cols),(gparent.col,ggparent.cols) ]
+        let mut from_bounds = Vec::new(); //[depth_len-depth-1]=(focus_nodes[depth].col,.focus_nodes[depth].parent.cols)
 
+        //
         //past is for going past the edge and wrapping, forget why its split into befores/afters
         //befores is for ones behind ie in the opposite move dir, think also used in wrapping?
-
 
         //
         let mut stk_befores: Vec<(Entity, Vec<(u32, u32)>,(u32,u32), usize,bool)> = Vec::new(); //[]=(entity,from_bounds,to_range,focus_depth,valid)
@@ -454,23 +453,9 @@ fn go(
 
             //
             for child_entity in parent_children.iter() {
-                // if !focusable_entity_visiteds.contains(&child_entity) { //not really necessary?
-                //     continue;
-                // }
-
                 let child_computed=computed_query.get(child_entity).unwrap();
 
-                // let float=float_query.get(child_entity).map(|x|x.float).unwrap_or_default();
-
-                // if float {
-                //     continue;
-                // }
-
-                if child_entity == cur_entity {
-                    continue;
-                }
-
-                if (move_vert && child_computed.col != cur_computed.col) || (move_hori && child_computed.row != cur_computed.row) {
+                if child_entity == cur_entity || (move_vert && child_computed.col != cur_computed.col) || (move_hori && child_computed.row != cur_computed.row) {
                     continue;
                 }
 
@@ -482,12 +467,6 @@ fn go(
                     FocusMove::Next => child_computed.order > cur_computed.order,
                     FocusMove::Prev => child_computed.order < cur_computed.order,
                 };
-
-                // let to_len=match move_dir {
-                //     FocusMove::Up|FocusMove::Down => parent_computed.rows,
-                //     FocusMove::Left|FocusMove::Right => parent_computed.cols,
-                //     FocusMove::Prev|FocusMove::Next => 0,
-                // };
 
                 let to_len=match move_dir {
                     FocusMove::Up|FocusMove::Down => child_computed.cols,
@@ -516,7 +495,6 @@ fn go(
             stk[stk_len..].sort_by(|x,y|{
                 let x_computed=computed_query.get(x.0).unwrap();
                 let y_computed=computed_query.get(y.0).unwrap();
-
 
                 let q = if move_tab {
                     x_computed.order.cmp(&y_computed.order)
@@ -673,45 +651,27 @@ fn go(
         stk.extend(stk_past_befores);
         stk.extend(stk_befores);
         stk.reverse();
-
-        // println!("stk is {stk:?}");
-
     } else if move_tab {
         if let Some(&focus_stk_last_entity)=focus_entity_stk.last() {
             if let Ok(children)=children_query.get(focus_stk_last_entity) {
-                stk.extend(children.iter().map(|child_entity|(
-                    child_entity,
-                    // computed_query.get(child_entity).unwrap(),
-                    Vec::new(),
-                    (0,0),
-                    0,
-                    true,
-                )));
+                stk.extend(children.iter().map(|child_entity|( child_entity, vec![], (0,0), 0, true, )));
             }
         } else {
-            stk.push((
-                top_root_entity,
-                // computed_query.get(top_root_entity).unwrap(),
-                Vec::new(),
-                (0,0),
-                0,
-                true,
-            ));
+            stk.push(( top_root_entity, vec![], (0,0), 0, true, ));
         }
 
         stk.sort_by(|x,y|{
             let x_computed=computed_query.get(x.0).unwrap();
             let y_computed=computed_query.get(y.0).unwrap();
-
             let q= x_computed.order.cmp(&y_computed.order);
             if move_dir==FocusMove::Next { q.reverse() } else { q } //
         });
     }
 
     //
-    // println!("\n\n");
-    // println!("stk init {stk:?}");
+    // println!("\n\nstk init {stk:?}");
 
+    //
     let mut _found=false;
 
     //eval stk
@@ -742,7 +702,6 @@ fn go(
                 if focus_depth>0 {
                     for _ in 0 .. focus_depth {
                         let entity=focus_entity_stk.pop().unwrap();
-                        // prev_focused_stk.pop().unwrap();
 
                         ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: cur_device }});
 
@@ -756,12 +715,9 @@ fn go(
                     }
                 }
 
-
                 //
-
                 *cur_focus_entity = Some(entity);
                 ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group:cur_group, device:cur_device }});
-
 
                 // // if let Ok(mut focusable)=focusable_query.get_mut(entity) {
                 // //     focusable.focused=true;
@@ -799,11 +755,6 @@ fn go(
             if let Ok(children)=children_query.get(entity) {
                 for child_entity in children.iter() {
                     let child_computed = computed_query.get(child_entity).unwrap();
-                    // let float=float_query.get(child_entity).map(|x|x.float).unwrap_or_default();
-
-                    // if float {
-                    //     continue;
-                    // }
 
                     let new_to_len=if move_vert {
                         child_computed.cols
@@ -812,22 +763,13 @@ fn go(
                     };
 
                     let new_to_bound = (0,new_to_len);
-
-                    stk.push((
-                        child_entity,
-                        from_bounds.clone(),
-                        new_to_bound,
-                        focus_depth,
-                        true,
-                    ));
+                    stk.push(( child_entity, from_bounds.clone(), new_to_bound, focus_depth, true, ));
                 }
             }
         } else { //splits, not move_tab
             let mut from_bounds = from_bounds.clone();
             let (from_bound_start,from_bound_end)=from_bounds.pop().unwrap();
             let (to_bound_start,to_bound_end)=to_bound;
-
-
             let absolute_to_len = if move_vert { computed.cols } else { computed.rows };
 
             // let to_bound_len = to_bound_end-to_bound_start;
@@ -835,13 +777,11 @@ fn go(
             //use from_bound_end as min, as any from_val min'd against it will always be smaller
             //use 0 as max, as any from_val max'd against it will always be larger
 
-            let mut to_from_map=(0..absolute_to_len).map(|_|(from_bound_end,0)).collect::<Vec<_>>(); //[to_ind]=(from_min,from_max)
-
             //
+            let mut to_from_map=(0..absolute_to_len).map(|_|(from_bound_end,0)).collect::<Vec<_>>(); //[to_ind]=(from_min,from_max)
             let mut from_to_stk= vec![((0,from_bound_end),(to_bound_start,to_bound_end))]; //[]=((from_start,from_len),(to_start,to_len))
 
             // println!("\tto_from_map0={:?}", to_from_map.iter().enumerate() .map(|(to,(from_start,from_end))|format!("{from_start}..{from_end} => {to}")) .collect::<Vec<_>>() );
-
 
             //calculates to_from_map
             while let Some(((from_start,from_end),(to_start,to_end)))=from_to_stk.pop() {
@@ -902,9 +842,7 @@ fn go(
 
                     for to in to_start .. to_end {
                         let i = to-to_start;
-
                         let from_range=&mut to_from_map[to as usize];
-
 
                         // // println!("\t\t\tfromrange1 {from_range:?} => {to}");
 
@@ -922,12 +860,10 @@ fn go(
                         let from=i+from_start;
                         let from_range=&mut to_from_map[to as usize];
 
-
                         // // println!("\t\t\tfromrange1 {from_range:?} => {to}");
 
                         from_range.0=from_range.0.min(from);
                         from_range.1=from_range.1.max(from+1);
-
 
                         // println!("\t\t\tfromrange {from_range:?} => {to}");
                     }
@@ -1001,8 +937,7 @@ fn go(
                     // println!("\t\t\tstk_push {:?}",(entity, &from_bounds,new_to_bound,focus_depth));
 
                     stk.push((entity, from_bounds,new_to_bound,focus_depth,true));
-                } else
-                {
+                } else {
                     // println!("\t\tto_len <= 1");
 
                     // let q=children_query.get(entity).map(|x|x.iter()).unwrap_or_default();
@@ -1011,12 +946,6 @@ fn go(
                         // let mut child_stk=Vec::new();
                         for child_entity in children.iter() {
                             let child_computed = computed_query.get(child_entity).unwrap();
-
-                            // let float=float_query.get(child_entity).map(|x|x.float).unwrap_or_default();
-
-                            // if float {
-                            //     continue;
-                            // }
 
                             let to=if move_vert {
                                 child_computed.col
@@ -1029,6 +958,7 @@ fn go(
                             } else {
                                 child_computed.rows
                             };
+
                             let new_to_bound = (0,new_to_len);
 
                             // println!("\t\t\tchild={child_entity:?}");
@@ -1055,11 +985,6 @@ fn go(
                                     }
 
                                     //
-
-
-
-                                    //
-
                                     // println!("\t\t\t\tnew_to_len={new_to_len:?}");
                                     // println!("\t\t\t\t\tfrom_bounds={from_bounds:?}");
                                     // println!("\t\t\t\t\tstk={stk:?}");
@@ -1137,8 +1062,10 @@ fn go(
             let mut c1=0;
             let mut c2=0;
 
+            //
             //if invalid then h more important than q
             //if valid then h more important than r
+
             // match h { //the hist!
             //     Ordering::Equal=> {
             //     }
@@ -1149,6 +1076,7 @@ fn go(
             //         c2+=2;
             //     }
             // }
+
             match v {
                 Ordering::Equal=> {
                 }
@@ -1181,6 +1109,7 @@ fn go(
                     c2+=1;
                 }
             }
+
             // let q=if q==Ordering::Equal { h } else { q };
             // let q=if q==Ordering::Equal { v } else { q };
             // let q=if q==Ordering::Equal { r } else { q };

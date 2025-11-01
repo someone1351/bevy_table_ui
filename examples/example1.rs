@@ -156,6 +156,7 @@ pub fn on_affects<'a>(
 
     //
     for ev in interact_event_reader.read() {
+        println!("{ev}");
         let Ok((_,_,mut affect_computed))=affect_query.get_mut(ev.entity) else {continue;};
 
         match ev.event_type {
@@ -210,17 +211,17 @@ pub fn on_affects<'a>(
         }
     }
 
-    if !new_states.is_empty() {
-        println!("==");
+    // if !new_states.is_empty() {
+    //     println!("==");
 
-        for (entity, _affect,affect_computed) in affect_query.iter() {
-            let states:HashSet<UiAffectState>=new_states.get(&entity).map(|x|x.iter()).unwrap_or_default().chain(affect_computed.states.iter())
-                .filter_map(|(&k,v)|(!v.is_empty()).then_some(k))
-                .collect();
+    //     for (entity, _affect,affect_computed) in affect_query.iter() {
+    //         let states:HashSet<UiAffectState>=new_states.get(&entity).map(|x|x.iter()).unwrap_or_default().chain(affect_computed.states.iter())
+    //             .filter_map(|(&k,v)|(!v.is_empty()).then_some(k))
+    //             .collect();
 
-            println!("{entity}: {states:?}");
-        }
-    }
+    //         println!("{entity}: {states:?}");
+    //     }
+    // }
 }
 
 #[derive(Component)]

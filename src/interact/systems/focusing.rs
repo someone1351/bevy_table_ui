@@ -22,6 +22,8 @@ use bevy::ecs::prelude::*;
 // use bevy::hierarchy::prelude::*;
 
 
+use crate::interact::vals::FocusMove;
+
 use super::super::components::*;
 use super::super::resources::*;
 use super::super::messages::*;
@@ -42,20 +44,6 @@ also keep a count to use for adding visit time
 
 */
 
-#[derive(PartialEq,Debug)]
-enum FocusMove {Left,Right,Up,Down,Prev,Next}
-impl FocusMove {
-    fn ind(&self) -> Option<usize> {
-        match self {
-            FocusMove::Left => Some(0),
-            FocusMove::Right => Some(2),
-            FocusMove::Up => Some(1),
-            FocusMove::Down => Some(3),
-            FocusMove::Prev => None,
-            FocusMove::Next => None,
-        }
-    }
-}
 
 // #[derive(PartialEq,Debug)] //,Default
 // pub enum FocusMoveType {
@@ -438,11 +426,12 @@ fn move_focus(
 
     //on nofocus(init) then up/back, don't send focus_begin/end for the init dif from up/back focus entity
 
-    let move_hori = move_dir==FocusMove::Left || move_dir==FocusMove::Right;
-    let move_vert = move_dir==FocusMove::Down || move_dir==FocusMove::Up;
-    let move_tab = move_dir==FocusMove::Prev || move_dir==FocusMove::Next;
-    let move_pos = move_dir==FocusMove::Down || move_dir==FocusMove::Right || move_dir==FocusMove::Next;
+    let move_hori = move_dir.horizontal();
+    let move_vert = move_dir.vertical();
+    let move_tab = move_dir.tab();
+    let move_pos = move_dir.positive();
 
+    //
     let mut stk: Vec<(Entity,Vec<(u32,u32)>,(u32,u32),usize,bool)>=Vec::new(); //[]=(entity,from_bounds,(to_start,to_len),focus_depth,valid)
 
     //init stk
@@ -450,10 +439,10 @@ fn move_focus(
     //  that are in same row/col (for hori/vert) or all if using order (for prev/enxt)
 
     if let Some(cur_focus_entity)=*cur_focus_entity {
-
         //calculated from curfocus+focus_stk, used on "to" nodes,
-        //[(cur_focus.col,parent.cols),(parent.col,gparent.cols),(gparent.col,ggparent.cols) ]
-        let mut from_bounds = Vec::new(); //[depth_len-depth-1]=(focus_nodes[depth].col,.focus_nodes[depth].parent.cols)
+        //[depth_len-depth-1]=(focus_nodes[depth].col,.focus_nodes[depth].parent.cols)
+        //    eg [(cur_focus.col,parent.cols),(parent.col,gparent.cols),(gparent.col,ggparent.cols) ]
+        let mut from_bounds = Vec::new();
 
         //
         //past is for going past the edge and wrapping, forget why its split into befores/afters
@@ -467,23 +456,25 @@ fn move_focus(
         //
         let mut focus_depth = 0;
 
-        //
+        //loop thru cur focused entity and its ancestors
         for cur_entity in [cur_focus_entity].into_iter().chain(parent_query.iter_ancestors(cur_focus_entity)) {
             let Ok(parent_entity) = parent_query.get(cur_entity).map(|p|p.parent()) else {
                 break; //only loop entities with parent
             };
 
+            let Ok(parent_children) = children_query.get(parent_entity) else {
+                continue;
+            };
+
+            //
             let cur_computed = layout_computed_query.get(cur_entity).unwrap();
             let parent_computed = layout_computed_query.get(parent_entity).unwrap();
 
+            //
             let stk_len = stk.len();
             let stk_befores_len = stk_befores.len();
             let stk_past_befores_len = stk_past_befores.len();
             let stk_past_afters_len = stk_past_afters.len();
-
-            let Ok(parent_children) = children_query.get(parent_entity) else {
-                continue;
-            };
 
             //
             for child_entity in parent_children.iter() {
@@ -750,7 +741,7 @@ fn move_focus(
                 }
 
                 //
-                if let Some(ind)=move_dir.ind() {
+                if let Some(ind)=move_dir.rev().ind() {
                     device_move_hists.entry(entity).or_insert_with(||[Entity::PLACEHOLDER;4])[ind]=cur_focus_entity.unwrap();
                 }
 

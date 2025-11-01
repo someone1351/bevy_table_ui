@@ -3,6 +3,7 @@ pub mod systems;
 pub mod resources;
 pub mod plugin;
 pub mod messages;
+mod vals;
 // use bevy::app::PostUpdate;
 /*
 TODO

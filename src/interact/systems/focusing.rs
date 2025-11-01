@@ -426,6 +426,9 @@ fn move_focus(
 
     //on nofocus(init) then up/back, don't send focus_begin/end for the init dif from up/back focus entity
 
+    //with move_hists, if moving right, and reaching end, want it to wrap to first item in cur row's move_hist.left
+    //  could look through list of the candidates, and search for the first candidate.move_hist.left
+
     let move_hori = move_dir.horizontal();
     let move_vert = move_dir.vertical();
     let move_tab = move_dir.tab();
@@ -813,6 +816,7 @@ fn move_focus(
             let mut to_from_map=(0..absolute_to_len).map(|_|(from_bound_end,0)).collect::<Vec<_>>(); //[to_ind]=(from_min,from_max)
             let mut from_to_stk= vec![((0,from_bound_end),(to_bound_start,to_bound_end))]; //[]=((from_start,from_len),(to_start,to_len))
 
+            //
             // println!("\tto_from_map0={:?}", to_from_map.iter().enumerate() .map(|(to,(from_start,from_end))|format!("{from_start}..{from_end} => {to}")) .collect::<Vec<_>>() );
 
             //calculates to_from_map
@@ -972,39 +976,38 @@ fn move_focus(
                 } else {
                     // println!("\t\tto_len <= 1");
 
-                    // let q=children_query.get(entity).map(|x|x.iter()).unwrap_or_default();
-
                     if let Ok(children)=children_query.get(entity) {
-                        // let mut child_stk=Vec::new();
                         for child_entity in children.iter() {
                             let child_computed = layout_computed_query.get(child_entity).unwrap();
 
-                            let to=if move_vert {
-                                child_computed.col
+                            let (to,new_to_len)=if move_vert {
+                                (child_computed.col, child_computed.cols)
                             } else {
-                                child_computed.row
+                                (child_computed.row, child_computed.rows)
                             };
 
-                            let new_to_len=if move_vert {
-                                child_computed.cols
-                            } else {
-                                child_computed.rows
-                            };
-
+                            //
                             let new_to_bound = (0,new_to_len);
 
+                            //
                             // println!("\t\t\tchild={child_entity:?}");
                             // println!("\t\t\t\tto={to:?}, to_start={to_start:?}, to_end={to_end:?}, to_len={to_len:?}");
 
+                            //
                             if to>=to_start && to<to_end //to_start+to_len
                             {
+                                //
                                 let (from_start,from_end)=to_from_map[to as usize];
+
+                                //
                                 // println!("\t\t\t\tfrom_start={from_start:?}, from_end={from_end:?}");
 
+                                //
                                 if from_bound_start >= from_start && from_bound_start < from_end {
                                     let mut from_bounds=from_bounds.clone();
                                     let from_len=from_end-from_start;
 
+                                    //
                                     // println!("\t\t\t\tok");
 
                                     //add new from split
@@ -1012,6 +1015,7 @@ fn move_focus(
                                         let new_split_ind=from_bound_start-from_start;
                                         from_bounds.push((new_split_ind,from_len));
 
+                                        //
                                         // println!("\t\t\t\t\tfrom_len>1");
                                         // println!("\t\t\t\t\t\tfrom_bounds_push ({new_split_ind},{from_len})");
                                     }
@@ -1024,6 +1028,8 @@ fn move_focus(
 
                                     //
                                     stk.push((child_entity, from_bounds,new_to_bound,focus_depth,true));
+
+                                    //
                                     continue;
                                 } else {
                                     // println!("\t\t\t\tnot_ok from");
@@ -1036,7 +1042,7 @@ fn move_focus(
                             // if there are no other options
                             stk.push((child_entity, from_bounds.clone(),new_to_bound,focus_depth,false));
 
-                        } //for
+                        } //end for
                         // println!("\t\t\tstk={stk:?}");
                     }
                 }

@@ -662,41 +662,39 @@ fn move_focus(
         }
 
         //when coming across a focusable, focus on it
-        if let Some(focusable) = focusable_query.get(entity).ok() {
-            if cur_group==focusable.group && focusable.enable {
-                //
-                if let Some(cur_focus_entity) = *cur_focus_entity {
-                    ui_event_writer.write(UiInteractEvent{entity:cur_focus_entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: cur_device }});
-                }
-
-                //
-                if focus_depth>0 {
-                    for _ in 0 .. focus_depth {
-                        let entity=focus_entity_stk.pop().unwrap();
-                        ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: cur_device }});
-                    }
-                }
-
-                //
-                if let Some(ind)=move_dir.rev().ind() {
-                    device_move_hists.entry(entity).or_insert_with(||[Entity::PLACEHOLDER;4])[ind]=cur_focus_entity.unwrap();
-                }
-
-                //
-                *cur_focus_entity = Some(entity);
-                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group:cur_group, device:cur_device }});
-
-                //println!("focus found {entity:?}, valid={valid}");
-
-                // *hist_incr+=1; //the hist!
-                // hist.insert(entity, *hist_incr); //the hist!
-
-                // println!("\tfound focusable {entity:?},");
-
-                //
-                _found = true;
-                break;
+        if focusable_query.get(entity).map(|focusable|cur_group==focusable.group && focusable.enable).unwrap_or_default() {
+            //
+            if let Some(cur_focus_entity) = *cur_focus_entity {
+                ui_event_writer.write(UiInteractEvent{entity:cur_focus_entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: cur_device }});
             }
+
+            //
+            if focus_depth>0 {
+                for _ in 0 .. focus_depth {
+                    let entity=focus_entity_stk.pop().unwrap();
+                    ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: cur_device }});
+                }
+            }
+
+            //
+            if let Some(ind)=move_dir.rev().ind() {
+                device_move_hists.entry(entity).or_insert_with(||[Entity::PLACEHOLDER;4])[ind]=cur_focus_entity.unwrap();
+            }
+
+            //
+            *cur_focus_entity = Some(entity);
+            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group:cur_group, device:cur_device }});
+
+            //println!("focus found {entity:?}, valid={valid}");
+
+            // *hist_incr+=1; //the hist!
+            // hist.insert(entity, *hist_incr); //the hist!
+
+            // println!("\tfound focusable {entity:?},");
+
+            //
+            _found = true;
+            break;
         }
 
         //else if non focusable, ancestor to a focusable

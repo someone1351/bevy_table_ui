@@ -546,7 +546,7 @@ fn move_focus(
             }
 
             //sort backwards?
-            let sort_func= Box::new(|x:&FocusMoveWork,y:&FocusMoveWork|{
+            let sort_func= &Box::new(|x:&FocusMoveWork,y:&FocusMoveWork|{
                 let x_computed=layout_computed_query.get(x.entity).unwrap();
                 let y_computed=layout_computed_query.get(y.entity).unwrap();
 
@@ -582,15 +582,13 @@ fn move_focus(
             });
 
             //
-            stk[stk_len..].sort_by(&sort_func);
-            stk_past_afters[stk_past_afters_len..].sort_by(&sort_func);
+            let sort_func_rev = &Box::new(|x:&FocusMoveWork,y:&FocusMoveWork|sort_func(x,y).reverse());
 
             //
-            let sort_func_rev = Box::new(|x:&FocusMoveWork,y:&FocusMoveWork|sort_func(x,y).reverse());
-
-            //
-            stk_befores[stk_befores_len..].sort_by(&sort_func_rev);
-            stk_past_befores[stk_past_befores_len..].sort_by(&sort_func_rev);
+            stk[stk_len..].sort_by(sort_func);
+            stk_befores[stk_befores_len..].sort_by(sort_func_rev);
+            stk_past_befores[stk_past_befores_len..].sort_by(sort_func_rev);
+            stk_past_afters[stk_past_afters_len..].sort_by(sort_func);
 
             //
             if move_vert && parent_computed.cols > 1 { //because doesn't need to split when is 1
@@ -615,12 +613,10 @@ fn move_focus(
         //everything was added to stk backwards
 
         //
-        // stk_befores.reverse();
-        // stk_past_befores.reverse();
-
         stk.extend(stk_past_afters);
         stk.extend(stk_past_befores.into_iter().rev());
         stk.extend(stk_befores.into_iter().rev());
+
         stk.reverse();
     } else if move_tab {
         //

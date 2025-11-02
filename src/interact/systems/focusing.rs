@@ -433,7 +433,7 @@ fn move_focus(
     ui_event_writer: &mut MessageWriter<UiInteractEvent>,
     device_move_hists : &mut HashMap<Entity,[Entity;4]>, //[device][entiti]=(left,top,right,bottom)
 ) {
-
+    println!("go");
     //on nofocus(init) then up/back, don't send focus_begin/end for the init dif from up/back focus entity
 
     //with move_hists, if moving right, and reaching end, want it to wrap to first item in cur row's move_hist.left
@@ -637,13 +637,15 @@ fn move_focus(
         //
         if let Some(&focus_stk_last_entity)=focus_entity_stk.last() {
             if let Ok(children)=children_query.get(focus_stk_last_entity) {
-                // stk.extend(children.iter().map(|child_entity|( child_entity, vec![], (0,0), 0, true, )));
                 stk.extend(children.iter().map(|child_entity|FocusMoveWork {
-                    entity: child_entity, from_bounds: vec![], to_bound: (0,0), focus_depth: 0, valid: true,
+                    entity: child_entity,
+                    from_bounds: vec![],
+                    to_bound: (0,0),
+                    focus_depth: 0,
+                    valid: true,
                 }));
             }
         } else {
-            // stk.push(( top_root_entity, vec![], (0,0), 0, true, ));
             stk.push(FocusMoveWork { entity: top_root_entity, from_bounds: vec![], to_bound: (0,0), focus_depth: 0, valid: true });
         }
 
@@ -678,17 +680,18 @@ fn move_focus(
 
         //when coming across a focusable, focus on it
         if focusable_query.get(entity).map(|focusable|cur_group==focusable.group && focusable.enable).unwrap_or_default() {
-            //
-            if let Some(cur_focus_entity) = *cur_focus_entity {
-                ui_event_writer.write(UiInteractEvent{entity:cur_focus_entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: cur_device }});
-            }
 
-            //
+            //unfocus some ancestors?
             if focus_depth>0 {
                 for _ in 0 .. focus_depth {
                     let entity=focus_entity_stk.pop().unwrap();
                     ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: cur_device }});
                 }
+            }
+
+            //should be after ancestors focus end?
+            if let Some(cur_focus_entity) = *cur_focus_entity {
+                ui_event_writer.write(UiInteractEvent{entity:cur_focus_entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: cur_device }});
             }
 
             //

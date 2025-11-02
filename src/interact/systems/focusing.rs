@@ -17,6 +17,11 @@ TODO:
 * when entity (top or nested) gets moved and is in nested focus,
 ** should refocus new focusable ancestors?
 ** or just unfocus moved entity? and set prev focusable ancestor as top focus?
+
+* when something is focusable, but disabled, then don't allow children to be focused? is that implemented or not?
+** can't go past ancestor that has focusable
+*** what if want to leave cur nested focus, and move out?
+**** eg going past end eg have column of horizontal options, where moving left/right goes between them, and up/down exits?
 */
 
 use std::cmp::Ordering;
@@ -480,6 +485,16 @@ fn move_focus(
 
         //loop thru cur focused entity and its ancestors
         for cur_entity in [cur_focus_entity].into_iter().chain(parent_query.iter_ancestors(cur_focus_entity)) {
+            // if cur_entity!=cur_focus_entity && focusable_query.get(cur_entity).map(|focusable|!focusable.enable).unwrap_or_default() {
+            //     continue;
+            // }
+
+            //can't focus outside ancestor's focusable (if there is one)
+            // if cur_entity!=cur_focus_entity && focusable_query.contains(cur_entity) {
+            //     continue;
+            // }
+
+            //
             let Ok(parent_entity) = parent_query.get(cur_entity).map(|p|p.parent()) else {
                 break; //only loop entities with parent
             };
@@ -909,7 +924,7 @@ fn move_focus(
                     // println!("\t\t\tstk_push {:?}",(entity, &from_bounds,new_to_bound,focus_depth));
 
                     // stk.push((entity, from_bounds,new_to_bound,focus_depth,true));
-                    stk.push(FocusMoveWork { entity, from_bounds, to_bound, focus_depth, valid: true });
+                    stk.push(FocusMoveWork { entity, from_bounds, to_bound:new_to_bound, focus_depth, valid: true });
                 } else {
                     // println!("\t\tto_len <= 1");
 
@@ -968,7 +983,7 @@ fn move_focus(
 
                                     //
                                     // stk.push((child_entity, from_bounds,new_to_bound,focus_depth,true));
-                                    stk.push(FocusMoveWork { entity: child_entity, from_bounds, to_bound, focus_depth, valid: true });
+                                    stk.push(FocusMoveWork { entity: child_entity, from_bounds, to_bound:new_to_bound, focus_depth, valid: true });
 
                                     //
                                     continue;

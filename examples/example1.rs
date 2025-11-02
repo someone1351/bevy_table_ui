@@ -391,6 +391,13 @@ fn update_ui_input(
 
                 for root_entity in ui_root_query.iter() {
                     match ev.key_code {
+
+                        KeyCode::Tab => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusNext { root_entity, group, device });
+                        }
+                        KeyCode::Backquote => {
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPrev { root_entity, group, device });
+                        }
                         KeyCode::KeyW => {
                             ui_interact_input_event_writer.write(UiInteractInputMessage::FocusUp { root_entity, group, device });
                         }

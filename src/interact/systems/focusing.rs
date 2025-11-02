@@ -258,7 +258,7 @@ pub fn update_focus_events(
 
 
     let mut was_resent=false; //not sure if need? to stop infinite loop if no focusable is there
-
+    let mut resent_found: Option<Entity> = None;
     //
     while let Some(ev)=ev_stk.pop() {
 
@@ -353,12 +353,12 @@ pub fn update_focus_events(
         let device_move_hists=move_hists.entry(cur_device).or_default();
 
         // let x: Query<&ChildOf, With<UiLayoutComputed>>=parent_query;
-        move_focus(
+        let move_result=move_focus(
             move_dir,
             top_root_entity,
             cur_group,
             cur_device,
-            cur_focus_entity,
+            if resent_found.is_some() {resent_found}else{cur_focus_entity.clone()},
             focus_entity_stk,
             // hist, //the hist!
             // &mut hist_incr, //the hist!
@@ -371,6 +371,31 @@ pub fn update_focus_events(
             &mut ui_event_writer,
             device_move_hists,
         );
+
+        if let Some((entity,focus_depth))=move_result {
+            // if was_resent {
+            //     resent_found=Some(entity);
+            // } else
+            {
+                //unfocus some ancestors?
+                if focus_depth>0 {
+                    for _ in 0 .. focus_depth {
+                        let entity=focus_entity_stk.pop().unwrap();
+                        ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: cur_device }});
+                    }
+                }
+
+                //should be after ancestors focus end?
+                if let Some(cur_focus_entity) = *cur_focus_entity {
+                    ui_event_writer.write(UiInteractEvent{entity:cur_focus_entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: cur_device }});
+                }
+
+                *cur_focus_entity = Some(entity);
+                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group:cur_group, device:cur_device }});
+            }
+
+
+        }
 
         //
         if let UiInteractInputMessage::FocusEnter{..}=ev { //if no focus found, undo focus_entity_push above
@@ -419,7 +444,8 @@ fn move_focus(
     top_root_entity:Entity,
     cur_group:i32,
     cur_device:i32,
-    cur_focus_entity:&mut Option<Entity>,
+    // cur_focus_entity:&mut Option<Entity>,
+    cur_focus_entity:Option<Entity>,
     focus_entity_stk:&mut Vec<Entity>,
     // hist:  &mut HashMap<Entity, u64>, //the hist!
     // hist_incr:&mut u64, //the hist!
@@ -432,8 +458,8 @@ fn move_focus(
     // focuseds : &mut UiFocuseds, //hmph
     ui_event_writer: &mut MessageWriter<UiInteractEvent>,
     device_move_hists : &mut HashMap<Entity,[Entity;4]>, //[device][entiti]=(left,top,right,bottom)
-) {
-    println!("go");
+) -> Option<(Entity,usize)> {
+    // println!("go");
     //on nofocus(init) then up/back, don't send focus_begin/end for the init dif from up/back focus entity
 
     //with move_hists, if moving right, and reaching end, want it to wrap to first item in cur row's move_hist.left
@@ -461,7 +487,7 @@ fn move_focus(
     //get all uncles, great uncles, great great uncles etc
     //  that are in same row/col (for hori/vert) or all if using order (for prev/enxt)
 
-    if let Some(cur_focus_entity)=*cur_focus_entity {
+    if let Some(cur_focus_entity)=cur_focus_entity {
         //calculated from curfocus+focus_stk, used on "to" nodes,
         //[depth_len-depth-1]=(focus_nodes[depth].col,.focus_nodes[depth].parent.cols)
         //    eg [(cur_focus.col,parent.cols),(parent.col,gparent.cols),(gparent.col,ggparent.cols) ]
@@ -623,7 +649,7 @@ fn move_focus(
                     }
                 }
             }
-        }
+        } //end for
 
         //everything was added to stk backwards
 
@@ -662,7 +688,7 @@ fn move_focus(
     // println!("\n\nstk init {stk:?}");
 
     //
-    let mut _found=false;
+    // let mut _found=false;
 
     //eval stk
     // while let Some((entity, from_bounds, to_bound, focus_depth,_valid))=stk.pop()
@@ -681,18 +707,18 @@ fn move_focus(
         //when coming across a focusable, focus on it
         if focusable_query.get(entity).map(|focusable|cur_group==focusable.group && focusable.enable).unwrap_or_default() {
 
-            //unfocus some ancestors?
-            if focus_depth>0 {
-                for _ in 0 .. focus_depth {
-                    let entity=focus_entity_stk.pop().unwrap();
-                    ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: cur_device }});
-                }
-            }
+            // //unfocus some ancestors?
+            // if focus_depth>0 {
+            //     for _ in 0 .. focus_depth {
+            //         let entity=focus_entity_stk.pop().unwrap();
+            //         ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: cur_device }});
+            //     }
+            // }
 
-            //should be after ancestors focus end?
-            if let Some(cur_focus_entity) = *cur_focus_entity {
-                ui_event_writer.write(UiInteractEvent{entity:cur_focus_entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: cur_device }});
-            }
+            // //should be after ancestors focus end?
+            // if let Some(cur_focus_entity) = cur_focus_entity {
+            //     ui_event_writer.write(UiInteractEvent{entity:cur_focus_entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: cur_device }});
+            // }
 
             //
             if let Some(ind)=move_dir.rev().ind() {
@@ -700,19 +726,21 @@ fn move_focus(
             }
 
             //
-            *cur_focus_entity = Some(entity);
-            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group:cur_group, device:cur_device }});
+            // *cur_focus_entity = Some(entity);
+            // ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group:cur_group, device:cur_device }});
 
-            //println!("focus found {entity:?}, valid={valid}");
+            // //println!("focus found {entity:?}, valid={valid}");
 
-            // *hist_incr+=1; //the hist!
-            // hist.insert(entity, *hist_incr); //the hist!
+            // // *hist_incr+=1; //the hist!
+            // // hist.insert(entity, *hist_incr); //the hist!
 
-            // println!("\tfound focusable {entity:?},");
+            // // println!("\tfound focusable {entity:?},");
 
-            //
-            _found = true;
-            break;
+            // //
+            // // _found = true;
+            // // break;
+
+            return Some((entity,focus_depth))
         }
 
         //else if non focusable, ancestor to a focusable
@@ -1125,6 +1153,8 @@ fn move_focus(
 
         // println!("\tstk2={stk:?}");
     } //end while
+
+    None
 }
 
 

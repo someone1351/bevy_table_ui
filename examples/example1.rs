@@ -262,6 +262,13 @@ pub fn setup_ui(
         for _ in 0..2 {
             let entity=parent.spawn(()).id();
             create_ui_box(&mut parent.commands(), &mut rng, font.clone(),entity);
+
+            parent.commands().entity(entity).with_children(|parent|{
+                for _ in 0..2 {
+                    let entity=parent.spawn(()).id();
+                    create_ui_box(&mut parent.commands(), &mut rng, font.clone(),entity);
+                }
+            });
         }
     });
     commands.entity(right_container_entity).with_children(|parent|{
@@ -288,18 +295,26 @@ fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<Font
             border_col.clone(),
         ]),
         UiSize{ width:UiVal::Px(-20.0), height:UiVal::Px(-30.0), },
-        UiFocusable{ enable: true, ..Default::default() },
+        UiFocusable{
+            enable: true,
+            hdir_exit:false,
+            hdir_wrap:true,
+            ..Default::default()
+        },
         UiPressable{ enable: true, ..Default::default() },
         // UiHoverable{ enable: true },
         // UiDraggable{ enable: true },
-        UiEdge{  border: UiRectVal::new_scalar(UiVal::Px(5.0)),  ..Default::default() },
+        UiEdge{
+            border: UiRectVal::new_scalar(UiVal::Px(5.0)),
+            margin: UiRectVal::new_scalar(UiVal::Px(5.0)),
+            ..Default::default() },
         UiText{
             value:format!("{entity}"),
             font_size: 15.0,
             // halign:UiTextHAlign::Left,
             // valign:UiTextVAlign::Top,
-            // halign:UiTextHAlign::Right,
-            // valign:UiTextVAlign::Bottom,
+            halign:UiTextHAlign::Right,
+            valign:UiTextVAlign::Bottom,
             font: font.clone(),
             color: Color::linear_rgb(1.0,1.0,1.0),
             ..Default::default()
@@ -392,12 +407,12 @@ fn update_ui_input(
                 for root_entity in ui_root_query.iter() {
                     match ev.key_code {
 
-                        KeyCode::Tab => {
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusNext { root_entity, group, device });
-                        }
-                        KeyCode::Backquote => {
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPrev { root_entity, group, device });
-                        }
+                        // KeyCode::Tab => {
+                        //     ui_interact_input_event_writer.write(UiInteractInputMessage::FocusNext { root_entity, group, device });
+                        // }
+                        // KeyCode::Backquote => {
+                        //     ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPrev { root_entity, group, device });
+                        // }
                         KeyCode::KeyW => {
                             ui_interact_input_event_writer.write(UiInteractInputMessage::FocusUp { root_entity, group, device });
                         }
@@ -427,7 +442,7 @@ fn update_ui_input(
                         KeyCode::Tab|KeyCode::KeyE => {
                             ui_interact_input_event_writer.write(UiInteractInputMessage::FocusNext { root_entity, group, device });
                         }
-                        KeyCode::KeyQ => {
+                        KeyCode::Backquote|KeyCode::KeyQ => {
                             ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPrev { root_entity, group, device });
                         }
 
@@ -439,6 +454,7 @@ fn update_ui_input(
                         }
                         KeyCode::Space => {
                             ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPressBegin{root_entity, group, device,button:0, });
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusEnter {root_entity, group, device, });
                         }
                         KeyCode::Enter => {
                             ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPressBegin{root_entity, group, device: device2,button:0, });
@@ -448,6 +464,7 @@ fn update_ui_input(
                         }
                         KeyCode::Backspace => {
                             ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPressCancel{root_entity, device:device2,button:0, });
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusExit {root_entity, group, device, });
                         }
                         _ => {}
                     }

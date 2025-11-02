@@ -13,6 +13,10 @@ TODO:
 * when scrolling
 - if focus goes off screen, could move focus
 - or if no focus, init a focus from the back side
+
+* when entity (top or nested) gets moved and is in nested focus,
+** should refocus new focusable ancestors?
+** or just unfocus moved entity? and set prev focusable ancestor as top focus?
 */
 
 use std::cmp::Ordering;
@@ -25,7 +29,7 @@ use bevy::ecs::prelude::*;
 use crate::interact::vals::FocusMove;
 
 use super::super::components::*;
-use super::super::resources::*;
+// use super::super::resources::*;
 use super::super::messages::*;
 // use super::super::utils::*;
 // use super::super::values::*;
@@ -99,7 +103,7 @@ pub fn update_focus_events(
     // mut hist_incr : Local<u64>,
 ) {
     //
-    move_hists.retain(|device,device_move_hists|{
+    move_hists.retain(|_device,device_move_hists|{
         device_move_hists.retain(|&entity,dirs|{
             for entity2 in dirs {
                 if *entity2!=Entity::PLACEHOLDER && !computed_query.contains(*entity2) {
@@ -129,6 +133,7 @@ pub fn update_focus_events(
                 // }
 
                 //remove from cur_focus/focus_stk any invisible, changed group, no longer focusable or focusable.enabled
+                //  should compare against ancestors, so can check if cur entity or ancestor entities have been moved
                 for i in 0..focus_entity_stk.len() {
                     let entity=focus_entity_stk[i];
                     let unlocked = computed_query.get(entity).map(|x|x.unlocked).unwrap_or_default();
@@ -434,8 +439,18 @@ fn move_focus(
     let move_tab = move_dir.tab();
     let move_pos = move_dir.positive();
 
+    struct FocusMoveWork {
+        entity:Entity,
+        from_bounds:Vec<(u32,u32)>,
+        to_bound:(u32,u32),
+        // to_start:u32,
+        // to_len:u32,
+        focus_depth:usize,
+        valid:bool,
+    }
     //
-    let mut stk: Vec<(Entity,Vec<(u32,u32)>,(u32,u32),usize,bool)>=Vec::new(); //[]=(entity,from_bounds,(to_start,to_len),focus_depth,valid)
+    // let mut stk: Vec<(Entity,Vec<(u32,u32)>,(u32,u32),usize,bool)>=Vec::new(); //[]=(entity,from_bounds,(to_start,to_len),focus_depth,valid)
+    let mut stk: Vec<FocusMoveWork>=Vec::new();
 
     //init stk
     //get all uncles, great uncles, great great uncles etc
@@ -452,9 +467,13 @@ fn move_focus(
         //befores is for ones behind ie in the opposite move dir, think also used in wrapping?
 
         //
-        let mut stk_befores: Vec<(Entity, Vec<(u32, u32)>,(u32,u32), usize,bool)> = Vec::new(); //[]=(entity,from_bounds,to_range,focus_depth,valid)
-        let mut stk_past_befores: Vec<(Entity, Vec<(u32, u32)>,(u32,u32), usize,bool)> = Vec::new();
-        let mut stk_past_afters: Vec<(Entity, Vec<(u32, u32)>,(u32,u32), usize,bool)> = Vec::new();
+        // let mut stk_befores: Vec<(Entity, Vec<(u32, u32)>,(u32,u32), usize,bool)> = Vec::new(); //[]=(entity,from_bounds,to_range,focus_depth,valid)
+        // let mut stk_past_befores: Vec<(Entity, Vec<(u32, u32)>,(u32,u32), usize,bool)> = Vec::new();
+        // let mut stk_past_afters: Vec<(Entity, Vec<(u32, u32)>,(u32,u32), usize,bool)> = Vec::new();
+
+        let mut stk_befores: Vec<FocusMoveWork> = Vec::new();
+        let mut stk_past_befores: Vec<FocusMoveWork> = Vec::new();
+        let mut stk_past_afters: Vec<FocusMoveWork> = Vec::new();
 
         //
         let mut focus_depth = 0;
@@ -481,7 +500,9 @@ fn move_focus(
 
             //
             for child_entity in parent_children.iter() {
-                let child_computed=layout_computed_query.get(child_entity).unwrap();
+                let Ok(child_computed)=layout_computed_query.get(child_entity) else {
+                    continue;
+                };
 
                 if child_entity == cur_entity || (move_vert && child_computed.col != cur_computed.col) || (move_hori && child_computed.row != cur_computed.row) {
                     continue;
@@ -507,23 +528,27 @@ fn move_focus(
                 //
                 if is_after {
                     if focus_depth>0 {
-                        stk_past_afters.push((child_entity,from_bounds.clone(),to_bound,focus_depth,true));
+                        // stk_past_afters.push((child_entity,from_bounds.clone(),to_bound,focus_depth,true));
+                        stk_past_afters.push(FocusMoveWork { entity: child_entity, from_bounds: from_bounds.clone(), to_bound, focus_depth, valid: true });
                     } else {
-                        stk.push((child_entity,from_bounds.clone(),to_bound,0,true));
+                        // stk.push((child_entity,from_bounds.clone(),to_bound,0,true));
+                        stk.push(FocusMoveWork { entity: child_entity, from_bounds: from_bounds.clone(), to_bound, focus_depth: 0, valid: true })
                     }
                 } else {
                     if focus_depth>0 {
-                        stk_past_befores.push((child_entity,from_bounds.clone(),to_bound,focus_depth,true));
+                        // stk_past_befores.push((child_entity,from_bounds.clone(),to_bound,focus_depth,true));
+                        stk_past_befores.push(FocusMoveWork { entity: child_entity, from_bounds: from_bounds.clone(), to_bound, focus_depth, valid: true });
                     } else {
-                        stk_befores.push((child_entity,from_bounds.clone(),to_bound,0,true));
+                        // stk_befores.push((child_entity,from_bounds.clone(),to_bound,0,true));
+                        stk_befores.push(FocusMoveWork { entity: child_entity, from_bounds: from_bounds.clone(), to_bound, focus_depth: 0, valid: true });
                     }
                 }
             }
 
-            //sort backwards
-            stk[stk_len..].sort_by(|x,y|{
-                let x_computed=layout_computed_query.get(x.0).unwrap();
-                let y_computed=layout_computed_query.get(y.0).unwrap();
+            //sort backwards?
+            let sort_func= Box::new(|x:&FocusMoveWork,y:&FocusMoveWork|{
+                let x_computed=layout_computed_query.get(x.entity).unwrap();
+                let y_computed=layout_computed_query.get(y.entity).unwrap();
 
                 //
                 let q = if move_tab {
@@ -536,8 +561,8 @@ fn move_focus(
 
                 //
                 let q=if q == Ordering::Equal {
-                    let x_float=float_query.get(x.0).map(|f|f.float).unwrap_or_default();
-                    let y_float=float_query.get(y.0).map(|f|f.float).unwrap_or_default();
+                    let x_float=float_query.get(x.entity).map(|f|f.float).unwrap_or_default();
+                    let y_float=float_query.get(y.entity).map(|f|f.float).unwrap_or_default();
 
                     if !x_float && !y_float {
                         x_computed.order.cmp(&y_computed.order)
@@ -557,113 +582,15 @@ fn move_focus(
             });
 
             //
-            stk_befores[stk_befores_len..].sort_by(|x,y|{
-                let x_computed=layout_computed_query.get(x.0).unwrap();
-                let y_computed=layout_computed_query.get(y.0).unwrap();
-
-                //
-                let q = if move_tab {
-                    x_computed.order.cmp(&y_computed.order)
-                } else if move_vert {
-                    x_computed.row.cmp(&y_computed.row)
-                } else { //move_hori
-                    x_computed.col.cmp(&y_computed.col)
-                };
-
-                //
-                let q=if q == Ordering::Equal {
-                    let x_float=float_query.get(x.0).map(|f|f.float).unwrap_or_default();
-                    let y_float=float_query.get(y.0).map(|f|f.float).unwrap_or_default();
-
-                    if !x_float && !y_float {
-                        x_computed.order.cmp(&y_computed.order)
-                    } else if !x_float && y_float {
-                        Ordering::Greater
-                    } else if x_float && !y_float {
-                        Ordering::Less
-                    } else { //both floating
-                        x_computed.order.cmp(&y_computed.order)
-                    }
-                } else {
-                    q
-                };
-
-                //
-                if move_pos { q.reverse() } else { q }
-            });
+            stk[stk_len..].sort_by(&sort_func);
+            stk_past_afters[stk_past_afters_len..].sort_by(&sort_func);
 
             //
-            stk_past_afters[stk_past_afters_len..].sort_by(|x,y|{
-                let x_computed=layout_computed_query.get(x.0).unwrap();
-                let y_computed=layout_computed_query.get(y.0).unwrap();
-
-                //
-                let q = if move_tab {
-                    x_computed.order.cmp(&y_computed.order)
-                } else if move_vert {
-                    x_computed.row.cmp(&y_computed.row)
-                } else { //move_hori
-                    x_computed.col.cmp(&y_computed.col)
-                };
-
-                //
-                let q=if q == Ordering::Equal {
-                    let x_float=float_query.get(x.0).map(|f|f.float).unwrap_or_default();
-                    let y_float=float_query.get(y.0).map(|f|f.float).unwrap_or_default();
-
-                    //
-                    if !x_float && !y_float {
-                        x_computed.order.cmp(&y_computed.order)
-                    } else if !x_float && y_float {
-                        Ordering::Greater
-                    } else if x_float && !y_float {
-                        Ordering::Less
-                    } else { //both floating
-                        x_computed.order.cmp(&y_computed.order)
-                    }
-                } else {
-                    q
-                };
-
-                //
-                if move_pos { q } else { q.reverse() }
-            });
+            let sort_func_rev = Box::new(|x:&FocusMoveWork,y:&FocusMoveWork|sort_func(x,y).reverse());
 
             //
-            stk_past_befores[stk_past_befores_len..].sort_by(|x,y|{
-                let x_computed=layout_computed_query.get(x.0).unwrap();
-                let y_computed=layout_computed_query.get(y.0).unwrap();
-
-                //
-                let q = if move_tab {
-                    x_computed.order.cmp(&y_computed.order)
-                } else if move_vert {
-                    x_computed.row.cmp(&y_computed.row)
-                } else { //move_hori
-                    x_computed.col.cmp(&y_computed.col)
-                };
-
-                //
-                let q=if q == Ordering::Equal {
-                    let x_float=float_query.get(x.0).map(|f|f.float).unwrap_or_default();
-                    let y_float=float_query.get(y.0).map(|f|f.float).unwrap_or_default();
-
-                    if !x_float && !y_float {
-                        x_computed.order.cmp(&y_computed.order)
-                    } else if !x_float && y_float {
-                        Ordering::Greater
-                    } else if x_float && !y_float {
-                        Ordering::Less
-                    } else { //both floating
-                        x_computed.order.cmp(&y_computed.order)
-                    }
-                } else {
-                    q
-                };
-
-                //
-                if move_pos { q.reverse() } else { q }
-            });
+            stk_befores[stk_befores_len..].sort_by(&sort_func_rev);
+            stk_past_befores[stk_past_befores_len..].sort_by(&sort_func_rev);
 
             //
             if move_vert && parent_computed.cols > 1 { //because doesn't need to split when is 1
@@ -698,16 +625,20 @@ fn move_focus(
         //
         if let Some(&focus_stk_last_entity)=focus_entity_stk.last() {
             if let Ok(children)=children_query.get(focus_stk_last_entity) {
-                stk.extend(children.iter().map(|child_entity|( child_entity, vec![], (0,0), 0, true, )));
+                // stk.extend(children.iter().map(|child_entity|( child_entity, vec![], (0,0), 0, true, )));
+                stk.extend(children.iter().map(|child_entity|FocusMoveWork {
+                    entity: child_entity, from_bounds: vec![], to_bound: (0,0), focus_depth: 0, valid: true,
+                }));
             }
         } else {
-            stk.push(( top_root_entity, vec![], (0,0), 0, true, ));
+            // stk.push(( top_root_entity, vec![], (0,0), 0, true, ));
+            stk.push(FocusMoveWork { entity: top_root_entity, from_bounds: vec![], to_bound: (0,0), focus_depth: 0, valid: true });
         }
 
         //
         stk.sort_by(|x,y|{
-            let x_computed=layout_computed_query.get(x.0).unwrap();
-            let y_computed=layout_computed_query.get(y.0).unwrap();
+            let x_computed=layout_computed_query.get(x.entity).unwrap();
+            let y_computed=layout_computed_query.get(y.entity).unwrap();
             let q= x_computed.order.cmp(&y_computed.order);
             if move_dir==FocusMove::Next { q.reverse() } else { q } //
         });
@@ -720,7 +651,9 @@ fn move_focus(
     let mut _found=false;
 
     //eval stk
-    while let Some((entity, from_bounds, to_bound, focus_depth,_valid))=stk.pop() {
+    // while let Some((entity, from_bounds, to_bound, focus_depth,_valid))=stk.pop()
+    while let Some(FocusMoveWork { entity, from_bounds, to_bound, focus_depth, valid:_valid })=stk.pop()
+    {
         // println!("while stk: entity={entity:?}, from_bounds={from_bounds:?}, to_bound={to_bound:?}, focus_depth={focus_depth}, stk_len={}",stk.len());
 
         //
@@ -795,7 +728,8 @@ fn move_focus(
 
                     //
                     let new_to_bound = (0,new_to_len);
-                    stk.push(( child_entity, from_bounds.clone(), new_to_bound, focus_depth, true, ));
+                    // stk.push(( child_entity, from_bounds.clone(), new_to_bound, focus_depth, true, ));
+                    stk.push(FocusMoveWork { entity: child_entity, from_bounds: from_bounds.clone(), to_bound: new_to_bound, focus_depth, valid: true });
                 }
             }
         } else { //splits, not move_tab
@@ -979,14 +913,17 @@ fn move_focus(
                     // println!("\t\t\tstk={stk:?}");
                     // println!("\t\t\tstk_push {:?}",(entity, &from_bounds,new_to_bound,focus_depth));
 
-                    stk.push((entity, from_bounds,new_to_bound,focus_depth,true));
+                    // stk.push((entity, from_bounds,new_to_bound,focus_depth,true));
+                    stk.push(FocusMoveWork { entity, from_bounds, to_bound, focus_depth, valid: true });
                 } else {
                     // println!("\t\tto_len <= 1");
 
                     if let Ok(children)=children_query.get(entity) {
                         //
                         for child_entity in children.iter() {
-                            let child_computed = layout_computed_query.get(child_entity).unwrap();
+                            let Ok(child_computed) = layout_computed_query.get(child_entity) else {
+                                continue;
+                            };
 
                             let (to,new_to_len)=if move_vert {
                                 (child_computed.col, child_computed.cols)
@@ -1035,7 +972,8 @@ fn move_focus(
                                     // println!("\t\t\t\t\tstkpush {:?}",(child_entity, &from_bounds,new_to_bound,focus_depth));
 
                                     //
-                                    stk.push((child_entity, from_bounds,new_to_bound,focus_depth,true));
+                                    // stk.push((child_entity, from_bounds,new_to_bound,focus_depth,true));
+                                    stk.push(FocusMoveWork { entity: child_entity, from_bounds, to_bound, focus_depth, valid: true });
 
                                     //
                                     continue;
@@ -1048,7 +986,8 @@ fn move_focus(
 
                             //adds invalid moves, which are sorted to the end of the stk, so they are only chosen
                             // if there are no other options
-                            stk.push((child_entity, from_bounds.clone(),new_to_bound,focus_depth,false));
+                            // stk.push((child_entity, from_bounds.clone(),new_to_bound,focus_depth,false));
+                            stk.push(FocusMoveWork { entity: child_entity, from_bounds: from_bounds.clone(), to_bound: new_to_bound, focus_depth, valid: false });
 
                         } //end for
                         // println!("\t\t\tstk={stk:?}");
@@ -1069,17 +1008,17 @@ fn move_focus(
 
             //sort invalid ones to start
 
-            let v= if x.4 && !y.4 {
+            let v= if x.valid && !y.valid {
                 Ordering::Greater
-            } else if !x.4 && y.4 {
+            } else if !x.valid && y.valid {
                 Ordering::Less
             } else {
                 Ordering::Equal
             };
 
             //
-            let x_computed=layout_computed_query.get(x.0).unwrap();
-            let y_computed=layout_computed_query.get(y.0).unwrap();
+            let x_computed=layout_computed_query.get(x.entity).unwrap();
+            let y_computed=layout_computed_query.get(y.entity).unwrap();
 
             //
             if move_tab {

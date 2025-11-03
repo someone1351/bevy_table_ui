@@ -1,5 +1,5 @@
 
-#[derive(PartialEq,Debug)]
+#[derive(PartialEq,Debug,Copy,Clone)]
 pub enum FocusMove {Left,Right,Up,Down,Prev,Next}
 
 impl FocusMove {

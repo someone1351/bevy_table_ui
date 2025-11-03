@@ -121,7 +121,27 @@ impl UiInteractInputMessage {
             UiInteractInputMessage::CursorMoveTo { device, .. } => device,
         }
     }
-
+    pub fn is_focus_move(&self) -> bool {
+        match *self {
+            UiInteractInputMessage::FocusOn {..} => true,
+            UiInteractInputMessage::FocusInit {..} => true,
+            UiInteractInputMessage::FocusLeft {..} => true,
+            UiInteractInputMessage::FocusRight {..} => true,
+            UiInteractInputMessage::FocusUp {..} => true,
+            UiInteractInputMessage::FocusDown {..} => true,
+            UiInteractInputMessage::FocusPrev {..} => true,
+            UiInteractInputMessage::FocusNext {..} => true,
+            UiInteractInputMessage::FocusEnter {..} => true,
+            UiInteractInputMessage::FocusExit {..} => true,
+            UiInteractInputMessage::FocusPressBegin {..} => false,
+            UiInteractInputMessage::FocusPressEnd {..} => false,
+            UiInteractInputMessage::FocusPressCancel {..} => false,
+            UiInteractInputMessage::CursorPressBegin {..} => false,
+            UiInteractInputMessage::CursorPressEnd {..} => false,
+            UiInteractInputMessage::CursorPressCancel {..} => false,
+            UiInteractInputMessage::CursorMoveTo {..} => false,
+        }
+    }
 
     pub fn device_type(&self) -> DeviceType {
         match *self {

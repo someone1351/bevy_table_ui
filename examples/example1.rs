@@ -297,8 +297,8 @@ fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<Font
         UiSize{ width:UiVal::Px(-20.0), height:UiVal::Px(-30.0), },
         UiFocusable{
             enable: true,
-            hdir_exit:false,
-            hdir_wrap:true,
+            hexit:false,
+            hwrap:true,
             ..Default::default()
         },
         UiPressable{ enable: true, ..Default::default() },

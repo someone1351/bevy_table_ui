@@ -42,25 +42,38 @@ pub struct UiSelectable {
     pub group : String,
 }
 
-#[derive(Component,Default,Clone,Debug)]
+#[derive(Component,Clone,Debug)]
 #[require(UiLayoutComputed)]
 pub struct UiFocusable {
     pub enable : bool,
     // pub focused : bool, //set by both user and interact system
     pub group : i32,
 
-    pub tab_exit : bool,
-    pub hdir_exit : bool,
-    pub vdir_exit : bool,
+    // pub texit : bool,
+    pub hexit : bool,
+    pub vexit : bool,
 
-    pub hdir_wrap : bool,
-    pub vdir_wrap : bool,
+    pub hwrap : bool,
+    pub vwrap : bool,
 
     // pub hdir_press : bool, //when left/right on start/aready focus(ed) // ?
     // pub vdir_press : bool, //when up/down on start/aready focus(ed) // ?
 
 }
 
+impl Default for UiFocusable {
+    fn default() -> Self {
+        Self {
+            enable: Default::default(),
+            group: Default::default(),
+            // texit: Default::default(),
+            hexit: Default::default(),
+            vexit: Default::default(),
+            hwrap: true,
+            vwrap: true,
+        }
+    }
+}
 //for press, when first focusing on end node or already focused, it presses it
 //what about tabbing?
 

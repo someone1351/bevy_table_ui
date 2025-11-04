@@ -540,9 +540,9 @@ fn move_focus(
         //everything was added to stk backwards
 
         //
-        // stk.extend(stk_past_afters);
-        // stk.extend(stk_past_befores.into_iter().rev());
-        // stk.extend(stk_befores.into_iter().rev());
+        stk.extend(stk_past_afters);
+        stk.extend(stk_past_befores.into_iter().rev());
+        stk.extend(stk_befores.into_iter().rev());
 
         stk.reverse();
     } else if move_tab {

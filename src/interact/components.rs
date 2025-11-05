@@ -64,13 +64,15 @@ pub struct UiFocusable {
 impl Default for UiFocusable {
     fn default() -> Self {
         Self {
-            enable: Default::default(),
-            group: Default::default(),
+            enable: false,
+            group: 0,
             // texit: Default::default(),
-            hexit: Default::default(),
-            vexit: Default::default(),
-            hwrap: true,
-            vwrap: true,
+            hexit: false,
+            vexit: false,
+            // hwrap: true,
+            // vwrap: true,
+            hwrap: false,
+            vwrap: false,
         }
     }
 }

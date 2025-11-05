@@ -299,6 +299,8 @@ fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<Font
             enable: true,
             hexit:false,
             hwrap:true,
+            vexit:true,
+            vwrap:true,
             ..Default::default()
         },
         UiPressable{ enable: true, ..Default::default() },

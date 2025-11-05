@@ -382,9 +382,13 @@ fn move_focus(
         //    eg [(cur_focus.col,parent.cols),(parent.col,gparent.cols),(gparent.col,ggparent.cols) ]
         let mut from_bounds = Vec::new();
 
+        // //
+        // //past is for going past the edge and wrapping, forget why its split into befores/afters
+        // //befores is for ones behind ie in the opposite move dir, think also used in wrapping?
+
         //
-        //past is for going past the edge and wrapping, forget why its split into befores/afters
-        //befores is for ones behind ie in the opposite move dir, think also used in wrapping?
+        //befores are ones that come before, used for wrap
+        //past are the ones that go past a focusable ancestor, used for exit
 
 
         let mut stk_befores: Vec<FocusMoveWork> = Vec::new();
@@ -452,19 +456,35 @@ fn move_focus(
                 let to_bound=(0,to_len);
 
                 //
-                if is_after {
-                    if focus_depth>0 {
-                        stk_past_afters.push(FocusMoveWork { entity: child_entity, from_bounds: from_bounds.clone(), to_bound, focus_depth, valid: true });
-                    } else {
+
+                if focus_depth==0 {
+                    if is_after {
                         stk.push(FocusMoveWork { entity: child_entity, from_bounds: from_bounds.clone(), to_bound, focus_depth: 0, valid: true })
-                    }
-                } else {
-                    if focus_depth>0 {
-                        stk_past_befores.push(FocusMoveWork { entity: child_entity, from_bounds: from_bounds.clone(), to_bound, focus_depth, valid: true });
-                    } else {
+                    } else if wrap {
                         stk_befores.push(FocusMoveWork { entity: child_entity, from_bounds: from_bounds.clone(), to_bound, focus_depth: 0, valid: true });
                     }
+                } else if exit {
+                    if is_after {
+                        stk_past_afters.push(FocusMoveWork { entity: child_entity, from_bounds: from_bounds.clone(), to_bound, focus_depth, valid: true });
+                    } else if wrap {
+                        stk_past_befores.push(FocusMoveWork { entity: child_entity, from_bounds: from_bounds.clone(), to_bound, focus_depth, valid: true });
+                    }
                 }
+
+                //
+                // if is_after {
+                //     if focus_depth>0 {
+                //         stk_past_afters.push(FocusMoveWork { entity: child_entity, from_bounds: from_bounds.clone(), to_bound, focus_depth, valid: true });
+                //     } else {
+                //         stk.push(FocusMoveWork { entity: child_entity, from_bounds: from_bounds.clone(), to_bound, focus_depth: 0, valid: true })
+                //     }
+                // } else {
+                //     if focus_depth>0 {
+                //         stk_past_befores.push(FocusMoveWork { entity: child_entity, from_bounds: from_bounds.clone(), to_bound, focus_depth, valid: true });
+                //     } else {
+                //         stk_befores.push(FocusMoveWork { entity: child_entity, from_bounds: from_bounds.clone(), to_bound, focus_depth: 0, valid: true });
+                //     }
+                // }
             }
 
             //sort backwards?
@@ -528,9 +548,9 @@ fn move_focus(
                             focus_depth+=1;
 
                             //stop at first focusable ancestor
-                            if !exit {
-                                break;
-                            }
+                            // if !exit {
+                            //     break;
+                            // }
                         }
                     }
                 }

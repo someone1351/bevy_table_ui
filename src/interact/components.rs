@@ -42,7 +42,7 @@ pub struct UiSelectable {
     pub group : String,
 }
 
-#[derive(Component,Clone,Debug)]
+#[derive(Component,Clone,Debug,Default)]
 #[require(UiLayoutComputed)]
 pub struct UiFocusable {
     pub enable : bool,
@@ -59,23 +59,32 @@ pub struct UiFocusable {
     // pub hdir_press : bool, //when left/right on start/aready focus(ed) // ?
     // pub vdir_press : bool, //when up/down on start/aready focus(ed) // ?
 
+    // pub move_press:bool, //on focused or focus move failed then press, works even if pressable is false, but if both enabled, both count has being held down
+    pub pressable:bool,
+    pub left_pressable:bool,
+    pub right_pressable:bool,
+    pub up_pressable:bool,
+    pub down_pressable:bool,
+
+    pub init:bool, // on focus_enter, focus on this
+
 }
 
-impl Default for UiFocusable {
-    fn default() -> Self {
-        Self {
-            enable: false,
-            group: 0,
-            // texit: Default::default(),
-            hexit: false,
-            vexit: false,
-            // hwrap: true,
-            // vwrap: true,
-            hwrap: false,
-            vwrap: false,
-        }
-    }
-}
+// impl Default for UiFocusable {
+//     fn default() -> Self {
+//         Self {
+//             enable: false,
+//             group: 0,
+//             // texit: Default::default(),
+//             hexit: false,
+//             vexit: false,
+//             // hwrap: true,
+//             // vwrap: true,
+//             hwrap: false,
+//             vwrap: false,
+//         }
+//     }
+// }
 //for press, when first focusing on end node or already focused, it presses it
 //what about tabbing?
 

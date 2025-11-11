@@ -32,6 +32,8 @@ use bevy::ecs::prelude::*;
 
 
 use crate::interact::vals::FocusMove;
+use crate::FocusMoveHists;
+use crate::FocusStates;
 
 use super::super::components::*;
 // use super::super::resources::*;
@@ -80,28 +82,28 @@ also keep a count to use for adding visit time
 //         q
 //     };
 // }
-pub fn update_focus_events(
+
+pub fn focus_move_cleanup(
 
     computed_query: Query<&UiLayoutComputed,With<UiLayoutComputed>>,
-    float_query: Query<&UiFloat,With<UiLayoutComputed>>,
-    parent_query : Query<&ChildOf,With<UiLayoutComputed>>,
+    // float_query: Query<&UiFloat,With<UiLayoutComputed>>,
+    // parent_query : Query<&ChildOf,With<UiLayoutComputed>>,
     root_query: Query<(Entity,&UiLayoutComputed), With<UiRoot>>,
-    children_query: Query<&Children,(With<UiLayoutComputed>,)>,
+    // children_query: Query<&Children,(With<UiLayoutComputed>,)>,
     // focus_query : Query<Entity, (With<UiFocusable>,)>,
     mut focusable_query : Query<&mut UiFocusable>,
 
-    mut input_event_reader: MessageReader<UiInteractInputMessage>,
+    // mut input_event_reader: MessageReader<UiInteractInputMessage>,
     mut ui_event_writer: MessageWriter<UiInteractEvent>,
+    mut focus_states:ResMut<FocusStates>, //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk)
+    mut move_hists:ResMut<FocusMoveHists>, //[device][entity]=(left,top,right,bottom)
 
-    mut focus_states:Local<HashMap<i32,HashMap<Entity,HashMap<i32,(Option<Entity>,Vec<Entity>)>>>>, //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk)
-
-    mut move_hists:Local<HashMap<i32,HashMap<Entity,[Entity;4]>>>, //[device][entity]=(left,top,right,bottom)
     //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk,from_dirs)
 
     // mut hist_incr : Local<u64>,
 ) {
     //
-    move_hists.retain(|_device,device_move_hists|{
+    move_hists.0.retain(|_device,device_move_hists|{
         device_move_hists.retain(|&entity,dirs|{
             for entity2 in dirs {
                 if *entity2!=Entity::PLACEHOLDER && !computed_query.contains(*entity2) {
@@ -116,7 +118,7 @@ pub fn update_focus_events(
     });
 
     //in cur_focus_entity, focus_entity_stk, unfocus removed entities, disabled/invisible entities, disabled focusables, focusables changed groups
-    for (&device,device_focus_states) in focus_states.iter_mut() {
+    for (&device,device_focus_states) in focus_states.0.iter_mut() {
         for (&root_entity,groups) in device_focus_states.iter_mut() {
             let root_entity_alive= root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default();
 
@@ -188,7 +190,7 @@ pub fn update_focus_events(
     }
 
     //remove dead devices, roots
-    focus_states.retain(|&_device,device_focus_states|{
+    focus_states.0.retain(|&_device,device_focus_states|{
         device_focus_states.retain(|&root_entity,_root_focus_states|{
             let root_entity_alive= root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default();
             root_entity_alive
@@ -196,13 +198,40 @@ pub fn update_focus_events(
 
         !device_focus_states.is_empty()
     });
+}
+
+pub fn update_focus_events(
+
+    computed_query: Query<&UiLayoutComputed,With<UiLayoutComputed>>,
+    float_query: Query<&UiFloat,With<UiLayoutComputed>>,
+    parent_query : Query<&ChildOf,With<UiLayoutComputed>>,
+    root_query: Query<(Entity,&UiLayoutComputed), With<UiRoot>>,
+    children_query: Query<&Children,(With<UiLayoutComputed>,)>,
+    // focus_query : Query<Entity, (With<UiFocusable>,)>,
+    focusable_query : Query<& UiFocusable>,
+
+    mut input_event_reader: MessageReader<UiInteractInputMessage>,
+    mut ui_event_writer: MessageWriter<UiInteractEvent>,
+
+    // mut focus_states:Local<HashMap<i32,HashMap<Entity,HashMap<i32,(Option<Entity>,Vec<Entity>)>>>>, //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk)
+
+    // mut move_hists:Local<HashMap<i32,HashMap<Entity,[Entity;4]>>>, //[device][entity]=(left,top,right,bottom)
+
+    mut focus_states:ResMut<FocusStates>, //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk)
+    mut move_hists:ResMut<FocusMoveHists>, //[device][entity]=(left,top,right,bottom)
+
+    //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk,from_dirs)
+
+    // mut hist_incr : Local<u64>,
+) {
+
 
     //
     let mut ev_stk= input_event_reader.read().cloned().collect::<Vec<_>>();
     ev_stk.reverse();
 
     let mut was_resent=false; //not sure if need? to stop infinite loop if no focusable is there
-    let mut resent_found: Option<Entity> = None;
+    // let mut resent_found: Option<Entity> = None;
 
     //
     while let Some(ev)=ev_stk.pop() {
@@ -228,7 +257,7 @@ pub fn update_focus_events(
         let device=ev.device();
 
         //
-        let (cur_focus_entity,focus_entity_stk)=focus_states
+        let (cur_focus_entity,focus_entity_stk)=focus_states.0
             .entry(device).or_default()
             .entry(root_entity).or_default()
             .entry(group).or_default();
@@ -253,19 +282,23 @@ pub fn update_focus_events(
         }
 
         //
-        let device_move_hists=move_hists.entry(device).or_default();
+        let device_move_hists=move_hists.0.entry(device).or_default();
         let move_dir=get_focus_move_dir(&ev,cur_focus_entity.is_none()).unwrap();
         let move_back=move_dir.negative();
 
         //
-
+        // if move_back {
+            println!("hm {move_dir:?} {move_back:?}");
+        // }
         //
             if move_back && cur_focus_entity.is_none() {
                 if !was_resent {
                     ev_stk.push(ev.clone());
                     was_resent=true;
+                    println!("yes");
                 } else {
                     was_resent=false;
+                    println!("no");
                 }
             }
 
@@ -285,7 +318,7 @@ pub fn update_focus_events(
                 cur_focus_entity.clone(),
                 focus_entity_stk,device_move_hists,
                 wrap,exit,
-                parent_query,computed_query,children_query,float_query,focusable_query.as_readonly(),
+                parent_query,computed_query,children_query,float_query,focusable_query,
             );
 
             if let Some((entity,focus_depth))=move_result {
@@ -320,10 +353,14 @@ pub fn update_focus_events(
 
 fn get_focus_move_dir(ev : &UiInteractInputMessage, b:bool) -> Option<FocusMove> {
     match ev {
-        UiInteractInputMessage::FocusInit{..}|UiInteractInputMessage::FocusEnter{..}
-            |UiInteractInputMessage::FocusPrev{..}|UiInteractInputMessage::FocusNext{..}
-            |UiInteractInputMessage::FocusLeft{..}|UiInteractInputMessage::FocusRight{..}
-            |UiInteractInputMessage::FocusUp{..}|UiInteractInputMessage::FocusDown{..}
+        UiInteractInputMessage::FocusInit{..}
+        |UiInteractInputMessage::FocusEnter{..}
+        |UiInteractInputMessage::FocusPrev{..}
+        |UiInteractInputMessage::FocusNext{..}
+        |UiInteractInputMessage::FocusLeft{..}
+        |UiInteractInputMessage::FocusRight{..}
+        |UiInteractInputMessage::FocusUp{..}
+        |UiInteractInputMessage::FocusDown{..}
             if b
             => Some(FocusMove::Next),
 

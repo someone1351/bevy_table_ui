@@ -1,19 +1,30 @@
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use bevy::ecs::prelude::*;
 
-#[derive(Resource,Debug, Default)]
-pub struct UiFocuseds(pub HashMap<i32,HashSet<Entity>>); //[device][entity_focused] replaces focusable.focused, is it cleared if entity is deleted?
-
 
 #[derive(Resource,Debug, Default)]
-pub struct UiFocusStates {
-    pub cur_focuses:HashMap<i32,HashMap<Entity,HashMap<i32,(Option<Entity>,Vec<Entity>,
-        HashMap<Entity,u64>, //replace with left/right/top/bottom eg [Option<Entity>;4] or [(Option<Entity>,u64);4]
-    )>>>,
-        //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk,hist)
-}
+
+//[device][root_entity][group]=(cur_focus_entity,focus_entity_stk)
+pub struct FocusStates(pub HashMap<i32,HashMap<Entity,HashMap<i32,(Option<Entity>,Vec<Entity>)>>>);
+
+#[derive(Resource,Debug, Default)]
+//[device][entity]=(left,top,right,bottom)
+pub struct FocusMoveHists(pub HashMap<i32,HashMap<Entity,[Entity;4]>>);
+
+
+// #[derive(Resource,Debug, Default)]
+// pub struct UiFocuseds(pub HashMap<i32,HashSet<Entity>>); //[device][entity_focused] replaces focusable.focused, is it cleared if entity is deleted?
+
+
+// #[derive(Resource,Debug, Default)]
+// pub struct UiFocusStates {
+//     pub cur_focuses:HashMap<i32,HashMap<Entity,HashMap<i32,(Option<Entity>,Vec<Entity>,
+//         HashMap<Entity,u64>, //replace with left/right/top/bottom eg [Option<Entity>;4] or [(Option<Entity>,u64);4]
+//     )>>>,
+//         //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk,hist)
+// }
 
 #[derive(Debug,Clone, Copy,PartialEq, Eq,Hash)]
 pub enum DeviceType {

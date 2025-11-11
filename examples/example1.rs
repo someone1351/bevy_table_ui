@@ -107,7 +107,7 @@ pub enum UiAffectState {
     Select,
     Hover,
     Focus,
-    Press,
+    Press(i32),
     Drag,
 }
 #[derive(Component,Default)]
@@ -167,14 +167,14 @@ pub fn on_affects<'a>(
             UiInteractMessageType::FocusEnd { device,.. } => {
                 affect_computed.states.get_mut(&UiAffectState::Focus).map(|x|x.remove(&DeviceType::Focus(device)));
             }
-            UiInteractMessageType::PressBegin{device,..} => {
+            UiInteractMessageType::PressBegin{device,button,..} => {
                 println!("press begin {device}");
-                affect_computed.states.entry(UiAffectState::Press).or_default().insert(DeviceType::Cursor(device));
-                new_states.entry(ev.entity).or_default().entry(UiAffectState::Press).or_default().insert(DeviceType::Cursor(device));
+                affect_computed.states.entry(UiAffectState::Press(button)).or_default().insert(DeviceType::Cursor(device));
+                new_states.entry(ev.entity).or_default().entry(UiAffectState::Press(button)).or_default().insert(DeviceType::Cursor(device));
             }
-            UiInteractMessageType::PressEnd{device,..} => {
+            UiInteractMessageType::PressEnd{device,button,..} => {
                 println!("press end {device}");
-                affect_computed.states.get_mut(&UiAffectState::Press).map(|x|x.remove(&DeviceType::Cursor(device)));
+                affect_computed.states.get_mut(&UiAffectState::Press(button)).map(|x|x.remove(&DeviceType::Cursor(device)));
             }
             UiInteractMessageType::SelectBegin => {
                 affect_computed.states.entry(UiAffectState::Select).or_default().insert(DeviceType::None);
@@ -185,10 +185,10 @@ pub fn on_affects<'a>(
             }
             UiInteractMessageType::HoverBegin{device,..} => {
                 affect_computed.states.entry(UiAffectState::Hover).or_default().insert(DeviceType::Focus(device));
-                new_states.entry(ev.entity).or_default().entry(UiAffectState::Hover).or_default().insert(DeviceType::Focus(device));
+                new_states.entry(ev.entity).or_default().entry(UiAffectState::Hover).or_default().insert(DeviceType::Cursor(device));
             }
-            UiInteractMessageType::HoverEnd{..} => {
-                affect_computed.states.get_mut(&UiAffectState::Hover).map(|x|x.remove(&DeviceType::None));
+            UiInteractMessageType::HoverEnd{device,..} => {
+                affect_computed.states.get_mut(&UiAffectState::Hover).map(|x|x.remove(&DeviceType::Cursor(device)));
             }
             UiInteractMessageType::Click{..}=> {}
             UiInteractMessageType::DragX{..} => {}
@@ -283,7 +283,7 @@ pub fn setup_ui(
 fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<Font>,entity:Entity) {
     let border_col= attrib_setter(|c:&mut UiColor,v|c.border=v,Color::linear_rgb(0.5,0.5,0.5),[
         (UiAffectState::Focus,Color::linear_rgb(0.8,0.6,0.3)),
-        (UiAffectState::Press,Color::linear_rgb(1.0,0.8,0.1))
+        (UiAffectState::Press(0),Color::linear_rgb(1.0,0.8,0.1))
     ]);
 
     let c=[rng.gen::<f32>(),rng.gen::<f32>(),rng.gen::<f32>()];

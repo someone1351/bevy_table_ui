@@ -2,7 +2,7 @@
 use super::resources;
 use super::messages;
 // use super::components;
-use super::systems;
+use super::systems::*;
 // use super::super::layout;
 
 use bevy::app::*;
@@ -25,8 +25,8 @@ impl bevy::app::Plugin for UiInteractPlugin {
             .add_message::<messages::UiInteractInputMessage>()
             // .add_message::<UiCustomEvent>()UiPressStates
 
-            .init_resource::<resources::UiFocuseds>()
-            .init_resource::<resources::UiFocusStates>()
+            .init_resource::<resources::FocusStates>()
+            .init_resource::<resources::FocusMoveHists>()
             .init_resource::<resources::UiPressStates>()
             // .init_resource::<resources::UiDragStates>()
 
@@ -35,14 +35,15 @@ impl bevy::app::Plugin for UiInteractPlugin {
                 (
                     // update_active_nodes,
 
-                    systems::update_hover_events, //cursor(x,y)
+                    update_hover_events, //cursor(x,y)
 
-                    systems::update_focus_events, //up/down/left/right/prev/next/ok/cancel
-                    // systems::pre_update_press,
-                    systems::update_press_events, //ok,cancel, cursor(x,y)
-                    // systems::pre_update_drag,
-                    systems::update_drag_events, //ok, cursor(mx,my)
-                    systems::update_select_events, //
+                    focus_move_cleanup,
+                    update_focus_events, //up/down/left/right/prev/next/ok/cancel
+                    // pre_update_press,
+                    update_press_events, //ok,cancel, cursor(x,y)
+                    // pre_update_drag,
+                    update_drag_events, //ok, cursor(mx,my)
+                    update_select_events, //
 
                     // update_scripting,
                     // forward_custom_events,

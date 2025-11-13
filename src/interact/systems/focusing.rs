@@ -335,7 +335,7 @@ pub fn update_focus_events(
     let mut ev_stk= input_event_reader.read().cloned().collect::<Vec<_>>();
     ev_stk.reverse();
 
-    let mut was_resent=false; //not sure if need? to stop infinite loop if no focusable is there
+    // let mut was_resent=false; //not sure if need? to stop infinite loop if no focusable is there
     // let mut resent_found: Option<Entity> = None;
 
     //
@@ -388,64 +388,84 @@ pub fn update_focus_events(
 
         //
         let device_move_hists=move_hists.0.entry(device).or_default();
-        let move_dir=get_focus_move_dir(&ev,cur_focus_entity.is_none()).unwrap();
-        let move_back=move_dir.negative();
+        // let move_dir=get_focus_move_dir(&ev,cur_focus_entity.is_none()).unwrap();
+        let move_dir= match ev {
+            UiInteractInputMessage::FocusInit{..} if cur_focus_entity.is_none() => FocusMove::Next,
+            UiInteractInputMessage::FocusEnter{..} => FocusMove::Next, //cur_focus_entity would be none
+            UiInteractInputMessage::FocusPrev{..} => FocusMove::Prev,
+            UiInteractInputMessage::FocusNext{..} => FocusMove::Next,
+
+            UiInteractInputMessage::FocusLeft{..} => FocusMove::Left,
+            UiInteractInputMessage::FocusRight{..} => FocusMove::Right,
+
+            UiInteractInputMessage::FocusUp{..} => FocusMove::Up,
+            UiInteractInputMessage::FocusDown{..} => FocusMove::Down,
+
+            _ => {continue;},
+        };
 
         //
         // if move_back {
-            println!("hm {move_dir:?} {move_back:?}");
+            // println!("hm {move_dir:?} {move_back:?}");
         // }
-        //
-            if move_back && cur_focus_entity.is_none() {
-                if !was_resent {
-                    ev_stk.push(ev.clone());
-                    was_resent=true;
-                    println!("yes");
-                } else {
-                    was_resent=false;
-                    println!("no");
-                }
-            }
 
-            let (wrap,exit)=cur_focus_entity.and_then(|e|focusable_query.get(e).ok()).map(|c|{
-                if move_dir.horizontal() {
-                    (c.hwrap,c.hexit)
-                } else if move_dir.vertical() {
-                    (c.vwrap,c.vexit)
-                } else {
-                    (false,false)
-                }
-            }).unwrap_or_default();
 
-            let move_result=move_focus(
-                move_dir,root_entity,group,
-                // if resent_found.is_some() {resent_found}else{cur_focus_entity.clone()},
-                cur_focus_entity.clone(),
+        //init
+        let mut neg_init=false;
+
+        if move_dir.negative() && !move_dir.tab() && cur_focus_entity.is_none() {
+            if let Some((entity,_))=move_focus( //don't need to worry about popping focus_entity_stk, since using FocusMove::Next won't try to exit
+                FocusMove::Next,group,
+                root_entity,None,
                 focus_entity_stk,device_move_hists,
-                wrap,exit,
                 parent_query,computed_query,children_query,float_query,focusable_query,
-            );
+            ) {
+                *cur_focus_entity = Some(entity);
+                println!("init {entity}");
+                neg_init=true;
+            }
+        }
 
-            if let Some((entity,focus_depth))=move_result {
-                // if was_resent {
-                //     resent_found=Some(entity);
-                // } else
-                {
-                    //unfocus some ancestors?
-                    for _ in 0 .. focus_depth {
-                        let entity=focus_entity_stk.pop().unwrap();
-                        ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group, device }});
-                    }
+        //
+        // if move_back && cur_focus_entity.is_none() {
+        //     if !was_resent {
+        //         ev_stk.push(ev.clone());
+        //         was_resent=true;
+        //         println!("yes");
+        //     } else {
+        //         was_resent=false;
+        //         println!("no");
+        //     }
+        // }
 
-                    //should be after ancestors focus end?
-                    if let Some(cur_focus_entity) = *cur_focus_entity {
-                        ui_event_writer.write(UiInteractEvent{entity:cur_focus_entity,event_type:UiInteractMessageType::FocusEnd{group, device }});
-                    }
 
-                    *cur_focus_entity = Some(entity);
-                    ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group, device }});
+        let move_result=move_focus(
+            move_dir,group,
+            root_entity,cur_focus_entity.clone(),
+            focus_entity_stk,device_move_hists,
+            parent_query,computed_query,children_query,float_query,focusable_query,
+        );
+
+        if let Some((entity,focus_depth))=move_result {
+            //unfocus some ancestors?
+            for _ in 0 .. focus_depth {
+                let entity=focus_entity_stk.pop().unwrap();
+                ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusEnd{group, device }});
+            }
+
+            //should be after ancestors focus end?
+            if let Some(cur_focus_entity) = *cur_focus_entity {
+                if !neg_init {
+                    ui_event_writer.write(UiInteractEvent{entity:cur_focus_entity,event_type:UiInteractMessageType::FocusEnd{group, device }});
                 }
             }
+
+            *cur_focus_entity = Some(entity);
+            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group, device }});
+            println!("hmm1! {neg_init}");
+        } else {
+            println!("hmm2! {neg_init}");
+        }
 
         //focus enter, on no focusable found (undo push above)
         if let UiInteractInputMessage::FocusEnter{..}=ev {
@@ -456,42 +476,12 @@ pub fn update_focus_events(
     } //end for
 }
 
-fn get_focus_move_dir(ev : &UiInteractInputMessage, b:bool) -> Option<FocusMove> {
-    match ev {
-        UiInteractInputMessage::FocusInit{..}
-        |UiInteractInputMessage::FocusEnter{..}
-        |UiInteractInputMessage::FocusPrev{..}
-        |UiInteractInputMessage::FocusNext{..}
-        |UiInteractInputMessage::FocusLeft{..}
-        |UiInteractInputMessage::FocusRight{..}
-        |UiInteractInputMessage::FocusUp{..}
-        |UiInteractInputMessage::FocusDown{..}
-            if b
-            => Some(FocusMove::Next),
-
-
-        UiInteractInputMessage::FocusPrev{..} => Some(FocusMove::Prev),
-        UiInteractInputMessage::FocusNext{..} => Some(FocusMove::Next),
-
-        UiInteractInputMessage::FocusLeft{..} => Some(FocusMove::Left),
-        UiInteractInputMessage::FocusRight{..} => Some(FocusMove::Right),
-
-        UiInteractInputMessage::FocusUp{..} => Some(FocusMove::Up),
-        UiInteractInputMessage::FocusDown{..} => Some(FocusMove::Down),
-
-        _ => None,
-    }
-}
-
 fn move_focus(
-    move_dir: FocusMove,
+    move_dir: FocusMove,cur_group:i32,
     top_root_entity:Entity,
-    cur_group:i32,
     cur_focus_entity:Option<Entity>,
     focus_entity_stk:& Vec<Entity>,
     device_move_hists : &mut HashMap<Entity,[Entity;4]>, //[device][entiti]=(left,top,right,bottom)
-    wrap:bool,
-    exit:bool,
     parent_query:Query<&ChildOf, With<UiLayoutComputed>>,
     layout_computed_query: Query<&UiLayoutComputed,With<UiLayoutComputed>>,
     children_query: Query<&Children,(With<UiLayoutComputed>,)>,
@@ -504,10 +494,26 @@ fn move_focus(
     //with move_hists, if moving right, and reaching end, want it to wrap to first item in cur row's move_hist.left
     //  could look through list of the candidates, and search for the first candidate.move_hist.left
 
+    //
     let move_hori = move_dir.horizontal();
     let move_vert = move_dir.vertical();
     let move_tab = move_dir.tab();
     let move_pos = move_dir.positive();
+
+    //
+    let (wrap,exit)=cur_focus_entity.and_then(|e|focusable_query.get(e).ok()).and_then(|c|{
+        if move_hori {
+            Some((c.hwrap,c.hexit))
+        } else if move_vert {
+            Some((c.vwrap,c.vexit))
+        } else if move_tab {
+            Some((true,true))
+        } else {
+            None
+        }
+    }).unwrap_or_default();
+
+    //
 
     struct FocusMoveWork {
         entity:Entity,
@@ -695,7 +701,8 @@ fn move_focus(
         stk.extend(stk_befores.into_iter().rev());
 
         stk.reverse();
-    } else if move_tab {
+    } else //if move_tab //just init if no focus
+    {
         //
         if let Some(&focus_stk_last_entity)=focus_entity_stk.last() {
             if let Ok(children)=children_query.get(focus_stk_last_entity) {

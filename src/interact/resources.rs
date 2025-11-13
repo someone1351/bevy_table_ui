@@ -1,7 +1,7 @@
 
 use std::collections::HashMap;
 
-use bevy::ecs::prelude::*;
+use bevy::{ecs::prelude::*, math::Vec2};
 
 
 #[derive(Resource,Debug, Default)]
@@ -12,6 +12,19 @@ pub struct FocusStates(pub HashMap<i32,HashMap<Entity,HashMap<i32,(Option<Entity
 #[derive(Resource,Debug, Default)]
 //[device][entity]=(left,top,right,bottom)
 pub struct FocusMoveHists(pub HashMap<i32,HashMap<Entity,[Entity;4]>>);
+
+type DevicePresseds = HashMap<i32,HashMap<(Entity,i32),(Entity,bool)>>; //[button][(root_entity,device)]=(pressed_entity,is_pressed)
+
+
+#[derive(Resource,Debug, Default)]
+pub struct FocusDevicePresseds(pub DevicePresseds);
+
+#[derive(Resource,Debug, Default)]
+pub struct CursorDevicePresseds(pub DevicePresseds);
+
+#[derive(Resource,Debug, Default)]
+pub struct CursorDevicePointers(pub HashMap<(Entity,i32),Vec2>); // [(root_entity,device)]=cursor
+
 
 
 // #[derive(Resource,Debug, Default)]

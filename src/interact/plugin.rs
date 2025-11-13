@@ -27,6 +27,12 @@ impl bevy::app::Plugin for UiInteractPlugin {
 
             .init_resource::<resources::FocusStates>()
             .init_resource::<resources::FocusMoveHists>()
+
+            .init_resource::<resources::FocusDevicePresseds>()
+            .init_resource::<resources::CursorDevicePresseds>()
+            .init_resource::<resources::CursorDevicePointers>()
+
+
             .init_resource::<resources::UiPressStates>()
             // .init_resource::<resources::UiDragStates>()
 
@@ -38,16 +44,20 @@ impl bevy::app::Plugin for UiInteractPlugin {
                     update_hover_events, //cursor(x,y)
 
                     focus_move_cleanup,
+                    focus_press_cleanup,
+                    focus_update_press_events,
                     update_focus_events, //up/down/left/right/prev/next/ok/cancel
-                    // pre_update_press,
+
+                    cursor_press_cleanup,
                     update_press_events, //ok,cancel, cursor(x,y)
-                    // pre_update_drag,
+
                     update_drag_events, //ok, cursor(mx,my)
                     update_select_events, //
 
+                    // pre_update_press,
+                    // pre_update_drag,
                     // update_scripting,
                     // forward_custom_events,
-
                     // ui_asset_modified,
                     // ui_asset_load,
                 ).chain().in_set(UiInteractSystem)

@@ -32,6 +32,7 @@ use bevy::ecs::prelude::*;
 
 
 use crate::interact::vals::FocusMove;
+use crate::FocusDevicePresseds;
 use crate::FocusMoveHists;
 use crate::FocusStates;
 
@@ -200,6 +201,110 @@ pub fn focus_move_cleanup(
     });
 }
 
+
+pub fn focus_press_cleanup(
+    root_query: Query<&UiLayoutComputed, With<UiRoot>>,
+    layout_computed_query: Query<&UiLayoutComputed>,
+    pressable_query: Query<(Entity,& UiFocusable)>,
+    mut device_presseds : ResMut<FocusDevicePresseds>,
+    mut ui_output_event_writer: MessageWriter<UiInteractEvent>,
+) {
+    //remove dead roots/pressed entities from device_presseds
+    device_presseds.0.retain(|&button,button_device_presseds|{
+        button_device_presseds.retain(|&(root_entity,device),&mut (pressed_entity,is_pressed)|{
+            let root_alive= root_query.get(root_entity).map(|computed|computed.unlocked).unwrap_or_default();
+            let (computed_root_entity,unlocked)=layout_computed_query.get(pressed_entity).map(|c|(c.root_entity,c.unlocked)).unwrap_or((Entity::PLACEHOLDER,false));
+            let pressable_enabled=pressable_query.get(pressed_entity).map(|(_,c)|c.enable).unwrap_or_default();
+
+            let b=root_alive && unlocked && pressable_enabled && computed_root_entity==root_entity; //&& entities_presseds_contains
+
+            if !b && is_pressed {
+                ui_output_event_writer.write(UiInteractEvent{entity:pressed_entity,event_type:UiInteractMessageType::PressEnd{ device, button }});
+            }
+
+            b
+        });
+
+        !button_device_presseds.is_empty()
+    });
+}
+
+
+pub fn focus_update_press_events(
+    root_query: Query<&UiLayoutComputed, With<UiRoot>>,
+    focus_states:Res<FocusStates>, //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk)
+    mut device_presseds : ResMut<FocusDevicePresseds>,
+    mut input_event_reader: MessageReader<UiInteractInputMessage>,
+    mut ui_output_event_writer: MessageWriter<UiInteractEvent>,
+) {
+
+    //
+    for ev in input_event_reader.read()
+
+    {
+
+        //
+        if !ev.root_entity()
+            .and_then(|root_entity|root_query.get(root_entity).ok())
+            .map(|computed|computed.unlocked)
+            .unwrap_or_default()
+        {
+            continue;
+        }
+
+        //
+        match ev.clone() {
+            UiInteractInputMessage::FocusPressBegin{root_entity,group,device, button } => {
+                //already pressed on an entity
+                if device_presseds.0.get(&button).map(|button_device_presseds|{
+                    button_device_presseds.contains_key(&(root_entity,device))
+                }).unwrap_or_default() {
+                    continue;
+                }
+
+                let focused_entity=focus_states.0.get(&device)
+                    .and_then(|device_focus_states|device_focus_states.get(&root_entity))
+                    .and_then(|root_focus_states|root_focus_states.get(&group))
+                    .and_then(|(cur_focus_entity,_)|cur_focus_entity.clone());
+
+                //
+                if let Some(entity)=focused_entity {
+                    ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::PressBegin{ device, button }});
+
+                    device_presseds.0.entry(button).or_default()
+                        .insert((root_entity,device),(entity,true));
+
+                }
+            }
+            UiInteractInputMessage::FocusPressEnd{root_entity,device, button } => {
+                let Some((pressed_entity,_is_pressed))=device_presseds.0.get_mut(&button)
+                    .and_then(|button_device_presseds|button_device_presseds.remove(&(root_entity,device)))
+                else {
+                    continue;
+                };
+
+                //
+                ui_output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::PressEnd{ device, button }});
+                ui_output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::Click{ device, button }});
+            }
+
+            UiInteractInputMessage::FocusPressCancel{root_entity,device, button } => {
+                let Some((pressed_entity,_))=device_presseds.0.get_mut(&button)
+                    .and_then(|button_device_presseds|button_device_presseds.remove(&(root_entity,device)))
+                else {
+                    continue;
+                };
+
+                //
+                ui_output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::PressEnd{ device, button }});
+            }
+
+            _=>{}
+        } //match
+    } //for
+}
+
+
 pub fn update_focus_events(
 
     computed_query: Query<&UiLayoutComputed,With<UiLayoutComputed>>,
@@ -235,7 +340,7 @@ pub fn update_focus_events(
 
     //
     while let Some(ev)=ev_stk.pop() {
-        if !ev.is_focus_move() {
+        if !ev.is_focus() {
             continue;
         }
 

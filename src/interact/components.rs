@@ -28,6 +28,19 @@ pub struct UiDraggable {
     pub enable : bool,
 }
 
+
+
+
+#[derive(Component,Default,Clone,Debug)]
+#[require(UiLayoutComputed)]
+pub struct UiCursorable {
+    pub hoverable : bool,
+    pub draggable : bool,
+    pub pressable : bool,
+    pub press_always : bool,
+
+}
+
 // #[derive(Component,Default,Clone,Debug)]
 // pub struct UiScrollable {
 //     pub henable : bool,
@@ -61,10 +74,10 @@ pub struct UiFocusable {
 
     // pub move_press:bool, //on focused or focus move failed then press, works even if pressable is false, but if both enabled, both count has being held down
     pub pressable:bool,
-    pub left_pressable:bool,
-    pub right_pressable:bool,
-    pub up_pressable:bool,
-    pub down_pressable:bool,
+    // pub left_pressable:bool,
+    // pub right_pressable:bool,
+    // pub up_pressable:bool,
+    // pub down_pressable:bool,
 
     pub init:bool, // on focus_enter, focus on this
 

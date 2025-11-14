@@ -231,77 +231,69 @@ pub fn focus_press_cleanup(
 
 
 pub fn focus_update_press_events(
-    root_query: Query<&UiLayoutComputed, With<UiRoot>>,
-    focus_states:Res<FocusStates>, //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk)
-    mut device_presseds : ResMut<FocusDevicePresseds>,
-    mut input_event_reader: MessageReader<UiInteractInputMessage>,
-    mut ui_output_event_writer: MessageWriter<UiInteractEvent>,
+    // root_query: Query<&UiLayoutComputed, With<UiRoot>>,
+    focus_states:&FocusStates, //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk)
+    device_presseds : &mut FocusDevicePresseds,
+    ev: UiInteractInputMessage,
+    ui_output_event_writer: &mut MessageWriter<UiInteractEvent>,
 ) {
+    //
+    // if !ev.root_entity()
+    //     .and_then(|root_entity|root_query.get(root_entity).ok())
+    //     .map(|computed|computed.unlocked)
+    //     .unwrap_or_default()
+    // {
+    //     return;
+    // }
 
     //
-    for ev in input_event_reader.read()
+    match ev.clone() {
+        UiInteractInputMessage::FocusPressBegin{root_entity,group,device, button } => {
+            //already pressed on an entity
+            if device_presseds.0.get(&button).map(|button_device_presseds|{
+                button_device_presseds.contains_key(&(root_entity,device))
+            }).unwrap_or_default() {
+                return;
+            }
 
-    {
+            let focused_entity=focus_states.0.get(&device)
+                .and_then(|device_focus_states|device_focus_states.get(&root_entity))
+                .and_then(|root_focus_states|root_focus_states.get(&group))
+                .and_then(|(cur_focus_entity,_)|cur_focus_entity.clone());
 
-        //
-        if !ev.root_entity()
-            .and_then(|root_entity|root_query.get(root_entity).ok())
-            .map(|computed|computed.unlocked)
-            .unwrap_or_default()
-        {
-            continue;
+            //
+            if let Some(entity)=focused_entity {
+                ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::PressBegin{ device, button }});
+
+                device_presseds.0.entry(button).or_default().insert((root_entity,device),(entity,true));
+
+            }
+        }
+        UiInteractInputMessage::FocusPressEnd{root_entity,device, button } => {
+            let Some((pressed_entity,_is_pressed))=device_presseds.0.get_mut(&button)
+                .and_then(|button_device_presseds|button_device_presseds.remove(&(root_entity,device)))
+            else {
+                return;
+            };
+
+            //
+            ui_output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::PressEnd{ device, button }});
+            ui_output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::Click{ device, button }});
         }
 
-        //
-        match ev.clone() {
-            UiInteractInputMessage::FocusPressBegin{root_entity,group,device, button } => {
-                //already pressed on an entity
-                if device_presseds.0.get(&button).map(|button_device_presseds|{
-                    button_device_presseds.contains_key(&(root_entity,device))
-                }).unwrap_or_default() {
-                    continue;
-                }
+        UiInteractInputMessage::FocusPressCancel{root_entity,device, button } => {
+            let Some((pressed_entity,_))=device_presseds.0.get_mut(&button)
+                .and_then(|button_device_presseds|button_device_presseds.remove(&(root_entity,device)))
+            else {
+                return;
+            };
 
-                let focused_entity=focus_states.0.get(&device)
-                    .and_then(|device_focus_states|device_focus_states.get(&root_entity))
-                    .and_then(|root_focus_states|root_focus_states.get(&group))
-                    .and_then(|(cur_focus_entity,_)|cur_focus_entity.clone());
+            //
+            ui_output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::PressEnd{ device, button }});
+        }
 
-                //
-                if let Some(entity)=focused_entity {
-                    ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::PressBegin{ device, button }});
-
-                    device_presseds.0.entry(button).or_default()
-                        .insert((root_entity,device),(entity,true));
-
-                }
-            }
-            UiInteractInputMessage::FocusPressEnd{root_entity,device, button } => {
-                let Some((pressed_entity,_is_pressed))=device_presseds.0.get_mut(&button)
-                    .and_then(|button_device_presseds|button_device_presseds.remove(&(root_entity,device)))
-                else {
-                    continue;
-                };
-
-                //
-                ui_output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::PressEnd{ device, button }});
-                ui_output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::Click{ device, button }});
-            }
-
-            UiInteractInputMessage::FocusPressCancel{root_entity,device, button } => {
-                let Some((pressed_entity,_))=device_presseds.0.get_mut(&button)
-                    .and_then(|button_device_presseds|button_device_presseds.remove(&(root_entity,device)))
-                else {
-                    continue;
-                };
-
-                //
-                ui_output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::PressEnd{ device, button }});
-            }
-
-            _=>{}
-        } //match
-    } //for
+        _=>{}
+    } //match
 }
 
 
@@ -325,6 +317,7 @@ pub fn update_focus_events(
     mut focus_states:ResMut<FocusStates>, //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk)
     mut move_hists:ResMut<FocusMoveHists>, //[device][entity]=(left,top,right,bottom)
 
+    mut device_presseds : ResMut<FocusDevicePresseds>,
     //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk,from_dirs)
 
     // mut hist_incr : Local<u64>,
@@ -356,6 +349,9 @@ pub fn update_focus_events(
         if !root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default() {
             continue;
         }
+
+        //
+        focus_update_press_events(& focus_states, &mut device_presseds , ev, &mut ui_event_writer, );
 
         //
         let Some(group)= ev.focus_group() else {continue;};
@@ -421,23 +417,10 @@ pub fn update_focus_events(
                 parent_query,computed_query,children_query,float_query,focusable_query,
             ) {
                 *cur_focus_entity = Some(entity);
-                println!("init {entity}");
+                // println!("init {entity}");
                 neg_init=true;
             }
         }
-
-        //
-        // if move_back && cur_focus_entity.is_none() {
-        //     if !was_resent {
-        //         ev_stk.push(ev.clone());
-        //         was_resent=true;
-        //         println!("yes");
-        //     } else {
-        //         was_resent=false;
-        //         println!("no");
-        //     }
-        // }
-
 
         let move_result=move_focus(
             move_dir,group,
@@ -462,9 +445,9 @@ pub fn update_focus_events(
 
             *cur_focus_entity = Some(entity);
             ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group, device }});
-            println!("hmm1! {neg_init}");
-        } else {
-            println!("hmm2! {neg_init}");
+            // println!("hmm1! {neg_init}");
+        // } else {
+        //     println!("hmm2! {neg_init}");
         }
 
         //focus enter, on no focusable found (undo push above)
@@ -507,7 +490,7 @@ fn move_focus(
         } else if move_vert {
             Some((c.vwrap,c.vexit))
         } else if move_tab {
-            Some((true,true))
+            Some((true,false))
         } else {
             None
         }
@@ -701,21 +684,16 @@ fn move_focus(
         stk.extend(stk_befores.into_iter().rev());
 
         stk.reverse();
-    } else //if move_tab //just init if no focus
-    {
-        //
-        if let Some(&focus_stk_last_entity)=focus_entity_stk.last() {
-            if let Ok(children)=children_query.get(focus_stk_last_entity) {
-                stk.extend(children.iter().map(|child_entity|FocusMoveWork {
-                    entity: child_entity,
-                    from_bounds: vec![],
-                    to_bound: (0,0),
-                    focus_depth: 0,
-                    valid: true,
-                }));
-            }
-        } else {
-            stk.push(FocusMoveWork { entity: top_root_entity, from_bounds: vec![], to_bound: (0,0), focus_depth: 0, valid: true });
+    // } else { //if move_tab
+    } else if let Some(&focus_stk_last_entity)=focus_entity_stk.last() { //just init if no focus
+        if let Ok(children)=children_query.get(focus_stk_last_entity) {
+            stk.extend(children.iter().map(|child_entity|FocusMoveWork {
+                entity: child_entity,
+                from_bounds: vec![],
+                to_bound: (0,0),
+                focus_depth: 0,
+                valid: true,
+            }));
         }
 
         //
@@ -726,6 +704,8 @@ fn move_focus(
             let q= if move_pos { q.reverse() } else { q };
             q
         });
+    } else { //just init if no focus
+        stk.push(FocusMoveWork { entity: top_root_entity, from_bounds: vec![], to_bound: (0,0), focus_depth: 0, valid: true });
     }
 
     //
@@ -765,8 +745,8 @@ fn move_focus(
             // }
 
             //
-            if let Some(ind)=move_dir.rev().ind() {
-                device_move_hists.entry(entity).or_insert_with(||[Entity::PLACEHOLDER;4])[ind]=cur_focus_entity.unwrap();
+            if let Some(ind)=move_dir.rev().ind() { //get opposite dir
+                // device_move_hists.entry(entity).or_insert_with(||[Entity::PLACEHOLDER;4])[ind]=cur_focus_entity.unwrap(); //shouldn't just use unwrap?
             }
 
             //

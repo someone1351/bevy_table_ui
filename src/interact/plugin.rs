@@ -45,7 +45,7 @@ impl bevy::app::Plugin for UiInteractPlugin {
 
                     focus_move_cleanup,
                     focus_press_cleanup,
-                    focus_update_press_events,
+                    // focus_update_press_events,
                     update_focus_events, //up/down/left/right/prev/next/ok/cancel
 
                     cursor_press_cleanup,

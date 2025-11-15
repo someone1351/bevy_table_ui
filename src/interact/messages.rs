@@ -234,11 +234,14 @@ TODO
 pub enum UiInteractMessageType {
     HoverBegin{device:i32,}, //don't really need device? like press?
     HoverEnd{device:i32,},
-    PressBegin{device:i32,button:i32}, //,is_cursor:bool //might need hashset of devices?
-    PressEnd{device:i32,button:i32},
-    Click{device:i32,button:i32,
+    CursorPressBegin{device:i32,button:i32}, //,is_cursor:bool //might need hashset of devices?
+    CursorPressEnd{device:i32,button:i32},
+    CursorClick{device:i32,button:i32,
         // times:u32, //how many times within the frame, most times will be 0, as press/release happens over multiple frames
     },
+    FocusPressBegin{device:i32,button:i32},
+    FocusPressEnd{device:i32,button:i32},
+    FocusClick{device:i32,button:i32,},
     // DragBegin,
     // DragEnd,
     // DragMove{ h_px:i32,v_px:i32, h_scale:f32,v_scale:f32, },
@@ -302,12 +305,9 @@ impl UiInteractMessageType {
         match self {
             Self::HoverBegin{..} => "hover_begin",
             Self::HoverEnd{..} => "hover_end",
-            Self::PressBegin{..} => "press_begin",
-            Self::PressEnd{..} => "press_end",
-            Self::Click{..} => "click",
-            // Self::DragBegin => "drag_begin",
-            // Self::DragEnd => "drag_end",
-            // Self::DragMove{..} => "drag_move",
+            Self::CursorPressBegin{..} => "press_begin",
+            Self::CursorPressEnd{..} => "press_end",
+            Self::CursorClick{..} => "click",
             Self::DragX{..}=>"drag_x",
             Self::DragY{..}=>"drag_y",
             Self::SelectBegin => "select_begin",
@@ -315,17 +315,10 @@ impl UiInteractMessageType {
             Self::FocusBegin{..} => "focus_begin",
             Self::FocusEnd{..} => "focus_end",
 
-            // Self::FocusLeft{..} => "focus_left",
-            // Self::FocusRight{..} => "focus_right",
-            // Self::FocusUp{..} => "focus_up",
-            // Self::FocusDown{..} => "focus_down",
-            // Self::FocusPrev{..} => "focus_prev",
-            // Self::FocusNext{..} => "focus_next",
+            Self::FocusPressBegin {.. } => "focus_press_begin",
+            Self::FocusPressEnd {.. } => "focus_press_end",
+            Self::FocusClick {.. } => "focus_click",
 
-            // Self::Custom { .. } => "custom",
-            // Self::Update => "update",
-            // Self::Char(_) => "char",
-            // Self::FocusCancel => "focus_cancel",
         }
     }
 }

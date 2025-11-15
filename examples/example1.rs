@@ -156,7 +156,7 @@ pub fn on_affects<'a>(
 
     //
     for ev in interact_event_reader.read() {
-        println!("{ev}");
+        println!("e {ev}");
         let Ok((_,_,mut affect_computed))=affect_query.get_mut(ev.entity) else {continue;};
 
         match ev.event_type {
@@ -167,14 +167,25 @@ pub fn on_affects<'a>(
             UiInteractMessageType::FocusEnd { device,.. } => {
                 affect_computed.states.get_mut(&UiAffectState::Focus).map(|x|x.remove(&DeviceType::Focus(device)));
             }
-            UiInteractMessageType::PressBegin{device,button,..} => {
+            UiInteractMessageType::CursorPressBegin{device,button,..} => {
                 println!("press begin {device}");
                 affect_computed.states.entry(UiAffectState::Press(button)).or_default().insert(DeviceType::Cursor(device));
                 new_states.entry(ev.entity).or_default().entry(UiAffectState::Press(button)).or_default().insert(DeviceType::Cursor(device));
             }
-            UiInteractMessageType::PressEnd{device,button,..} => {
+            UiInteractMessageType::CursorPressEnd{device,button,..} => {
                 println!("press end {device}");
                 affect_computed.states.get_mut(&UiAffectState::Press(button)).map(|x|x.remove(&DeviceType::Cursor(device)));
+            }
+
+
+            UiInteractMessageType::FocusPressBegin { device, button } => {
+                println!("focus press begin {device}");
+                affect_computed.states.entry(UiAffectState::Press(button)).or_default().insert(DeviceType::Focus(device));
+                new_states.entry(ev.entity).or_default().entry(UiAffectState::Press(button)).or_default().insert(DeviceType::Focus(device));
+            }
+            UiInteractMessageType::FocusPressEnd { device, button } => {
+                println!("focus press end {device}");
+                affect_computed.states.get_mut(&UiAffectState::Press(button)).map(|x|x.remove(&DeviceType::Focus(device)));
             }
             UiInteractMessageType::SelectBegin => {
                 affect_computed.states.entry(UiAffectState::Select).or_default().insert(DeviceType::None);
@@ -190,7 +201,8 @@ pub fn on_affects<'a>(
             UiInteractMessageType::HoverEnd{device,..} => {
                 affect_computed.states.get_mut(&UiAffectState::Hover).map(|x|x.remove(&DeviceType::Cursor(device)));
             }
-            UiInteractMessageType::Click{..}=> {}
+            UiInteractMessageType::CursorClick{..}=> {}
+            UiInteractMessageType::FocusClick { .. } => {}
             UiInteractMessageType::DragX{..} => {}
             UiInteractMessageType::DragY{..} => {}
         }
@@ -299,9 +311,14 @@ fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<Font
             enable: true,
             hexit:false,vexit:true,
             hwrap:true,vwrap:true,
+            pressable:[0].into(),
             ..Default::default()
         },
-        UiPressable{ enable: true, ..Default::default() },
+        UiPressable{
+            enable: true,
+            pressable:[0].into(),
+            ..Default::default()
+        },
         // UiHoverable{ enable: true },
         // UiDraggable{ enable: true },
         UiEdge{

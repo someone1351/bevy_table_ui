@@ -205,7 +205,7 @@ pub fn focus_move_cleanup(
 pub fn focus_press_cleanup(
     root_query: Query<&UiLayoutComputed, With<UiRoot>>,
     layout_computed_query: Query<&UiLayoutComputed>,
-    pressable_query: Query<(Entity,& UiFocusable)>,
+    focusable_query: Query<(Entity,& UiFocusable)>,
     mut device_presseds : ResMut<FocusDevicePresseds>,
     mut ui_output_event_writer: MessageWriter<UiInteractEvent>,
 ) {
@@ -214,12 +214,12 @@ pub fn focus_press_cleanup(
         button_device_presseds.retain(|&(root_entity,device),&mut (pressed_entity,is_pressed)|{
             let root_alive= root_query.get(root_entity).map(|computed|computed.unlocked).unwrap_or_default();
             let (computed_root_entity,unlocked)=layout_computed_query.get(pressed_entity).map(|c|(c.root_entity,c.unlocked)).unwrap_or((Entity::PLACEHOLDER,false));
-            let pressable_enabled=pressable_query.get(pressed_entity).map(|(_,c)|c.enable).unwrap_or_default();
+            let pressable_enabled=focusable_query.get(pressed_entity).map(|(_,c)|c.enable && c.pressable.contains(&button)).unwrap_or_default();
 
             let b=root_alive && unlocked && pressable_enabled && computed_root_entity==root_entity; //&& entities_presseds_contains
 
             if !b && is_pressed {
-                ui_output_event_writer.write(UiInteractEvent{entity:pressed_entity,event_type:UiInteractMessageType::PressEnd{ device, button }});
+                ui_output_event_writer.write(UiInteractEvent{entity:pressed_entity,event_type:UiInteractMessageType::FocusPressEnd{ device, button }});
             }
 
             b
@@ -232,6 +232,8 @@ pub fn focus_press_cleanup(
 
 pub fn focus_update_press_events(
     // root_query: Query<&UiLayoutComputed, With<UiRoot>>,
+    // focusable_query: Query<(Entity,& UiFocusable)>,
+    focusable_query : Query<& UiFocusable>,
     focus_states:&FocusStates, //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk)
     device_presseds : &mut FocusDevicePresseds,
     ev: UiInteractInputMessage,
@@ -249,6 +251,7 @@ pub fn focus_update_press_events(
     //
     match ev.clone() {
         UiInteractInputMessage::FocusPressBegin{root_entity,group,device, button } => {
+
             //already pressed on an entity
             if device_presseds.0.get(&button).map(|button_device_presseds|{
                 button_device_presseds.contains_key(&(root_entity,device))
@@ -263,7 +266,10 @@ pub fn focus_update_press_events(
 
             //
             if let Some(entity)=focused_entity {
-                ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::PressBegin{ device, button }});
+                let pressable=focusable_query.get(entity).map(|c|c.pressable.contains(&button)).unwrap_or_default();//c.enable?
+                if !pressable {return;}
+
+                ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusPressBegin{ device, button }});
 
                 device_presseds.0.entry(button).or_default().insert((root_entity,device),(entity,true));
 
@@ -277,8 +283,8 @@ pub fn focus_update_press_events(
             };
 
             //
-            ui_output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::PressEnd{ device, button }});
-            ui_output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::Click{ device, button }});
+            ui_output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::FocusPressEnd{ device, button }});
+            ui_output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::FocusClick{ device, button }});
         }
 
         UiInteractInputMessage::FocusPressCancel{root_entity,device, button } => {
@@ -289,7 +295,7 @@ pub fn focus_update_press_events(
             };
 
             //
-            ui_output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::PressEnd{ device, button }});
+            ui_output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::FocusPressEnd{ device, button }});
         }
 
         _=>{}
@@ -351,7 +357,7 @@ pub fn update_focus_events(
         }
 
         //
-        focus_update_press_events(& focus_states, &mut device_presseds , ev, &mut ui_event_writer, );
+        focus_update_press_events(focusable_query,& focus_states, &mut device_presseds , ev, &mut ui_event_writer, );
 
         //
         let Some(group)= ev.focus_group() else {continue;};

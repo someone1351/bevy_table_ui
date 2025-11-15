@@ -1,4 +1,6 @@
 
+use std::collections::HashSet;
+
 use bevy::ecs::prelude::*;
 use super::super::layout::components::UiLayoutComputed;
 
@@ -11,7 +13,10 @@ pub struct UiHoverable {
 #[derive(Component,Default,Clone,Debug)]
 #[require(UiLayoutComputed)]
 pub struct UiPressable {
-    pub enable : bool,
+    pub enable : bool, //disables everything
+    pub hoverable:bool,
+    pub draggable : bool,
+    pub pressable:HashSet<i32>, //[button] //todo use bit flags
     // doesn't temporarily release if cursor is moved off while still pressing
     // would want this to handle different for dif buttons eg lmb vs rmb?
     pub always : bool,
@@ -47,6 +52,7 @@ pub struct UiCursorable {
 //     pub venable : bool,
 // }
 
+//could add devices to selectable, so multiple devices can select different things ...
 #[derive(Component,Default,Clone,Debug)]
 #[require(UiLayoutComputed)]
 pub struct UiSelectable {
@@ -73,7 +79,8 @@ pub struct UiFocusable {
     // pub vdir_press : bool, //when up/down on start/aready focus(ed) // ?
 
     // pub move_press:bool, //on focused or focus move failed then press, works even if pressable is false, but if both enabled, both count has being held down
-    pub pressable:bool,
+    // pub pressable:bool,
+    pub pressable:HashSet<i32>, //[button] //todo use bit flags
     // pub left_pressable:bool,
     // pub right_pressable:bool,
     // pub up_pressable:bool,

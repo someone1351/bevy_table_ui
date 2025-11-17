@@ -36,12 +36,17 @@ impl bevy::app::Plugin for UiInteractPlugin {
             .init_resource::<resources::UiPressStates>()
             // .init_resource::<resources::UiDragStates>()
 
+            .init_resource::<resources::CursorHover>()
+            // .init_resource::<resources::UiPressStates>()
+            // .init_resource::<resources::UiPressStates>()
+            // .init_resource::<resources::UiPressStates>()
 
             .add_systems(Update, (
                 (
                     // update_active_nodes,
 
-                    update_hover_events, //cursor(x,y)
+                    hover_cleanup,
+                    // update_hover_events, //cursor(x,y)
 
                     focus_move_cleanup,
                     focus_press_cleanup,

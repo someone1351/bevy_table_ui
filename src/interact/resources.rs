@@ -25,7 +25,8 @@ pub struct CursorDevicePresseds(pub DevicePresseds);
 #[derive(Resource,Debug, Default)]
 pub struct CursorDevicePointers(pub HashMap<(Entity,i32),Vec2>); // [(root_entity,device)]=cursor
 
-
+#[derive(Resource,Debug, Default)]
+pub struct CursorHover(pub HashMap<(Entity,i32),(Entity,Vec2)>); //[(root_entity,device)]=cur_hover_entity
 
 // #[derive(Resource,Debug, Default)]
 // pub struct UiFocuseds(pub HashMap<i32,HashSet<Entity>>); //[device][entity_focused] replaces focusable.focused, is it cleared if entity is deleted?

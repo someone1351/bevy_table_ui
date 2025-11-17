@@ -4,11 +4,11 @@ use std::collections::HashSet;
 use bevy::ecs::prelude::*;
 use super::super::layout::components::UiLayoutComputed;
 
-#[derive(Component,Default,Clone,Debug)]
-#[require(UiLayoutComputed)]
-pub struct UiHoverable {
-    pub enable : bool,
-}
+// #[derive(Component,Default,Clone,Debug)]
+// #[require(UiLayoutComputed)]
+// pub struct UiHoverable {
+//     pub enable : bool,
+// }
 
 #[derive(Component,Default,Clone,Debug)]
 #[require(UiLayoutComputed)]

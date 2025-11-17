@@ -195,7 +195,7 @@ pub fn on_affects<'a>(
                 affect_computed.states.get_mut(&UiAffectState::Select).map(|x|x.remove(&DeviceType::None));
             }
             UiInteractMessageType::HoverBegin{device,..} => {
-                affect_computed.states.entry(UiAffectState::Hover).or_default().insert(DeviceType::Focus(device));
+                affect_computed.states.entry(UiAffectState::Hover).or_default().insert(DeviceType::Cursor(device));
                 new_states.entry(ev.entity).or_default().entry(UiAffectState::Hover).or_default().insert(DeviceType::Cursor(device));
             }
             UiInteractMessageType::HoverEnd{device,..} => {
@@ -298,13 +298,19 @@ fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<Font
         (UiAffectState::Press(0),Color::linear_rgb(1.0,0.8,0.1))
     ]);
 
+
+
     let c=[rng.gen::<f32>(),rng.gen::<f32>(),rng.gen::<f32>()];
     let col=Color::srgb_from_array(c.map(|c|c*0.8));
-
+    let col2=Color::srgb_from_array(c.map(|c|c));
+    let back_col= attrib_setter(|c:&mut UiColor,v|c.back=v,col,[
+        (UiAffectState::Hover,col2)
+    ]);
     commands.entity(entity).insert((
         UixAffect(vec![
-            attrib_setter(|c:&mut UiColor,v|c.back=v, col, []),
-            border_col.clone(),
+            // attrib_setter(|c:&mut UiColor,v|c.back=v, col, []),
+            back_col,
+            border_col,
         ]),
         UiSize{ width:UiVal::Px(-20.0), height:UiVal::Px(-30.0), },
         UiFocusable{
@@ -314,9 +320,11 @@ fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<Font
             pressable:[0].into(),
             ..Default::default()
         },
+        // UiHoverable{ enable: true },
         UiPressable{
             enable: true,
             pressable:[0].into(),
+            hoverable:true,
             ..Default::default()
         },
         // UiHoverable{ enable: true },

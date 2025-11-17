@@ -1,12 +1,12 @@
 mod focusing;
 mod selecting;
-mod hovering;
+// mod hovering;
 mod pressing;
 mod dragging;
 
 pub use focusing::*;
 pub use selecting::*;
-pub use hovering::*;
+// pub use hovering::*;
 pub use pressing::*;
 pub use dragging::*;
 

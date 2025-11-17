@@ -3,7 +3,7 @@ use std::fmt::Display;
 
 use bevy::ecs::prelude::*;
 
-use crate::DeviceType;
+// use crate::DeviceType;
 
 /*
 TODO
@@ -163,27 +163,27 @@ impl UiInteractInputMessage {
             UiInteractInputMessage::CursorMoveTo {..} => false,
         }
     }
-    pub fn device_type(&self) -> DeviceType {
-        match *self {
-            UiInteractInputMessage::FocusOn {device,..} => DeviceType::Focus(device),
-            UiInteractInputMessage::FocusInit {device,..} => DeviceType::Focus(device),
-            UiInteractInputMessage::FocusLeft {device,..} => DeviceType::Focus(device),
-            UiInteractInputMessage::FocusRight {device,..} => DeviceType::Focus(device),
-            UiInteractInputMessage::FocusUp {device,..} => DeviceType::Focus(device),
-            UiInteractInputMessage::FocusDown {device,..} => DeviceType::Focus(device),
-            UiInteractInputMessage::FocusPrev {device,..} => DeviceType::Focus(device),
-            UiInteractInputMessage::FocusNext {device,..} => DeviceType::Focus(device),
-            UiInteractInputMessage::FocusEnter {device,..} => DeviceType::Focus(device),
-            UiInteractInputMessage::FocusExit {device,..} => DeviceType::Focus(device),
-            UiInteractInputMessage::FocusPressBegin {device,..} => DeviceType::Focus(device),
-            UiInteractInputMessage::FocusPressEnd {device,..} => DeviceType::Focus(device),
-            UiInteractInputMessage::FocusPressCancel {device,..} => DeviceType::Focus(device),
-            UiInteractInputMessage::CursorPressBegin {device,..} => DeviceType::Cursor(device),
-            UiInteractInputMessage::CursorPressEnd {device,..} => DeviceType::Cursor(device),
-            UiInteractInputMessage::CursorPressCancel {device,..} => DeviceType::Cursor(device),
-            UiInteractInputMessage::CursorMoveTo {device,..} => DeviceType::Cursor(device),
-        }
-    }
+    // pub fn device_type(&self) -> DeviceType {
+    //     match *self {
+    //         UiInteractInputMessage::FocusOn {device,..} => DeviceType::Focus(device),
+    //         UiInteractInputMessage::FocusInit {device,..} => DeviceType::Focus(device),
+    //         UiInteractInputMessage::FocusLeft {device,..} => DeviceType::Focus(device),
+    //         UiInteractInputMessage::FocusRight {device,..} => DeviceType::Focus(device),
+    //         UiInteractInputMessage::FocusUp {device,..} => DeviceType::Focus(device),
+    //         UiInteractInputMessage::FocusDown {device,..} => DeviceType::Focus(device),
+    //         UiInteractInputMessage::FocusPrev {device,..} => DeviceType::Focus(device),
+    //         UiInteractInputMessage::FocusNext {device,..} => DeviceType::Focus(device),
+    //         UiInteractInputMessage::FocusEnter {device,..} => DeviceType::Focus(device),
+    //         UiInteractInputMessage::FocusExit {device,..} => DeviceType::Focus(device),
+    //         UiInteractInputMessage::FocusPressBegin {device,..} => DeviceType::Focus(device),
+    //         UiInteractInputMessage::FocusPressEnd {device,..} => DeviceType::Focus(device),
+    //         UiInteractInputMessage::FocusPressCancel {device,..} => DeviceType::Focus(device),
+    //         UiInteractInputMessage::CursorPressBegin {device,..} => DeviceType::Cursor(device),
+    //         UiInteractInputMessage::CursorPressEnd {device,..} => DeviceType::Cursor(device),
+    //         UiInteractInputMessage::CursorPressCancel {device,..} => DeviceType::Cursor(device),
+    //         UiInteractInputMessage::CursorMoveTo {device,..} => DeviceType::Cursor(device),
+    //     }
+    // }
 }
 // impl Clone for UiInteractInputEvent {
 //     fn clone(&self) -> Self {

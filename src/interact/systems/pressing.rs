@@ -187,9 +187,6 @@ fn do_hover(
 pub fn drag_cleanup(
     draggable_query: Query<(Entity,&UiLayoutComputed,&UiPressable)>,
     root_query: Query<(Entity,&UiLayoutComputed), With<UiRoot>>,
-
-
-    mut input_event_reader: MessageReader<UiInteractInputMessage>,
     mut output_event_writer: MessageWriter<UiInteractEvent>,
     mut device_drags:ResMut<CursorDrags>,
     // mut device_cursors : Local<HashMap<DragKey,Vec2>>, //[(root_entity,device)]=cursor
@@ -199,16 +196,26 @@ pub fn drag_cleanup(
     //     root_query.get(key.root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default()
     // });
 
-    device_drags.0.retain(|&(root_entity,_device),_|{
-        root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default()
-    });
+    //not necessary, handled below
+    // device_drags.0.retain(|&(root_entity,_device),_|{
+    //     root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default()
+    // });
 
     //remove disabled or without drag component
-    device_drags.0.retain(|_,button_drags|{
-        button_drags.retain(|&_button,drag|{
-            draggable_query.get(drag.dragged_entity)
+    device_drags.0.retain(|&(_,device),button_drags|{
+        button_drags.retain(|&button,drag|{
+            let b=draggable_query.get(drag.dragged_entity)
                 .map(|(_,computed,draggable)|computed.unlocked&&draggable.enable)
-                .unwrap_or_default()
+                .unwrap_or_default();
+
+            if b {
+                output_event_writer.write(UiInteractEvent{
+                    entity:drag.dragged_entity,
+                    event_type:UiInteractMessageType::CursorDragEnd {device, button } //scale:dragged_scale.y
+                });
+            }
+
+            b
         });
 
         !button_drags.is_empty()
@@ -265,6 +272,10 @@ fn do_drag_press_begin(
         // buttons: todo!(),
         // offset: border_rect.left_top()
     });
+    output_event_writer.write(UiInteractEvent{
+        entity:found_entity,
+        event_type:UiInteractMessageType::CursorDragBegin {device, button } //scale:dragged_scale.y
+    });
 
     // device_drags.0.get_mut(&(root_entity,device)).map(|x|x.entry(button));
     // //
@@ -285,8 +296,13 @@ fn do_drag_press_end_cancel(
     device_drags:&mut CursorDrags,
     output_event_writer: &mut MessageWriter<UiInteractEvent>,
 ) {
-    if let Some(x)=device_drags.0.get_mut(&(root_entity,device)) {
-        x.remove(&button);
+    if let Some(drags)=device_drags.0.get_mut(&(root_entity,device)) {
+        if let Some(drag)=drags.remove(&button) {
+            output_event_writer.write(UiInteractEvent{
+                entity:drag.dragged_entity,
+                event_type:UiInteractMessageType::CursorDragEnd {device, button } //scale:dragged_scale.y
+            });
+        }
     }
 }
 

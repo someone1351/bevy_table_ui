@@ -201,10 +201,19 @@ pub fn on_affects<'a>(
             UiInteractMessageType::HoverEnd{device,..} => {
                 affect_computed.states.get_mut(&UiAffectState::Hover).map(|x|x.remove(&DeviceType::Cursor(device)));
             }
+
+            UiInteractMessageType::CursorDragBegin { device, .. } => {
+                affect_computed.states.entry(UiAffectState::Drag).or_default().insert(DeviceType::Cursor(device));
+                new_states.entry(ev.entity).or_default().entry(UiAffectState::Drag).or_default().insert(DeviceType::Cursor(device));
+            }
+            UiInteractMessageType::CursorDragEnd { device, .. } => {
+                affect_computed.states.get_mut(&UiAffectState::Drag).map(|x|x.remove(&DeviceType::Cursor(device)));
+            }
             UiInteractMessageType::CursorClick{..}=> {}
             UiInteractMessageType::FocusClick { .. } => {}
-            UiInteractMessageType::DragX{..} => {}
-            UiInteractMessageType::DragY{..} => {}
+            UiInteractMessageType::CursorDragX{..} => {}
+            UiInteractMessageType::CursorDragY{..} => {}
+            UiInteractMessageType::CursorScroll { .. } => {}
         }
     }
 
@@ -323,7 +332,7 @@ fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<Font
         // UiHoverable{ enable: true },
         UiPressable{
             enable: true,
-            pressable:[0].into(),
+            pressable:true,
             hoverable:true,
             ..Default::default()
         },

@@ -1,5 +1,5 @@
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use bevy::ecs::prelude::*;
 use super::super::layout::components::UiLayoutComputed;
@@ -16,10 +16,16 @@ pub struct UiPressable {
     pub enable : bool, //disables everything
     pub hoverable:bool,
     pub draggable : bool,
-    pub pressable:HashSet<i32>, //[button] //todo use bit flags
+    pub pressable : bool,
+
+    pub press_onlys:HashSet<i32>, //[button] //todo use bit flags //only accept these buttons
+    pub drag_toggles:HashSet<i32>, //[button] //todo use bit flags
+
+    // pub draggable:HashMap<i32,bool>, //[button]=toggle
+    // pub pressable:HashSet<i32>, //[button] //todo use bit flags
     // doesn't temporarily release if cursor is moved off while still pressing
     // would want this to handle different for dif buttons eg lmb vs rmb?
-    pub always : bool,
+    // pub always : bool,
 
     // pub physical : bool, //works like a real button, ie stays held down as long as something is pressing it
 

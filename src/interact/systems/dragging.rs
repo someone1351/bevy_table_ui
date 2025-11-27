@@ -164,14 +164,14 @@ pub fn update_drag_events(
                 if dragged_delta_px.x != 0.0 {
                     ui_output_event_writer.write(UiInteractEvent{
                         entity:drag.dragged_entity,
-                        event_type:UiInteractMessageType::DragX {dist:dragged_px.x,delta:dragged_delta_px.x, device, button: 99 } //scale:dragged_scale.x
+                        event_type:UiInteractMessageType::CursorDragX {dist:dragged_px.x,delta:dragged_delta_px.x, device, button: 99 } //scale:dragged_scale.x
                     });
                 }
 
                 if dragged_delta_px.y != 0.0 {
                     ui_output_event_writer.write(UiInteractEvent{
                         entity:drag.dragged_entity,
-                        event_type:UiInteractMessageType::DragY {dist:dragged_px.y,delta:dragged_delta_px.y, device, button: 99 } //scale:dragged_scale.y
+                        event_type:UiInteractMessageType::CursorDragY {dist:dragged_px.y,delta:dragged_delta_px.y, device, button: 99 } //scale:dragged_scale.y
                     });
                 }
             }

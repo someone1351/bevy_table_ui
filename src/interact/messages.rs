@@ -12,12 +12,12 @@ TODO
 
 */
 
-#[derive(Debug,Message,Clone)]
-pub enum UiInteractInputFocusMessage {
-    FocusBegin{entity:Entity,device:i32},
-    FocusEnd{entity:Entity,device:i32},
-    Input(UiInteractInputMessage),
-}
+// #[derive(Debug,Message,Clone)]
+// pub enum UiInteractInputFocusMessage {
+//     FocusBegin{entity:Entity,device:i32},
+//     FocusEnd{entity:Entity,device:i32},
+//     Input(UiInteractInputMessage),
+// }
 
 #[derive(Debug,Message,Clone,Copy)]
 pub enum UiInteractInputMessage {
@@ -43,6 +43,7 @@ pub enum UiInteractInputMessage {
     CursorPressEnd{root_entity:Entity,device:i32,button:i32},
     CursorPressCancel{root_entity:Entity,device:i32,button:i32},
     CursorMoveTo{root_entity:Entity,device:i32,cursor:Option<bevy::math::Vec2>},
+    CursorScroll{root_entity:Entity,device:i32,axis:i32},
 
     //add DragBegin/DragEnd/DragMoveTo ? so can do the mmb click to toggle scroll,
 
@@ -76,6 +77,7 @@ impl UiInteractInputMessage {
             UiInteractInputMessage::CursorPressEnd { root_entity, ..} => Some(root_entity),
             UiInteractInputMessage::CursorPressCancel { root_entity, ..} => Some(root_entity),
             UiInteractInputMessage::CursorMoveTo { root_entity, ..} => Some(root_entity),
+            UiInteractInputMessage::CursorScroll { root_entity, ..} => Some(root_entity),
         }
     }
 
@@ -98,6 +100,7 @@ impl UiInteractInputMessage {
             UiInteractInputMessage::CursorPressEnd { .. } => None,
             UiInteractInputMessage::CursorPressCancel { .. } => None,
             UiInteractInputMessage::CursorMoveTo { .. } => None,
+            UiInteractInputMessage::CursorScroll { .. } => None,
         }
     }
     pub fn device(&self) -> i32 {
@@ -119,6 +122,7 @@ impl UiInteractInputMessage {
             UiInteractInputMessage::CursorPressEnd { device, .. } => device,
             UiInteractInputMessage::CursorPressCancel { device, .. } => device,
             UiInteractInputMessage::CursorMoveTo { device, .. } => device,
+            UiInteractInputMessage::CursorScroll { device, .. } => device,
         }
     }
     pub fn is_focus_move(&self) -> bool {
@@ -140,6 +144,7 @@ impl UiInteractInputMessage {
             UiInteractInputMessage::CursorPressEnd {..} => false,
             UiInteractInputMessage::CursorPressCancel {..} => false,
             UiInteractInputMessage::CursorMoveTo {..} => false,
+            UiInteractInputMessage::CursorScroll {..} => false,
         }
     }
     pub fn is_focus(&self) -> bool {
@@ -161,6 +166,7 @@ impl UiInteractInputMessage {
             UiInteractInputMessage::CursorPressEnd {..} => false,
             UiInteractInputMessage::CursorPressCancel {..} => false,
             UiInteractInputMessage::CursorMoveTo {..} => false,
+            UiInteractInputMessage::CursorScroll {..} => false,
         }
     }
     // pub fn device_type(&self) -> DeviceType {
@@ -252,8 +258,14 @@ pub enum UiInteractMessageType {
     //DragScrollY
 
     //add drag_begin/drag_end
-    DragX{dist:f32,delta:f32,device:i32,button:i32,}, //scale:f32
-    DragY{dist:f32,delta:f32,device:i32,button:i32,}, //scale:f32
+    CursorDragX{dist:f32,delta:f32,device:i32,button:i32,}, //scale:f32
+    CursorDragY{dist:f32,delta:f32,device:i32,button:i32,}, //scale:f32
+
+    CursorDragBegin{device:i32,button:i32},
+    CursorDragEnd{device:i32,button:i32},
+    // CursorDrag{dist:f32,delta:f32,device:i32,button:i32,axis:i32,},
+    CursorScroll{delta:f32,line:i32,device:i32,axis:i32,},
+
     SelectBegin,
     SelectEnd,
     FocusBegin{group:i32,device:i32,},
@@ -300,28 +312,29 @@ pub enum UiInteractMessageType {
 //     }
 // }
 
-impl UiInteractMessageType {
-    pub fn name(&self) -> &'static str {
-        match self {
-            Self::HoverBegin{..} => "hover_begin",
-            Self::HoverEnd{..} => "hover_end",
-            Self::CursorPressBegin{..} => "press_begin",
-            Self::CursorPressEnd{..} => "press_end",
-            Self::CursorClick{..} => "click",
-            Self::DragX{..}=>"drag_x",
-            Self::DragY{..}=>"drag_y",
-            Self::SelectBegin => "select_begin",
-            Self::SelectEnd => "select_end",
-            Self::FocusBegin{..} => "focus_begin",
-            Self::FocusEnd{..} => "focus_end",
+// impl UiInteractMessageType {
+//     pub fn name(&self) -> &'static str {
+//         match self {
+//             Self::HoverBegin{..} => "hover_begin",
+//             Self::HoverEnd{..} => "hover_end",
+//             Self::CursorPressBegin{..} => "press_begin",
+//             Self::CursorPressEnd{..} => "press_end",
+//             Self::CursorClick{..} => "click",
+//             // Self::DragX{..}=>"drag_x",
+//             // Self::DragY{..}=>"drag_y",
+//             Self::CursorDrag { .. } => "drag",
+//             Self::SelectBegin => "select_begin",
+//             Self::SelectEnd => "select_end",
+//             Self::FocusBegin{..} => "focus_begin",
+//             Self::FocusEnd{..} => "focus_end",
 
-            Self::FocusPressBegin {.. } => "focus_press_begin",
-            Self::FocusPressEnd {.. } => "focus_press_end",
-            Self::FocusClick {.. } => "focus_click",
+//             Self::FocusPressBegin {.. } => "focus_press_begin",
+//             Self::FocusPressEnd {.. } => "focus_press_end",
+//             Self::FocusClick {.. } => "focus_click",
 
-        }
-    }
-}
+//         }
+//     }
+// }
 
 // #[derive(Debug)]
 // pub enum UiEventEntity {

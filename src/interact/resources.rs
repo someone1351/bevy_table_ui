@@ -1,5 +1,5 @@
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use bevy::{ecs::prelude::*, math::Vec2};
 
@@ -26,7 +26,27 @@ pub struct CursorDevicePresseds(pub DevicePresseds);
 pub struct CursorDevicePointers(pub HashMap<(Entity,i32),Vec2>); // [(root_entity,device)]=cursor
 
 #[derive(Resource,Debug, Default)]
-pub struct CursorHover(pub HashMap<(Entity,i32),(Entity,Vec2)>); //[(root_entity,device)]=cur_hover_entity
+pub struct CursorHovers(pub HashMap<(Entity,i32),(Entity,Vec2)>); //[(root_entity,device)]=cur_hover_entity
+
+
+
+// #[derive(PartialEq, Eq,Hash,Debug)]
+// pub struct DragKey {
+//     pub root_entity:Entity,pub device:i32,
+// }
+
+#[derive(Debug)]
+pub struct Drag {
+    pub dragged_entity:Entity,
+    pub start_cursor:Vec2,
+    pub cursor:Vec2,
+    // pub _size:Vec2,
+    //pub offset:Vec2,
+    // pub buttons:HashSet<i32>,
+    // pub buttons:HashMap<i32,>,
+}
+#[derive(Resource,Debug, Default)]
+pub struct CursorDrags(pub HashMap<(Entity,i32),HashMap<i32,Drag>>); //[(root_entity,device,)][button]=(dragged_entity,size,offset,cursor,)
 
 // #[derive(Resource,Debug, Default)]
 // pub struct UiFocuseds(pub HashMap<i32,HashSet<Entity>>); //[device][entity_focused] replaces focusable.focused, is it cleared if entity is deleted?

@@ -779,6 +779,24 @@ fn move_focus(
     //
     // let mut _found=false;
 
+    //
+    let hist_last = cur_focus_entity.and_then(|cur_focus_entity|{
+        move_dir.ind().and_then(|ind|device_move_hists.get(&cur_focus_entity).map(|x|x[ind]))
+    });
+
+
+    if let Some(hist)=hist_last {
+        println!("h {hist:?}");
+
+    }
+    // if let Some(cur_focus_entity)=cur_focus_entity {
+    //     if let Some(ind)=move_dir.ind() { //get opposite dir
+    //         if let Some(x)=device_move_hists.get(&cur_focus_entity).map(|x|x[ind]) {
+
+    //         }
+
+    // }
+
     //eval stk
     // while let Some((entity, from_bounds, to_bound, focus_depth,_valid))=stk.pop()
     while let Some(FocusMoveWork { entity, from_bounds, to_bound, focus_depth, valid:_valid })=stk.pop()
@@ -810,8 +828,10 @@ fn move_focus(
             // }
 
             //
-            if let Some(ind)=move_dir.rev().ind() { //get opposite dir
-                // device_move_hists.entry(entity).or_insert_with(||[Entity::PLACEHOLDER;4])[ind]=cur_focus_entity.unwrap(); //shouldn't just use unwrap?
+            if let Some(cur_focus_entity)=cur_focus_entity {
+                if let Some(ind)=move_dir.rev().ind() { //get opposite dir
+                    device_move_hists.entry(entity).or_insert_with(||[Entity::PLACEHOLDER;4])[ind]=cur_focus_entity;
+                }
             }
 
             //
@@ -1127,6 +1147,18 @@ fn move_focus(
         }
 
         //
+        // let hist_last= (!move_dir.tab()).then(||device_move_hists.get(entity).and_then(|hist|))
+        // let hist_last= move_dir.rev().ind().and_then(|ind|device_move_hists.get(&entity).map(|hist|hist[ind]));
+
+        // if let Some(x)=device_move_hists.get(entity) {
+        //     if let Some(ind)=move_dir.rev().ind() { //get opposite dir
+        //     }
+
+
+        //     // device_move_hists.get(entity).or_insert_with(||[Entity::PLACEHOLDER;4])[ind]=cur_focus_entity;
+        // }
+
+        //
         stk[stk_len..].sort_by(|x,y|{
             //does float ordering need to be done here as well?
 
@@ -1145,6 +1177,11 @@ fn move_focus(
             } else {
                 Ordering::Equal
             };
+
+            //added
+            if !v.is_eq() {
+                return v;
+            }
 
             //
             let x_computed=layout_computed_query.get(x.entity).unwrap();
@@ -1165,6 +1202,34 @@ fn move_focus(
                 return q;
             }
 
+            //added
+            if !q.is_eq() {
+                return q;
+            }
+
+            if let Some(hist)=hist_last {
+                if hist==x.entity {
+                    println!("x {} => {hist}",cur_focus_entity.map(|x|format!("{x:?}")).unwrap_or("_".into()));
+                } else if hist==y.entity {
+                    println!("y {} => {hist}",cur_focus_entity.map(|x|format!("{x:?}")).unwrap_or("_".into()));
+
+                }
+            }
+
+            if hist_last==Some(x.entity) {
+                return Ordering::Greater;
+            } else if hist_last==Some(y.entity) {
+                return Ordering::Less;
+            }
+
+            // let  s=if hist_last==Some(x.entity) {
+            //     Some(Ordering::Less)
+            // } else if hist_last==Some(y.entity) {
+            //     Some(Ordering::Greater)
+            // } else {
+            //     None
+            // };
+
             //
             let r= if move_vert {
                 x_computed.col.cmp(&y_computed.col).reverse()
@@ -1172,69 +1237,86 @@ fn move_focus(
                 x_computed.row.cmp(&y_computed.row).reverse()
             };
 
-            //
-            let mut c1=0;
-            let mut c2=0;
+            // //added
+            // if !r.is_eq() {
+            //     return r;
+            // }
+
 
             //
-            //if invalid then h more important than q
-            //if valid then h more important than r
+            // if let Some(x)=device_move_hists.get(entity) {
+            //     if let Some(ind)=move_dir.rev().ind() { //get opposite dir
+            //     }
 
-            // match h { //the hist!
-            //     Ordering::Equal=> {
-            //     }
-            //     Ordering::Greater=> {
-            //         c1+=2;
-            //     }
-            //     Ordering::Less=>{
-            //         c2+=2;
-            //     }
+
+            //     // device_move_hists.get(entity).or_insert_with(||[Entity::PLACEHOLDER;4])[ind]=cur_focus_entity;
             // }
 
             //
-            match v {
-                Ordering::Equal=> {
-                }
-                Ordering::Greater=> {
-                    c1+=4;
-                }
-                Ordering::Less=>{
-                    c2+=4;
-                }
-            }
+            r
+            // //
+            // let mut c1=0;
+            // let mut c2=0;
 
-            //
-            match q {
-                Ordering::Equal=> {
-                }
-                Ordering::Greater=> {
-                    c1+=3;
-                }
-                Ordering::Less=>{
-                    c2+=3;
-                }
-            }
+            // //
+            // //if invalid then h more important than q
+            // //if valid then h more important than r
 
-            //
-            match r {
-                Ordering::Equal=> {
-                }
-                Ordering::Greater=> {
-                    c1+=1;
-                }
-                Ordering::Less=>{
-                    c2+=1;
-                }
-            }
+            // // match h { //the hist!
+            // //     Ordering::Equal=> {
+            // //     }
+            // //     Ordering::Greater=> {
+            // //         c1+=2;
+            // //     }
+            // //     Ordering::Less=>{
+            // //         c2+=2;
+            // //     }
+            // // }
 
-            //
-            c1.cmp(&c2)
+            // //
+            // match v {
+            //     Ordering::Equal=> {
+            //     }
+            //     Ordering::Greater=> {
+            //         c1+=4;
+            //     }
+            //     Ordering::Less=>{
+            //         c2+=4;
+            //     }
+            // }
 
-            //
-            // let q=if q==Ordering::Equal { h } else { q };
-            // let q=if q==Ordering::Equal { v } else { q };
-            // let q=if q==Ordering::Equal { r } else { q };
-            // q
+            // //
+            // match q {
+            //     Ordering::Equal=> {
+            //     }
+            //     Ordering::Greater=> {
+            //         c1+=3;
+            //     }
+            //     Ordering::Less=>{
+            //         c2+=3;
+            //     }
+            // }
+
+            // //
+            // match r {
+            //     Ordering::Equal=> {
+            //     }
+            //     Ordering::Greater=> {
+            //         c1+=1;
+            //     }
+            //     Ordering::Less=>{
+            //         c2+=1;
+            //     }
+            // }
+
+            // //
+            // c1.cmp(&c2)
+
+            // //
+            // // let q=if q==Ordering::Equal { h } else { q };
+            // // let q=if q==Ordering::Equal { v } else { q };
+            // // let q=if q==Ordering::Equal { r } else { q };
+            // // q
         });
 
         // println!("\tstk2={stk:?}");

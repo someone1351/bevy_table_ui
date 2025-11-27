@@ -487,12 +487,12 @@ fn update_ui_input(
                             ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPrev { root_entity, group, device:device2 });
                         }
                         KeyCode::Space => {
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusEnter {root_entity, group, device, });
                             ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPressBegin{root_entity, group, device,button:0, });
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusEnter {root_entity, group, device, });
                         }
                         KeyCode::Enter => {
-                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusEnter {root_entity, group, device: device2, });
                             ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPressBegin{root_entity, group, device: device2,button:0, });
+                            ui_interact_input_event_writer.write(UiInteractInputMessage::FocusEnter {root_entity, group, device: device2, });
                         }
                         KeyCode::Escape => {
                             ui_interact_input_event_writer.write(UiInteractInputMessage::FocusPressCancel{root_entity, device,button:0, });

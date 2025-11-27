@@ -208,7 +208,7 @@ pub fn drag_cleanup(
                 .map(|(_,computed,draggable)|computed.unlocked&&draggable.enable)
                 .unwrap_or_default();
 
-            if b {
+            if !b {
                 output_event_writer.write(UiInteractEvent{
                     entity:drag.dragged_entity,
                     event_type:UiInteractMessageType::CursorDragEnd {device, button } //scale:dragged_scale.y

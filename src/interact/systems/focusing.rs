@@ -302,6 +302,12 @@ pub fn focus_update_press_events(
     } //match
 }
 
+// fn get_cur_focus {
+//             let (cur_focus_entity,focus_entity_stk)=focus_states.0
+//             .entry(device).or_default()
+//             .entry(root_entity).or_default()
+//             .entry(group).or_default();
+// }
 
 pub fn update_focus_events(
 
@@ -333,6 +339,59 @@ pub fn update_focus_events(
     //
     let mut ev_stk= input_event_reader.read().cloned().collect::<Vec<_>>();
     ev_stk.reverse();
+
+    //
+    // while let Some(ev)=ev_stk.pop() {
+    //     if ev.root_entity()
+    //         .and_then(|root_entity|root_query.get(root_entity).map(|(_,computed)|!computed.unlocked).ok())
+    //         .unwrap_or_default()
+    //     {
+    //         continue;
+    //     }
+
+    //     match ev {
+    //         UiInteractInputMessage::FocusOn { entity, device } => {
+
+    //         }
+    //         UiInteractInputMessage::FocusInit { root_entity, group, device } => {
+
+    //         }
+    //         UiInteractInputMessage::FocusLeft { root_entity, group, device } => {
+
+    //         }
+    //         UiInteractInputMessage::FocusRight { root_entity, group, device } => {
+
+    //         }
+    //         UiInteractInputMessage::FocusUp { root_entity, group, device } => {
+
+    //         }
+    //         UiInteractInputMessage::FocusDown { root_entity, group, device } => {
+
+    //         }
+    //         UiInteractInputMessage::FocusPrev { root_entity, group, device } => {
+
+    //         }
+    //         UiInteractInputMessage::FocusNext { root_entity, group, device } => {
+
+    //         }
+    //         UiInteractInputMessage::FocusEnter { root_entity, group, device } => {
+
+    //         }
+    //         UiInteractInputMessage::FocusExit { root_entity, group, device } => {
+
+    //         }
+    //         UiInteractInputMessage::FocusPressBegin { root_entity, group, device, button } => {
+
+    //         }
+    //         UiInteractInputMessage::FocusPressEnd { root_entity, device, button } => {
+
+    //         }
+    //         UiInteractInputMessage::FocusPressCancel { root_entity, device, button } => {
+
+    //         }
+    //         _ => {}
+    //     }
+    // }
 
     // let mut was_resent=false; //not sure if need? to stop infinite loop if no focusable is there
     // let mut resent_found: Option<Entity> = None;

@@ -59,7 +59,6 @@ impl bevy::app::Plugin for UiInteractPlugin {
                     cursor_press_cleanup,
                     update_press_events, //ok,cancel, cursor(x,y)
 
-                    update_drag_events, //ok, cursor(mx,my)
                     update_select_events, //
 
                     // pre_update_press,

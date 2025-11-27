@@ -26,7 +26,7 @@ use bevy::ecs::prelude::*;
 // use bevy::hierarchy::prelude::*;
 use bevy::math::Vec2;
 
-use crate::UiRect;
+// use crate::UiRect;
 
 use super::super::components::*;
 use super::super::resources::*;
@@ -186,7 +186,7 @@ fn do_hover(
 
 pub fn drag_cleanup(
     draggable_query: Query<(Entity,&UiLayoutComputed,&UiPressable)>,
-    root_query: Query<(Entity,&UiLayoutComputed), With<UiRoot>>,
+    // root_query: Query<(Entity,&UiLayoutComputed), With<UiRoot>>,
     mut output_event_writer: MessageWriter<UiInteractEvent>,
     mut device_drags:ResMut<CursorDrags>,
     // mut device_cursors : Local<HashMap<DragKey,Vec2>>, //[(root_entity,device)]=cursor

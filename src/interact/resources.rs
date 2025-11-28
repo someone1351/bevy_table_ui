@@ -12,7 +12,8 @@ pub struct FocusStates(pub HashMap<i32,HashMap<Entity,HashMap<i32,(Option<Entity
 #[derive(Resource,Debug, Default)]
 //[device][entity]=(left,top,right,bottom)
 // pub struct FocusMoveHists(pub HashMap<i32,HashMap<Entity,[Entity;4]>>);
-pub struct FocusMoveHists(pub HashMap<i32,Vec<Entity>>); //[device][ind]=entity_hist
+
+pub struct FocusMoveHists(pub HashMap<(Entity,i32),Vec<Entity>>); //[(root_entity,device)][ind]=entity_hist
 
 type DevicePresseds = HashMap<i32,HashMap<(Entity,i32),(Entity,bool)>>; //[button][(root_entity,device)]=(pressed_entity,is_pressed)
 

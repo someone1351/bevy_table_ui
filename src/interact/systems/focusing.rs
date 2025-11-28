@@ -104,7 +104,7 @@ pub fn focus_move_cleanup(
     // mut hist_incr : Local<u64>,
 ) {
     //
-    move_hists.0.retain(|_device,device_move_hists|{
+    move_hists.0.retain(|&(root_entity,_device),device_move_hists|{
         device_move_hists.retain(|&entity|{
             // focusable_query
             true
@@ -555,7 +555,7 @@ fn move_focus(
 
     //
 
-    let device_move_hists=move_hists.0.entry(device).or_default();
+    let device_move_hists=move_hists.0.entry((top_root_entity,device)).or_default();
     let device_move_hists_map:HashMap<Entity,usize>=device_move_hists.iter().enumerate().map(|(i,&e)|(e,i)).collect();
 
     //

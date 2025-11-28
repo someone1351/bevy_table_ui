@@ -106,8 +106,10 @@ pub fn focus_move_cleanup(
     //
     move_hists.0.retain(|&(root_entity,_device),device_move_hists|{
         device_move_hists.retain(|&entity|{
-            // focusable_query
-            true
+            let layout_computed=computed_query.get(entity).ok();
+            let focusable=focusable_query.get(entity).ok();
+
+            focusable.is_some() && layout_computed.is_some() && layout_computed.unwrap().root_entity==root_entity
         });
     //     device_move_hists.retain(|&entity,dirs|{
     //         for entity2 in dirs {
@@ -843,63 +845,64 @@ fn move_focus(
             //     ui_event_writer.write(UiInteractEvent{entity:cur_focus_entity,event_type:UiInteractMessageType::FocusEnd{group:cur_group, device: cur_device }});
             // }
 
+            // //
+            // if let Some(cur_focus_entity)=cur_focus_entity {
+            //     if let Some(rev_ind)=move_dir.rev().ind() { //get opposite dir
+            //         // let x=device_move_hists.entry(entity).or_insert_with(||[Entity::PLACEHOLDER;4]).get_mut(rev_ind).unwrap();
+            //         // // let y=*x;
+
+
+            //         // *x=cur_focus_entity;
+            //         // // let x=device_move_hists.entry(y).or_insert_with(||[Entity::PLACEHOLDER;4]).get_mut(ind).unwrap();
+            //         // // *x=Entity::PLACEHOLDER;
+
+            //         // device_move_hists.entry(entity).or_insert_with(||[Entity::PLACEHOLDER;4])[rev_ind]=cur_focus_entity;
+
+
+            //         // let ind=move_dir.ind().unwrap();
+
+            //         // for i in (0..stk.len()).rev() {
+            //         //     let w=&stk[i];
+
+            //         //     if !w.valid {
+            //         //         break;
+            //         //     }
+
+            //         //     if i!=0 {
+            //         //         let w2=&stk[i-1];
+
+            //         //         if w2.valid {
+
+            //         //             device_move_hists.entry(w.entity).or_insert_with(||[Entity::PLACEHOLDER;4])[ind]=cur_focus_entity;
+            //         //         }
+
+            //         //     }
+
+
+            //         //     device_move_hists.entry(w.entity).or_insert_with(||[Entity::PLACEHOLDER;4])[rev_ind]=cur_focus_entity;
+            //         // }
+
+            //         // for rest in stk.iter().rev().filter(|x|x.valid) {
+            //         //     //only do valid ones
+            //         //     // if !rest.valid {
+            //         //     //     // break;
+            //         //     // }
+
+            //         //     //
+
+
+            //         //     device_move_hists.entry(rest.entity).or_insert_with(||[Entity::PLACEHOLDER;4])[rev_ind]=cur_focus_entity;
+
+
+            //         // }
+            //     }
+            // }
+
             //
-            if let Some(cur_focus_entity)=cur_focus_entity {
-                if let Some(rev_ind)=move_dir.rev().ind() { //get opposite dir
-                    // let x=device_move_hists.entry(entity).or_insert_with(||[Entity::PLACEHOLDER;4]).get_mut(rev_ind).unwrap();
-                    // // let y=*x;
-
-
-                    // *x=cur_focus_entity;
-                    // // let x=device_move_hists.entry(y).or_insert_with(||[Entity::PLACEHOLDER;4]).get_mut(ind).unwrap();
-                    // // *x=Entity::PLACEHOLDER;
-
-                    if let Some(old_pos)=device_move_hists.iter().rev().position(|&x|entity==x) {
-                        device_move_hists.remove(old_pos);
-                    }
-                    device_move_hists.push(entity);
-                    // device_move_hists.entry(entity).or_insert_with(||[Entity::PLACEHOLDER;4])[rev_ind]=cur_focus_entity;
-
-
-                    // let ind=move_dir.ind().unwrap();
-
-                    // for i in (0..stk.len()).rev() {
-                    //     let w=&stk[i];
-
-                    //     if !w.valid {
-                    //         break;
-                    //     }
-
-                    //     if i!=0 {
-                    //         let w2=&stk[i-1];
-
-                    //         if w2.valid {
-
-                    //             device_move_hists.entry(w.entity).or_insert_with(||[Entity::PLACEHOLDER;4])[ind]=cur_focus_entity;
-                    //         }
-
-                    //     }
-
-
-                    //     device_move_hists.entry(w.entity).or_insert_with(||[Entity::PLACEHOLDER;4])[rev_ind]=cur_focus_entity;
-                    // }
-
-                    // for rest in stk.iter().rev().filter(|x|x.valid) {
-                    //     //only do valid ones
-                    //     // if !rest.valid {
-                    //     //     // break;
-                    //     // }
-
-                    //     //
-
-
-                    //     device_move_hists.entry(rest.entity).or_insert_with(||[Entity::PLACEHOLDER;4])[rev_ind]=cur_focus_entity;
-
-
-                    // }
-                }
+            if let Some(old_pos)=device_move_hists.iter().rev().position(|&x|entity==x) {
+                device_move_hists.remove(old_pos);
             }
-
+            device_move_hists.push(entity);
             //
             // *cur_focus_entity = Some(entity);
             // ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusBegin{group:cur_group, device:cur_device }});

@@ -105,15 +105,19 @@ pub fn focus_move_cleanup(
 ) {
     //
     move_hists.0.retain(|_device,device_move_hists|{
-        device_move_hists.retain(|&entity,dirs|{
-            for entity2 in dirs {
-                if *entity2!=Entity::PLACEHOLDER && !computed_query.contains(*entity2) {
-                    *entity2=Entity::PLACEHOLDER;
-                }
-            }
-
-            computed_query.contains(entity)
+        device_move_hists.retain(|&entity|{
+            // focusable_query
+            true
         });
+    //     device_move_hists.retain(|&entity,dirs|{
+    //         for entity2 in dirs {
+    //             if *entity2!=Entity::PLACEHOLDER && !computed_query.contains(*entity2) {
+    //                 *entity2=Entity::PLACEHOLDER;
+    //             }
+    //         }
+
+    //         computed_query.contains(entity)
+    //     });
 
         !device_move_hists.is_empty()
     });
@@ -448,7 +452,7 @@ pub fn update_focus_events(
         }
 
         //
-        let device_move_hists=move_hists.0.entry(device).or_default();
+        // let device_move_hists=move_hists.0.entry(device).or_default();
         // let move_dir=get_focus_move_dir(&ev,cur_focus_entity.is_none()).unwrap();
         let move_dir= match ev {
             UiInteractInputMessage::FocusInit{..} if cur_focus_entity.is_none() => FocusMove::Next,
@@ -476,9 +480,11 @@ pub fn update_focus_events(
 
         if move_dir.negative() && !move_dir.tab() && cur_focus_entity.is_none() {
             if let Some((entity,_))=move_focus( //don't need to worry about popping focus_entity_stk, since using FocusMove::Next won't try to exit
-                FocusMove::Next,group,
+                FocusMove::Next,device,group,
                 root_entity,None,
-                focus_entity_stk,device_move_hists,
+                focus_entity_stk,
+                // device_move_hists,
+                &mut move_hists,
                 parent_query,computed_query,children_query,float_query,focusable_query,
             ) {
                 *cur_focus_entity = Some(entity);
@@ -488,9 +494,11 @@ pub fn update_focus_events(
         }
 
         let move_result=move_focus(
-            move_dir,group,
+            move_dir,device,group,
             root_entity,cur_focus_entity.clone(),
-            focus_entity_stk,device_move_hists,
+            focus_entity_stk,
+            // device_move_hists,
+            &mut move_hists,
             parent_query,computed_query,children_query,float_query,focusable_query,
         );
 
@@ -525,11 +533,14 @@ pub fn update_focus_events(
 }
 
 fn move_focus(
-    move_dir: FocusMove,cur_group:i32,
+    move_dir: FocusMove,
+    device:i32,
+    cur_group:i32,
     top_root_entity:Entity,
     cur_focus_entity:Option<Entity>,
     focus_entity_stk:& Vec<Entity>,
-    device_move_hists : &mut HashMap<Entity,[Entity;4]>, //[device][entiti]=(left,top,right,bottom)
+    // device_move_hists : &mut HashMap<Entity,[Entity;4]>, //[device][entiti]=(left,top,right,bottom)
+    move_hists:&mut FocusMoveHists,
     parent_query:Query<&ChildOf, With<UiLayoutComputed>>,
     layout_computed_query: Query<&UiLayoutComputed,With<UiLayoutComputed>>,
     children_query: Query<&Children,(With<UiLayoutComputed>,)>,
@@ -541,6 +552,11 @@ fn move_focus(
 
     //with move_hists, if moving right, and reaching end, want it to wrap to first item in cur row's move_hist.left
     //  could look through list of the candidates, and search for the first candidate.move_hist.left
+
+    //
+
+    let device_move_hists=move_hists.0.entry(device).or_default();
+    let device_move_hists_map:HashMap<Entity,usize>=device_move_hists.iter().enumerate().map(|(i,&e)|(e,i)).collect();
 
     //
     let move_hori = move_dir.horizontal();
@@ -780,15 +796,15 @@ fn move_focus(
     // let mut _found=false;
 
     //
-    let hist_last = cur_focus_entity.and_then(|cur_focus_entity|{
-        move_dir.ind().and_then(|ind|device_move_hists.get(&cur_focus_entity).map(|x|x[ind]))
-    });
+    // let hist_last = cur_focus_entity.and_then(|cur_focus_entity|{
+    //     move_dir.ind().and_then(|ind|device_move_hists.get(&cur_focus_entity).map(|x|x[ind]))
+    // });
 
 
-    if let Some(hist)=hist_last {
-        println!("h {hist:?}");
+    // if let Some(hist)=hist_last {
+    //     println!("h {hist:?}");
 
-    }
+    // }
     // if let Some(cur_focus_entity)=cur_focus_entity {
     //     if let Some(ind)=move_dir.ind() { //get opposite dir
     //         if let Some(x)=device_move_hists.get(&cur_focus_entity).map(|x|x[ind]) {
@@ -838,24 +854,49 @@ fn move_focus(
                     // // let x=device_move_hists.entry(y).or_insert_with(||[Entity::PLACEHOLDER;4]).get_mut(ind).unwrap();
                     // // *x=Entity::PLACEHOLDER;
 
-                    device_move_hists.entry(entity).or_insert_with(||[Entity::PLACEHOLDER;4])[rev_ind]=cur_focus_entity;
-
-
-                    let ind=move_dir.ind().unwrap();
-
-                    for rest in stk.iter().rev() {
-                        //only do valid ones
-                        if !rest.valid {
-                            // break;
-                        }
-
-                        //
-
-
-                        device_move_hists.entry(rest.entity).or_insert_with(||[Entity::PLACEHOLDER;4])[rev_ind]=cur_focus_entity;
-
-
+                    if let Some(old_pos)=device_move_hists.iter().rev().position(|&x|entity==x) {
+                        device_move_hists.remove(old_pos);
                     }
+                    device_move_hists.push(entity);
+                    // device_move_hists.entry(entity).or_insert_with(||[Entity::PLACEHOLDER;4])[rev_ind]=cur_focus_entity;
+
+
+                    // let ind=move_dir.ind().unwrap();
+
+                    // for i in (0..stk.len()).rev() {
+                    //     let w=&stk[i];
+
+                    //     if !w.valid {
+                    //         break;
+                    //     }
+
+                    //     if i!=0 {
+                    //         let w2=&stk[i-1];
+
+                    //         if w2.valid {
+
+                    //             device_move_hists.entry(w.entity).or_insert_with(||[Entity::PLACEHOLDER;4])[ind]=cur_focus_entity;
+                    //         }
+
+                    //     }
+
+
+                    //     device_move_hists.entry(w.entity).or_insert_with(||[Entity::PLACEHOLDER;4])[rev_ind]=cur_focus_entity;
+                    // }
+
+                    // for rest in stk.iter().rev().filter(|x|x.valid) {
+                    //     //only do valid ones
+                    //     // if !rest.valid {
+                    //     //     // break;
+                    //     // }
+
+                    //     //
+
+
+                    //     device_move_hists.entry(rest.entity).or_insert_with(||[Entity::PLACEHOLDER;4])[rev_ind]=cur_focus_entity;
+
+
+                    // }
                 }
             }
 
@@ -1232,20 +1273,33 @@ fn move_focus(
                 return q;
             }
 
-            if let Some(hist)=hist_last {
-                if hist==x.entity {
-                    println!("x {} => {hist}",cur_focus_entity.map(|x|format!("{x:?}")).unwrap_or("_".into()));
-                } else if hist==y.entity {
-                    println!("y {} => {hist}",cur_focus_entity.map(|x|format!("{x:?}")).unwrap_or("_".into()));
+            //
+            let x_hist=device_move_hists_map.get(&x.entity).cloned();
+            let y_hist=device_move_hists_map.get(&y.entity).cloned();
 
-                }
-            }
-
-            if hist_last==Some(x.entity) {
+            if x_hist.is_some() && y_hist.is_some(){
+                return x_hist.unwrap().cmp(&y_hist.unwrap());
+            } else if x_hist.is_some() && y_hist.is_none() {
                 return Ordering::Greater;
-            } else if hist_last==Some(y.entity) {
+            } else if x_hist.is_none() && y_hist.is_some() {
                 return Ordering::Less;
             }
+
+
+            // if let Some(hist)=hist_last {
+            //     if hist==x.entity {
+            //         println!("x {} => {hist}",cur_focus_entity.map(|x|format!("{x:?}")).unwrap_or("_".into()));
+            //     } else if hist==y.entity {
+            //         println!("y {} => {hist}",cur_focus_entity.map(|x|format!("{x:?}")).unwrap_or("_".into()));
+
+            //     }
+            // }
+
+            // if hist_last==Some(x.entity) {
+            //     return Ordering::Greater;
+            // } else if hist_last==Some(y.entity) {
+            //     return Ordering::Less;
+            // }
 
             // let  s=if hist_last==Some(x.entity) {
             //     Some(Ordering::Less)

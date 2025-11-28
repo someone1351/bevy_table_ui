@@ -830,16 +830,32 @@ fn move_focus(
             //
             if let Some(cur_focus_entity)=cur_focus_entity {
                 if let Some(rev_ind)=move_dir.rev().ind() { //get opposite dir
-                    let x=device_move_hists.entry(entity).or_insert_with(||[Entity::PLACEHOLDER;4]).get_mut(rev_ind).unwrap();
-                    // let y=*x;
+                    // let x=device_move_hists.entry(entity).or_insert_with(||[Entity::PLACEHOLDER;4]).get_mut(rev_ind).unwrap();
+                    // // let y=*x;
 
 
-                    *x=cur_focus_entity;
-                    // let ind=move_dir.ind().unwrap();
-                    // let x=device_move_hists.entry(y).or_insert_with(||[Entity::PLACEHOLDER;4]).get_mut(ind).unwrap();
-                    // *x=Entity::PLACEHOLDER;
+                    // *x=cur_focus_entity;
+                    // // let x=device_move_hists.entry(y).or_insert_with(||[Entity::PLACEHOLDER;4]).get_mut(ind).unwrap();
+                    // // *x=Entity::PLACEHOLDER;
 
-                    // device_move_hists.entry(entity).or_insert_with(||[Entity::PLACEHOLDER;4])[ind]=cur_focus_entity;
+                    device_move_hists.entry(entity).or_insert_with(||[Entity::PLACEHOLDER;4])[rev_ind]=cur_focus_entity;
+
+
+                    let ind=move_dir.ind().unwrap();
+
+                    for rest in stk.iter().rev() {
+                        //only do valid ones
+                        if !rest.valid {
+                            // break;
+                        }
+
+                        //
+
+
+                        device_move_hists.entry(rest.entity).or_insert_with(||[Entity::PLACEHOLDER;4])[rev_ind]=cur_focus_entity;
+
+
+                    }
                 }
             }
 

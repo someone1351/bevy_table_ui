@@ -38,7 +38,7 @@ use super::super::super::layout::components::{UiLayoutComputed,UiRoot};
 
 
 pub fn hover_cleanup(
-    hoverable_query: Query<(Entity,&UiLayoutComputed,&UiPressable)>,
+    hoverable_query: Query<(Entity,&UiLayoutComputed,&UiCursorable)>,
     root_query: Query<(Entity,&UiLayoutComputed), With<UiRoot>>,
     mut ui_event_writer: MessageWriter<UiInteractEvent>,
     // mut cur_hover_entities : Local<HashMap<(Entity,i32),(Entity,Vec2)>>, //[(root_entity,device)]=cur_hover_entity
@@ -51,7 +51,7 @@ pub fn hover_cleanup(
     cur_hover_entities.0.retain(|&(root_entity,device),&mut (entity,cursor)|{
         let root_alive = root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default();
         let hoverable_alive = hoverable_query.get(entity).map(|(_,layout_computed,hoverable)|{
-            hoverable.enable && layout_computed.unlocked && layout_computed.clamped_border_rect().contains_point(cursor)
+            hoverable.hoverable && layout_computed.unlocked && layout_computed.clamped_border_rect().contains_point(cursor)
         }).unwrap_or_default();
 
         // if let Ok((_,layout_computed,hoverable)) = hoverable_query.get(*entity) {
@@ -75,7 +75,7 @@ pub fn hover_cleanup(
 pub fn cursor_press_cleanup(
     root_query: Query<&UiLayoutComputed, With<UiRoot>>,
     layout_computed_query: Query<&UiLayoutComputed>,
-    pressable_query: Query<(Entity,& UiPressable)>,
+    pressable_query: Query<(Entity,& UiCursorable)>,
 
     // focus_states : Res<UiFocusStates>,
     // focuseds : Res<UiFocuseds>,
@@ -102,7 +102,7 @@ pub fn cursor_press_cleanup(
             let root_alive= root_query.get(root_entity).map(|computed|computed.unlocked).unwrap_or_default();
             let (computed_root_entity,unlocked)=layout_computed_query.get(pressed_entity).map(|c|(c.root_entity,c.unlocked)).unwrap_or((Entity::PLACEHOLDER,false));
             let pressable_enabled=pressable_query.get(pressed_entity).map(|(_,c)|{
-                c.enable&&c.pressable && (c.press_onlys.is_empty() || c.press_onlys.contains(&button))
+                c.pressable&&c.pressable && (c.press_onlys.is_empty() || c.press_onlys.contains(&button))
             }).unwrap_or_default();
 
             let b=root_alive && unlocked && pressable_enabled && computed_root_entity==root_entity; //&& entities_presseds_contains
@@ -127,7 +127,7 @@ fn do_hover(
     ui_event_writer: &mut MessageWriter<UiInteractEvent>,
 
     layout_computed_query: Query<&UiLayoutComputed>,
-    pressable_query: Query<(Entity,& UiPressable)>,
+    pressable_query: Query<(Entity,& UiCursorable)>,
 ) {
 
 
@@ -185,7 +185,7 @@ fn do_hover(
 }
 
 pub fn drag_cleanup(
-    draggable_query: Query<(Entity,&UiLayoutComputed,&UiPressable)>,
+    draggable_query: Query<(Entity,&UiLayoutComputed,&UiCursorable)>,
     // root_query: Query<(Entity,&UiLayoutComputed), With<UiRoot>>,
     mut output_event_writer: MessageWriter<UiInteractEvent>,
     mut device_drags:ResMut<CursorDrags>,
@@ -205,7 +205,7 @@ pub fn drag_cleanup(
     device_drags.0.retain(|&(_,device),button_drags|{
         button_drags.retain(|&button,drag|{
             let b=draggable_query.get(drag.dragged_entity)
-                .map(|(_,computed,draggable)|computed.unlocked&&draggable.enable)
+                .map(|(_,computed,draggable)|computed.unlocked&&draggable.draggable)
                 .unwrap_or_default();
 
             if !b {
@@ -426,7 +426,7 @@ fn do_press_begin(
     button:i32,
     roots_pressable_entities:&HashMap<Entity, Vec<Entity>>,
     layout_computed_query: Query<&UiLayoutComputed>,
-    pressable_query: Query<(Entity,& UiPressable)>,
+    pressable_query: Query<(Entity,& UiCursorable)>,
     device_presseds:&mut CursorDevicePresseds,
     output_event_writer: &mut MessageWriter<UiInteractEvent>,
 ) {
@@ -521,7 +521,7 @@ fn do_press_cancel(
 pub fn update_press_events(
     root_query: Query<&UiLayoutComputed, With<UiRoot>>,
     layout_computed_query: Query<&UiLayoutComputed>,
-    pressable_query: Query<(Entity,& UiPressable)>,
+    pressable_query: Query<(Entity,& UiCursorable)>,
 
     // focus_states : Res<UiFocusStates>,
     // focuseds : Res<UiFocuseds>,
@@ -549,7 +549,7 @@ pub fn update_press_events(
 
     //get root entities with their pressable descendants
     for (pressable_entity,pressable) in pressable_query.iter() {
-        if !pressable.enable {
+        if !pressable.pressable {
             continue;
         }
 

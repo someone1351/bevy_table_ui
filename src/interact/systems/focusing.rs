@@ -815,6 +815,12 @@ fn move_focus(
 
     // }
 
+    //ancestors
+
+    // let mut ancestors:HashMap<Entity,Vec<Entity>> = Default::default();
+
+
+
     //eval stk
     // while let Some((entity, from_bounds, to_bound, focus_depth,_valid))=stk.pop()
     while let Some(FocusMoveWork { entity, from_bounds, to_bound, focus_depth, valid:_valid })=stk.pop()
@@ -1274,6 +1280,13 @@ fn move_focus(
             //added
             if !q.is_eq() {
                 return q;
+            }
+
+            //
+            if let Some(cur_focus_entity)=cur_focus_entity {
+                for a in parent_query.iter_ancestors(cur_focus_entity) {
+
+                }
             }
 
             //

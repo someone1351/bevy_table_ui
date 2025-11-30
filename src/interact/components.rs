@@ -10,34 +10,34 @@ use super::super::layout::components::UiLayoutComputed;
 //     pub enable : bool,
 // }
 
-#[derive(Component,Default,Clone,Debug)]
-#[require(UiLayoutComputed)]
-pub struct UiPressable {
-    pub enable : bool, //disables everything
-    pub hoverable:bool,
-    pub draggable : bool,
-    pub pressable : bool,
+// #[derive(Component,Default,Clone,Debug)]
+// #[require(UiLayoutComputed)]
+// pub struct UiPressable {
+//     pub enable : bool, //disables everything
+//     pub hoverable:bool,
+//     pub draggable : bool,
+//     pub pressable : bool,
 
-    pub press_onlys:HashSet<i32>, //[button] //todo use bit flags //only accept these buttons
-    pub drag_toggles:HashSet<i32>, //[button] //todo use bit flags
+//     pub press_onlys:HashSet<i32>, //[button] //todo use bit flags //only accept these buttons
+//     pub drag_toggles:HashSet<i32>, //[button] //todo use bit flags
 
-    // pub draggable:HashMap<i32,bool>, //[button]=toggle
-    // pub pressable:HashSet<i32>, //[button] //todo use bit flags
-    // doesn't temporarily release if cursor is moved off while still pressing
-    // would want this to handle different for dif buttons eg lmb vs rmb?
-    // pub always : bool,
+//     // pub draggable:HashMap<i32,bool>, //[button]=toggle
+//     // pub pressable:HashSet<i32>, //[button] //todo use bit flags
+//     // doesn't temporarily release if cursor is moved off while still pressing
+//     // would want this to handle different for dif buttons eg lmb vs rmb?
+//     // pub always : bool,
 
-    // pub physical : bool, //works like a real button, ie stays held down as long as something is pressing it
+//     // pub physical : bool, //works like a real button, ie stays held down as long as something is pressing it
 
-    // pub pressed : bool, //set by both user and interact system
-    // pub released : bool, //set by both user and interact system
-}
+//     // pub pressed : bool, //set by both user and interact system
+//     // pub released : bool, //set by both user and interact system
+// }
 
-#[derive(Component,Default,Clone,Debug)]
-#[require(UiLayoutComputed)]
-pub struct UiDraggable {
-    pub enable : bool,
-}
+// #[derive(Component,Default,Clone,Debug)]
+// #[require(UiLayoutComputed)]
+// pub struct UiDraggable {
+//     pub enable : bool,
+// }
 
 
 
@@ -48,7 +48,8 @@ pub struct UiCursorable {
     pub hoverable : bool,
     pub draggable : bool,
     pub pressable : bool,
-    pub press_always : bool,
+    // pub press_always : bool,
+    pub press_onlys:HashSet<i32>, //[button] //todo use bit flags //only accept these buttons
 
 }
 
@@ -68,7 +69,13 @@ pub struct UiSelectable {
 }
 
 #[derive(Component,Clone,Debug,Default)]
-#[require(UiLayoutComputed)]
+pub struct UiFocusableComputed {
+    row:Option<usize>,
+    col:Option<usize>,
+}
+
+#[derive(Component,Clone,Debug,Default)]
+#[require(UiLayoutComputed,UiFocusableComputed)]
 pub struct UiFocusable {
     pub enable : bool,
     // pub focused : bool, //set by both user and interact system

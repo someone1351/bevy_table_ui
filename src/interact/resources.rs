@@ -9,6 +9,10 @@ use bevy::{ecs::prelude::*, math::Vec2};
 //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk)
 pub struct FocusStates(pub HashMap<i32,HashMap<Entity,HashMap<i32,(Option<Entity>,Vec<Entity>)>>>);
 
+
+#[derive(Resource,Debug, Default)]
+pub struct FocusMoveHist2(pub HashMap<(i32,Entity),(u32,u32)>); //[(device,entity)]=(row,col)
+
 #[derive(Resource,Debug, Default)]
 //[device][entity]=(left,top,right,bottom)
 // pub struct FocusMoveHists(pub HashMap<i32,HashMap<Entity,[Entity;4]>>);

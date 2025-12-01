@@ -27,6 +27,7 @@ impl bevy::app::Plugin for UiInteractPlugin {
 
             .init_resource::<resources::FocusStates>()
             .init_resource::<resources::FocusMoveHists>()
+            .init_resource::<resources::FocusMoveHist2>()
 
             .init_resource::<resources::FocusDevicePresseds>()
             .init_resource::<resources::CursorDevicePresseds>()

@@ -68,14 +68,14 @@ pub struct UiSelectable {
     pub group : String,
 }
 
-#[derive(Component,Clone,Debug,Default)]
-pub struct UiFocusableComputed {
-    row:Option<usize>,
-    col:Option<usize>,
-}
+// #[derive(Component,Clone,Debug,Default)]
+// pub struct UiFocusableComputed {
+//     pub hist_row:Option<u32>,
+//     pub hist_col:Option<u32>,
+// }
 
 #[derive(Component,Clone,Debug,Default)]
-#[require(UiLayoutComputed,UiFocusableComputed)]
+#[require(UiLayoutComputed,)]
 pub struct UiFocusable {
     pub enable : bool,
     // pub focused : bool, //set by both user and interact system

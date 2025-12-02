@@ -1398,11 +1398,21 @@ fn move_focus(
             // });
 
             if let Some(move_hist)=move_hist {
-                if x_order_alt==move_hist {
-                    return Ordering::Greater;
-                } else if y_order_alt==move_hist {
-                    return Ordering::Less;
+
+                let x_dif=x_order_alt.max(move_hist)-x_order_alt.min(move_hist);
+                let y_dif=y_order_alt.max(move_hist)-y_order_alt.min(move_hist);
+                let c=x_dif.cmp(&y_dif).reverse();
+
+
+                if !c.is_eq() {
+                    return c;
                 }
+
+                // if x_order_alt==move_hist {
+                //     return Ordering::Greater;
+                // } else if y_order_alt==move_hist {
+                //     return Ordering::Less;
+                // }
                 // let x_dif=x_order_alt.max(move_hist)-x_order_alt.min(move_hist);
                 // let y_dif=y_order_alt.max(move_hist)-y_order_alt.min(move_hist);
                 // let c=x_dif.cmp(&y_dif).reverse();

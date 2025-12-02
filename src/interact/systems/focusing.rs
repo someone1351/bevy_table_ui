@@ -1281,6 +1281,10 @@ fn move_focus(
         // }
 
         //
+        let move_hist=move_hists.0.get(&(device,entity))
+        .and_then(|x|if move_hori{Some(x.0)} else if move_vert {Some(x.1)}else{None});
+
+        //
         stk[stk_len..].sort_by(|x,y|{
             //does float ordering need to be done here as well?
 
@@ -1360,15 +1364,16 @@ fn move_focus(
                 return q;
             }
 
-            let x_parent=parent_query.get(x.entity).map(|p|p.parent()).ok();
-            let y_parent=parent_query.get(y.entity).map(|p|p.parent()).ok();
+            // let x_parent=parent_query.get(x.entity).map(|p|p.parent()).ok();
+            // let y_parent=parent_query.get(y.entity).map(|p|p.parent()).ok();
 
-            let x_hist=x_parent.and_then(|p|move_hists.0.get(&(device,p)));
-            let y_hist=y_parent.and_then(|p|move_hists.0.get(&(device,p)));
+            // let x_hist=x_parent.and_then(|p|move_hists.0.get(&(device,p)));
+            // let y_hist=y_parent.and_then(|p|move_hists.0.get(&(device,p)));
 
-            let x_hist=x_hist.map(|v|if move_hori {v.0}else{v.1});
-            let y_hist=y_hist.map(|v|if move_hori {v.0}else{v.1});
+            // let x_hist=x_hist.map(|v|if move_hori {v.0}else{v.1});
+            // let y_hist=y_hist.map(|v|if move_hori {v.0}else{v.1});
 
+            // println!("h {x_hist:?} {y_hist:?}, {x_order} {y_order}");
             // //
             // let xhist=parent_query.get(x.entity).map(|p|p.parent()).ok()
             //     .map(|parent_entity|focus_computed_query.get(parent_entity).unwrap())
@@ -1392,23 +1397,39 @@ fn move_focus(
             //     }
             // });
 
-            //
-            match (x_hist,y_hist) {
-                (Some(x_hist), Some(y_hist)) => {
-                    println!("==a");
-                    return x_hist.cmp(&y_hist);//.reverse();
-                }
-                (Some(_), None) => {
-                    println!("==b");
-                    return Ordering::Greater;
-                }
-                (None, Some(_)) => {
-                    println!("==c");
-                    return Ordering::Less;
-                }
-                (None, None) => {
+            if let Some(move_hist)=move_hist {
+                let x_dif=x_order_alt.max(move_hist)-x_order_alt.min(move_hist);
+                let y_dif=y_order_alt.max(move_hist)-y_order_alt.min(move_hist);
+                let c=x_dif.cmp(&y_dif).reverse();
+
+                if !c.is_eq() {
+                    return c;
                 }
             }
+
+            // //
+            // match (x_hist,y_hist) {
+            //     (Some(x_hist), Some(y_hist)) => {
+            //         println!("==a");
+            //         let x_dif=x_order.max(x_hist)-x_order.min(x_hist);
+            //         let y_dif=y_order.max(y_hist)-y_order.min(y_hist);
+            //         let c=x_dif.cmp(&y_dif).reverse();
+
+            //         if !c.is_eq() {
+            //             return c;
+            //         }
+            //     }
+            //     (Some(_), None) => {
+            //         println!("==b");
+            //         return Ordering::Greater;
+            //     }
+            //     (None, Some(_)) => {
+            //         println!("==c");
+            //         return Ordering::Less;
+            //     }
+            //     (None, None) => {
+            //     }
+            // }
 
             // if let (Some(xhist),Some(yhist))=(xhist,yhist) {
 

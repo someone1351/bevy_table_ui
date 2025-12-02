@@ -948,7 +948,7 @@ fn move_focus(
                     // let mut ancestor_focus_computed=focus_computed_query.get_mut(ancestor_entity).unwrap();
 
                     move_hists.0.insert((device,ancestor_entity), (last_layout_computed.row,last_layout_computed.col));
-                    println!("=={:?}",((device,ancestor_entity), (last_layout_computed.row,last_layout_computed.col)));
+                    // println!("=={:?}",((device,ancestor_entity), (last_layout_computed.row,last_layout_computed.col)));
                     // // if move_hori {
                     //     ancestor_focus_computed.hist_row=Some(last_layout_computed.row);
                     // // } else {// if move_vert
@@ -1015,7 +1015,7 @@ fn move_focus(
             //use from_bound_end as min, as any from_val min'd against it will always be smaller
             //use 0 as max, as any from_val max'd against it will always be larger
 
-            //
+            //what is from/to about? it's the current row/col? and the target row/col?
             let mut to_from_map=(0..absolute_to_len).map(|_|(from_bound_end,0)).collect::<Vec<_>>(); //[to_ind]=(from_min,from_max)
             let mut from_to_stk= vec![((0,from_bound_end),(to_bound_start,to_bound_end))]; //[]=((from_start,from_len),(to_start,to_len))
 

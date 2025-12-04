@@ -270,9 +270,11 @@ fn do_press_down(
 }
 
 fn do_press_up(
-    root_entity: Entity,group: i32,device: i32, button: i32,
-    focusable_query : Query<& UiFocusable>,
-    focus_states:&FocusStates, //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk)
+    root_entity: Entity,
+    // group: i32,
+    device: i32, button: i32,
+    // focusable_query : Query<& UiFocusable>,
+    // focus_states:&FocusStates, //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk)
     device_presseds : &mut FocusDevicePresseds,
     ui_output_event_writer: &mut MessageWriter<UiInteractEvent>,
 ) {
@@ -288,9 +290,11 @@ fn do_press_up(
 }
 
 fn do_press_cancel(
-    root_entity: Entity,group: i32,device: i32, button: i32,
-    focusable_query : Query<& UiFocusable>,
-    focus_states:&FocusStates, //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk)
+    root_entity: Entity,
+    // group: i32,
+    device: i32, button: i32,
+    // focusable_query : Query<& UiFocusable>,
+    // focus_states:&FocusStates, //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk)
     device_presseds : &mut FocusDevicePresseds,
     ui_output_event_writer: &mut MessageWriter<UiInteractEvent>,
 ) {
@@ -302,60 +306,6 @@ fn do_press_cancel(
 
     //
     ui_output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::FocusPressEnd{ device, button }});
-}
-fn focus_update_press_events(
-    // root_query: Query<&UiLayoutComputed, With<UiRoot>>,
-    // focusable_query: Query<(Entity,& UiFocusable)>,
-    focusable_query : Query<& UiFocusable>,
-    focus_states:&FocusStates, //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk)
-    device_presseds : &mut FocusDevicePresseds,
-    ev: UiInteractInputMessage,
-    ui_output_event_writer: &mut MessageWriter<UiInteractEvent>,
-) {
-    //
-    // if !ev.root_entity()
-    //     .and_then(|root_entity|root_query.get(root_entity).ok())
-    //     .map(|computed|computed.unlocked)
-    //     .unwrap_or_default()
-    // {
-    //     return;
-    // }
-
-    //
-    match ev.clone() {
-        UiInteractInputMessage::FocusPressBegin{root_entity,group,device, button } => {
-            do_press_down(
-                root_entity,group,device, button,
-                focusable_query,
-                focus_states,
-                device_presseds,
-                ui_output_event_writer,
-            );
-        }
-        UiInteractInputMessage::FocusPressEnd{root_entity,device, button } => {
-            let group=0;
-            do_press_up(
-                root_entity,group,device, button,
-                focusable_query,
-                focus_states,
-                device_presseds,
-                ui_output_event_writer,
-            );
-        }
-
-        UiInteractInputMessage::FocusPressCancel{root_entity,device, button } => {
-            let group=0;
-            do_press_cancel(
-                root_entity,group,device, button,
-                focusable_query,
-                focus_states,
-                device_presseds,
-                ui_output_event_writer,
-            );
-        }
-
-        _=>{}
-    } //match
 }
 
 // fn get_cur_focus {
@@ -634,13 +584,7 @@ pub fn update_focus_events(
     // mut hist_incr : Local<u64>,
 ) {
 
-
-    //
-    let mut ev_stk= input_event_reader.read().cloned().collect::<Vec<_>>();
-    ev_stk.reverse();
-
-    //
-    while let Some(ev)=ev_stk.pop() {
+    for &ev in input_event_reader.read() {
         if ev.root_entity()
             .and_then(|root_entity|root_query.get(root_entity).map(|(_,computed)|!computed.unlocked).ok())
             .unwrap_or_default()
@@ -649,9 +593,6 @@ pub fn update_focus_events(
         }
 
         match ev {
-            // UiInteractInputMessage::FocusOn { entity, device } => {
-
-            // }
             UiInteractInputMessage::FocusInit{ root_entity, group, device } => {
                 do_focus_init(
                     root_entity, group, device,
@@ -704,26 +645,35 @@ pub fn update_focus_events(
                 );
             }
             UiInteractInputMessage::FocusPressEnd{root_entity,device, button } => {
-                let group=0;
+                // let group=0;
                 do_press_up(
-                    root_entity,group,device, button,
-                    focusable_query,
-                    &mut focus_states,
+                    root_entity,
+                    // group,
+                    device, button,
+                    // focusable_query,
+                    // &mut focus_states,
                     &mut device_presseds,
                     &mut output_event_writer,
                 );
             }
 
             UiInteractInputMessage::FocusPressCancel{root_entity,device, button } => {
-                let group=0;
+                // let group=0;
                 do_press_cancel(
-                    root_entity,group,device, button,
-                    focusable_query,
-                    &mut focus_states,
+                    root_entity,
+                    // group,
+                    device, button,
+                    // focusable_query,
+                    // &mut focus_states,
                     &mut device_presseds,
                     &mut output_event_writer,
                 );
             }
+
+            // UiInteractInputMessage::FocusOn { entity, device } => {
+
+            // }
+
             _ => {}
         }
     }

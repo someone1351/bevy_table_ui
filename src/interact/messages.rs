@@ -1,7 +1,7 @@
 
 use std::fmt::Display;
 
-use bevy::ecs::prelude::*;
+use bevy::{ecs::prelude::*, math::Vec2};
 
 // use crate::DeviceType;
 
@@ -39,11 +39,14 @@ pub enum UiInteractInputMessage {
     FocusPressEnd{root_entity:Entity,device:i32,button:i32}, //why does this lack group? group is set by begin?
     FocusPressCancel{root_entity:Entity,device:i32,button:i32}, //why does this lack group?
 
+    //need page up/down, to work on top of focus stk, and output should be client clamped size?
+    //  or do with press or special press {root_entity:Entity,device:i32,button:i32}
+
     CursorPressBegin{root_entity:Entity,device:i32,button:i32},
     CursorPressEnd{root_entity:Entity,device:i32,button:i32},
     CursorPressCancel{root_entity:Entity,device:i32,button:i32},
-    CursorMoveTo{root_entity:Entity,device:i32,cursor:Option<bevy::math::Vec2>},
-    CursorScroll{root_entity:Entity,device:i32,axis:i32},
+    CursorMoveTo{root_entity:Entity,device:i32,cursor:Option<Vec2>},
+    CursorScroll{root_entity:Entity,device:i32,axis:i32, scroll:f32},
 
     //add DragBegin/DragEnd/DragMoveTo ? so can do the mmb click to toggle scroll,
 
@@ -264,7 +267,7 @@ pub enum UiInteractMessageType {
     CursorDragBegin{device:i32,button:i32},
     CursorDragEnd{device:i32,button:i32},
     // CursorDrag{dist:f32,delta:f32,device:i32,button:i32,axis:i32,},
-    CursorScroll{delta:f32,line:i32,device:i32,axis:i32,},
+    CursorScroll{scroll:f32,device:i32,axis:i32,},
 
     SelectBegin,
     SelectEnd,

@@ -48,6 +48,7 @@ pub struct UiCursorable {
     pub hoverable : bool,
     pub draggable : bool,
     pub pressable : bool,
+    pub scrollable : bool,
     // pub press_always : bool,
     pub press_onlys:HashSet<i32>, //[button] //todo use bit flags //only accept these buttons
 

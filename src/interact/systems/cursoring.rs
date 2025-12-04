@@ -704,7 +704,34 @@ pub fn update_press_events(
                     &mut output_event_writer,
                 );
             }
+            UiInteractInputMessage::CursorScroll { root_entity, device, axis, scroll } => {
+                let cursor = device_cursors.0.get(&(root_entity,device)).cloned();
 
+                let Some(cursor)=cursor else {
+                    continue;
+                };
+
+                let Some(pressable_entities)=roots_pressable_entities.get(&root_entity) else {
+                    continue;
+                };
+
+                let entity=pressable_entities.iter().find(|&&entity|{
+                    let computed = layout_computed_query.get(entity).unwrap();
+                    let pressable=pressable_query.get(entity).map(|(_,c)|c.scrollable).unwrap_or_default();
+
+                    if !pressable {
+                        return false;
+                    }
+
+                    let outer_rect=computed.clamped_border_rect();//.clamped_padding_rect();
+                    let cursor_inside= !outer_rect.is_zero() && outer_rect.contains_point(cursor);
+                    cursor_inside
+                }).cloned();
+
+                if let Some(entity)=entity {
+                    output_event_writer.write(UiInteractEvent { entity, event_type: UiInteractMessageType::CursorScroll {scroll, device, axis }});
+                }
+            }
             _=>{}
         } //match
     } //for

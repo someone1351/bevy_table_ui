@@ -13,7 +13,7 @@ use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::ecs::prelude::*;
 
 use bevy::input::keyboard::KeyboardInput;
-use bevy::input::mouse::{MouseButton, MouseButtonInput};
+use bevy::input::mouse::{MouseButton, MouseButtonInput, MouseWheel};
 use bevy::input::ButtonState;
 use bevy::math::Vec2;
 use bevy::text::*;
@@ -335,6 +335,7 @@ fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<Font
             pressable:true,
             hoverable:true,
             draggable:true,
+            scrollable:true,
             //press_onlys:[0].into(),
             ..Default::default()
         },
@@ -423,6 +424,7 @@ fn update_ui_input(
     mut key_events: MessageReader<KeyboardInput>,
     mut mouse_button_events : MessageReader<MouseButtonInput>,
     mut key_lasts : Local<HashSet<KeyCode>>,
+    mut mouse_scroll_events: MessageReader<MouseWheel>,
 ){
 
     let Ok(window) = windows.single_mut() else {return;};
@@ -575,7 +577,28 @@ fn update_ui_input(
                 }
             }
         }
+    }
 
+    //
+    for ev in mouse_scroll_events.read() {
+        match ev.unit {
+            bevy::input::mouse::MouseScrollUnit::Line => {
+                // println!("scroll line {} {}",ev.x,ev.y);
+                if ev.x!=0.0 {
+                    for root_entity in ui_root_query.iter() {
+                        ui_interact_input_event_writer.write(UiInteractInputMessage::CursorScroll { root_entity, device: 0, axis: 1, scroll: ev.x });
+                    }
+                }
+                if ev.y!=0.0 {
+                    for root_entity in ui_root_query.iter() {
+                        ui_interact_input_event_writer.write(UiInteractInputMessage::CursorScroll { root_entity, device: 0, axis: 0, scroll: ev.y });
+                    }
+                }
+            }
+            bevy::input::mouse::MouseScrollUnit::Pixel => {
+                // println!("scroll Pixel {} {}",ev.x,ev.y);
+            }
+        }
     }
 
     for root_entity in ui_root_query.iter() {

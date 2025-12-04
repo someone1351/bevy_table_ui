@@ -13,7 +13,7 @@ use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::ecs::prelude::*;
 
 use bevy::input::keyboard::KeyboardInput;
-use bevy::input::mouse::{MouseButton, MouseButtonInput, MouseWheel};
+use bevy::input::mouse::{MouseButton, MouseButtonInput, MouseScrollUnit, MouseWheel};
 use bevy::input::ButtonState;
 use bevy::math::Vec2;
 use bevy::text::*;
@@ -582,7 +582,7 @@ fn update_ui_input(
     //
     for ev in mouse_scroll_events.read() {
         match ev.unit {
-            bevy::input::mouse::MouseScrollUnit::Line => {
+            MouseScrollUnit::Line => {
                 // println!("scroll line {} {}",ev.x,ev.y);
                 if ev.x!=0.0 {
                     for root_entity in ui_root_query.iter() {
@@ -595,7 +595,7 @@ fn update_ui_input(
                     }
                 }
             }
-            bevy::input::mouse::MouseScrollUnit::Pixel => {
+            MouseScrollUnit::Pixel => {
                 // println!("scroll Pixel {} {}",ev.x,ev.y);
             }
         }

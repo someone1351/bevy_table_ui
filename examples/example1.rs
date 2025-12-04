@@ -326,7 +326,8 @@ fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<Font
             enable: true,
             hexit:false,vexit:true,
             hwrap:true,vwrap:true,
-            pressable:[0].into(),
+            pressable:true,
+            // press_onlys:[0].into(),
             ..Default::default()
         },
         // UiHoverable{ enable: true },

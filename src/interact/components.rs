@@ -93,8 +93,8 @@ pub struct UiFocusable {
     // pub vdir_press : bool, //when up/down on start/aready focus(ed) // ?
 
     // pub move_press:bool, //on focused or focus move failed then press, works even if pressable is false, but if both enabled, both count has being held down
-    // pub pressable:bool,
-    pub pressable:HashSet<i32>, //[button] //todo use bit flags
+    pub pressable:bool,
+    pub press_onlys:HashSet<i32>, //[button] //todo use bit flags
     // pub left_pressable:bool,
     // pub right_pressable:bool,
     // pub up_pressable:bool,

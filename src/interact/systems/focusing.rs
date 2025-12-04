@@ -224,7 +224,7 @@ pub fn focus_press_cleanup(
         button_device_presseds.retain(|&(root_entity,device),&mut (pressed_entity,is_pressed)|{
             let root_alive= root_query.get(root_entity).map(|computed|computed.unlocked).unwrap_or_default();
             let (computed_root_entity,unlocked)=layout_computed_query.get(pressed_entity).map(|c|(c.root_entity,c.unlocked)).unwrap_or((Entity::PLACEHOLDER,false));
-            let pressable_enabled=focusable_query.get(pressed_entity).map(|(_,c)|c.enable && c.pressable.contains(&button)).unwrap_or_default();
+            let pressable_enabled=focusable_query.get(pressed_entity).map(|(_,c)|c.enable && c.pressable && (c.press_onlys.is_empty() || c.press_onlys.contains(&button))).unwrap_or_default();
 
             let b=root_alive && unlocked && pressable_enabled && computed_root_entity==root_entity; //&& entities_presseds_contains
 
@@ -259,7 +259,7 @@ fn do_press_down(
 
     //
     if let Some(entity)=focused_entity {
-        let pressable=focusable_query.get(entity).map(|c|c.pressable.contains(&button)).unwrap_or_default();//c.enable?
+        let pressable=focusable_query.get(entity).map(|c| c.enable && c.pressable && (c.press_onlys.is_empty() || c.press_onlys.contains(&button))).unwrap_or_default();//c.enable?
         if !pressable {return;}
 
         ui_output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::FocusPressBegin{ device, button }});

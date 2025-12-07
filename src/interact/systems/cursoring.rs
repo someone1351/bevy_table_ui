@@ -63,7 +63,7 @@ pub fn hover_cleanup(
         if root_alive && hoverable_alive {
             true
         } else {
-            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::HoverEnd{device}}); //what if entity removed? ok to return a dead one?
+            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::CursorHoverEnd{device}}); //what if entity removed? ok to return a dead one?
             false
         }
     });
@@ -142,7 +142,7 @@ fn do_hover(
 
         if cursor.is_none() || rect.is_zero() || !rect.contains_point(cursor.unwrap()) {
             cur_hover_entities.0.remove(&(root_entity,device)).unwrap();
-            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::HoverEnd{device}});
+            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::CursorHoverEnd{device}});
         }
     }
 
@@ -174,11 +174,11 @@ fn do_hover(
             //
             if let Some(old_hover_entity)=old_hover_entity {
                 cur_hover_entities.0.remove(&(root_entity,device)).unwrap();
-                ui_event_writer.write(UiInteractEvent{entity:old_hover_entity,event_type:UiInteractMessageType::HoverEnd{device}});
+                ui_event_writer.write(UiInteractEvent{entity:old_hover_entity,event_type:UiInteractMessageType::CursorHoverEnd{device}});
             }
 
             //
-            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::HoverBegin{device}});
+            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::CursorHoverBegin{device}});
             cur_hover_entities.0.insert((root_entity,device), (entity,cursor));
         }
     }

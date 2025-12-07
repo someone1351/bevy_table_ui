@@ -241,8 +241,8 @@ TODO
 
 #[derive(Debug,Clone,Copy)] //
 pub enum UiInteractMessageType {
-    HoverBegin{device:i32,}, //don't really need device? like press?
-    HoverEnd{device:i32,},
+    CursorHoverBegin{device:i32,}, //don't really need device? like press?
+    CursorHoverEnd{device:i32,},
     CursorPressBegin{device:i32,button:i32}, //,is_cursor:bool //might need hashset of devices?
     CursorPressEnd{device:i32,button:i32},
     CursorClick{device:i32,button:i32,

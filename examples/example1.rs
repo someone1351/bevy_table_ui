@@ -194,11 +194,11 @@ pub fn on_affects<'a>(
             UiInteractMessageType::SelectEnd => {
                 affect_computed.states.get_mut(&UiAffectState::Select).map(|x|x.remove(&DeviceType::None));
             }
-            UiInteractMessageType::HoverBegin{device,..} => {
+            UiInteractMessageType::CursorHoverBegin{device,..} => {
                 affect_computed.states.entry(UiAffectState::Hover).or_default().insert(DeviceType::Cursor(device));
                 new_states.entry(ev.entity).or_default().entry(UiAffectState::Hover).or_default().insert(DeviceType::Cursor(device));
             }
-            UiInteractMessageType::HoverEnd{device,..} => {
+            UiInteractMessageType::CursorHoverEnd{device,..} => {
                 affect_computed.states.get_mut(&UiAffectState::Hover).map(|x|x.remove(&DeviceType::Cursor(device)));
             }
 

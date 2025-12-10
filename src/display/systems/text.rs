@@ -1,6 +1,8 @@
 /*
 TODO:
 * add min text size, if text len is less than size, add spaces to get same size, or get largest char width, and calc max px width, and use that
+
+* add option to set the text top_to_bottom or left_to_right
 */
 
 
@@ -36,7 +38,7 @@ pub fn update_text(
     mut text_pipeline: ResMut<TextPipeline>,
 
     mut ui_query: Query<(Entity,
-        &UiSize,
+        Option<&UiSize>,
         &UiLayoutComputed,
         &mut UiInnerSize,
         Option<&mut UiText>,
@@ -59,6 +61,7 @@ pub fn update_text(
         computed_text_block,
     ) in ui_query.iter_mut()
     {
+        let layout_size=layout_size.cloned().unwrap_or_default();
         if !layout_computed.enabled {
             // println!("{entity:?} {computed:?}");
             continue;
@@ -68,9 +71,9 @@ pub fn update_text(
         // and then later size wasn't 0, but counted as already updated,
         // showing no text
 
-        if layout_computed.size.x==0.0 || layout_computed.size.y==0.0 {
-            continue;
-        }
+        // if layout_computed.size.x==0.0 || layout_computed.size.y==0.0 {
+        //     // continue;
+        // }
 
         let root_entity=root_query.get(layout_computed.root_entity).unwrap();
         let scale_factor=root_entity.scaling.max(0.0);
@@ -97,6 +100,7 @@ pub fn update_text(
 
             if let Some(bevy::asset::LoadState::Loaded) = asset_server.get_load_state(handle) { } else {
                 fonts_loaded=false;
+                println!("noo");
             }
 
             let font_size=text.font_size;//*scale_factor*10.0;
@@ -117,9 +121,10 @@ pub fn update_text(
 
             // let tex_updated=true;
             //
-            if tex_updated && fonts_loaded {
+            if tex_updated &&
+                fonts_loaded {
                 let mut bound_width=(layout_computed.size.x>=0.0).then_some(layout_computed.size.x);
-                let mut bound_height=(layout_computed.size.y>=0.0).then_some(layout_computed.size.y);
+                let  bound_height=None;//(layout_computed.size.y>=0.0).then_some(layout_computed.size.y);
 
                 let mut new_text_max_size= Vec2::ZERO;
 
@@ -166,67 +171,70 @@ pub fn update_text(
                     ) {
                         if text.hlen!=0 {
                             bound_width=Some(temp_text_layout_info.size.x);
+                            new_text_max_size.x=temp_text_layout_info.size.x;
                         }
 
                         if text.vlen!=0 {
-                            bound_height=Some(temp_text_layout_info.size.y);
+                            // bound_height=Some(temp_text_layout_info.size.y);
+                            new_text_max_size.y=temp_text_layout_info.size.y;
                         }
-
-                        new_text_max_size=temp_text_layout_info.size;
                     }
                 }
 
                 //
-                let text_spans=[(entity, 0 /*depth*/, text.value.as_str(), &TextFont{
-                    font: text.font.clone(), font_size, font_smoothing: FontSmoothing::AntiAliased,
-                    line_height: LineHeight::RelativeToFont(1.2),
-                },text.color)];
+                {
+                    let text_spans=[(entity, 0 /*depth*/, text.value.as_str(), &TextFont{
+                        font: text.font.clone(), font_size, font_smoothing: FontSmoothing::AntiAliased,
+                        line_height: LineHeight::RelativeToFont(1.2),
+                    },text.color)];
 
-                // println!("b {bound_width:?} {bound_height:?}");
-                match text_pipeline.queue_text(
-                    &mut text_layout_info,
-                    &fonts,
-                    text_spans.into_iter(),
-                    text_scale_factor as f64,
-                    // 1.0,
-                    &TextLayout {justify: text_alignment,linebreak: LineBreak::WordBoundary,},
-                    TextBounds{width:bound_width,height:bound_height},
-                    &mut font_atlas_sets,
-                    &mut texture_atlases,
-                    &mut *textures,
-                    &mut computed_text_block,
-                    &mut font_system,
-                    &mut swash_cache,
-                    // YAxisOrientation::TopToBottom,
+                    // println!("b {bound_width:?} {bound_height:?}");
+                    match text_pipeline.queue_text(
+                        &mut text_layout_info,
+                        &fonts,
+                        text_spans.into_iter(),
+                        text_scale_factor as f64,
+                        // 1.0,
+                        &TextLayout {justify: text_alignment,linebreak: LineBreak::WordBoundary,},
+                        TextBounds{width:bound_width,height:bound_height},
+                        &mut font_atlas_sets,
+                        &mut texture_atlases,
+                        &mut *textures,
+                        &mut computed_text_block,
+                        &mut font_system,
+                        &mut swash_cache,
+                        // YAxisOrientation::TopToBottom,
 
-                ) {
-                    Err(e @ TextError::FailedToGetGlyphImage(_)) => {
-                        panic!("Fatal error when processing font: {}.", e);
-                    },
-                    Err(e @ TextError::NoSuchFont) => {
-                        panic!("Fatal error when processing font: {}.", e);
-                    },
-                    Err(e @ TextError::FailedToAddGlyph(_)) => {
-                        panic!("Fatal error when processing text: {}.", e);
-                    },
-                    Ok(()) => {
-                                        // println!("t {:?}",text_layout_info.size);
-                        new_text_max_size.x=new_text_max_size.x.max(text_layout_info.size.x);
-                        new_text_max_size.y=new_text_max_size.y.max(text_layout_info.size.y);
-                    }
-                };
+                    ) {
+                        Err(e @ TextError::FailedToGetGlyphImage(_)) => {
+                            panic!("Fatal error when processing font: {}.", e);
+                        },
+                        Err(e @ TextError::NoSuchFont) => {
+                            panic!("Fatal error when processing font: {}.", e);
+                        },
+                        Err(e @ TextError::FailedToAddGlyph(_)) => {
+                            panic!("Fatal error when processing text: {}.", e);
+                        },
+                        Ok(()) => {
+                                            // println!("t {:?}",text_layout_info.size);
+                            new_text_max_size.x=new_text_max_size.x.max(text_layout_info.size.x);
+                            new_text_max_size.y=new_text_max_size.y.max(text_layout_info.size.y);
+                        }
+                    };
 
-                //
-                inner_size.width = inner_size.width.max(new_text_max_size.x);
-                inner_size.height = inner_size.height.max(new_text_max_size.y);
+                    //
+                    inner_size.width = inner_size.width.max(new_text_max_size.x);
+                    inner_size.height = inner_size.height.max(new_text_max_size.y);
 
-                //
-                text_computed.max_size=new_text_max_size;
-                text_computed.bounds=layout_computed.size.max(new_text_max_size); //layout_computed.size before it's possibly recalculated?
+                    //
+                    text_computed.max_size=new_text_max_size;
+                    text_computed.bounds=layout_computed.size.max(new_text_max_size); //layout_computed.size before it's possibly recalculated?
 
-                //
-                text.update=false;
-                text_computed.scaling=text_scale_factor;
+                    //
+                    text.update=false;
+                    text_computed.scaling=text_scale_factor;
+                }
+                println!("goo {new_text_max_size:?}");
             } else { //whats this for again? because inner_size is cleared at top, need to reset it when not updated? what about for image?
                 inner_size.width = inner_size.width.max(text_computed.max_size.x); //size
                 inner_size.height = inner_size.height.max(text_computed.max_size.y); //size

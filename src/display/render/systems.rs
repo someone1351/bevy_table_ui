@@ -595,16 +595,19 @@ pub fn extract_uinodes2(
                 //something wrong with vertical tex coords
                 // if clamped_inner_rect.intersects(&glyph_rect)
                 {
+                    //clamped
                     let d1=Vec2::new(clamped_inner_rect.left-glyph_rect.left,clamped_inner_rect.top-glyph_rect.top).max(Vec2::ZERO);
                     let d2=Vec2::new(glyph_rect.right-clamped_inner_rect.right,glyph_rect.bottom-clamped_inner_rect.bottom).max(Vec2::ZERO);
                     let p1=Vec2::new(glyph_rect.left.max(clamped_inner_rect.left),glyph_rect.top.max(clamped_inner_rect.top));
                     let p2=Vec2::new(glyph_rect.right.min(clamped_inner_rect.right),glyph_rect.bottom.min(clamped_inner_rect.bottom));
 
+                    //unclamped
                     // let d1=Vec2::ZERO;
                     // let d2=Vec2::ZERO;
                     // let p1=Vec2::new(glyph_rect.left,glyph_rect.top);
                     // let p2=Vec2::new(glyph_rect.right,glyph_rect.bottom);
 
+                    //
                     let t1=(atlas_glyph_rect.min+d1)/atlas_size;
                     let t2 = (atlas_glyph_rect.max-d2)/atlas_size;
 

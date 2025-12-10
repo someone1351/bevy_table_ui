@@ -100,7 +100,7 @@ pub fn update_text(
 
             if let Some(bevy::asset::LoadState::Loaded) = asset_server.get_load_state(handle) { } else {
                 fonts_loaded=false;
-                println!("noo");
+                // println!("noo");
             }
 
             let font_size=text.font_size;//*scale_factor*10.0;
@@ -234,7 +234,7 @@ pub fn update_text(
                     text.update=false;
                     text_computed.scaling=text_scale_factor;
                 }
-                println!("goo {new_text_max_size:?}");
+                // println!("goo {new_text_max_size:?}");
             } else { //whats this for again? because inner_size is cleared at top, need to reset it when not updated? what about for image?
                 inner_size.width = inner_size.width.max(text_computed.max_size.x); //size
                 inner_size.height = inner_size.height.max(text_computed.max_size.y); //size

@@ -3,6 +3,13 @@ TODO:
 * add min text size, if text len is less than size, add spaces to get same size, or get largest char width, and calc max px width, and use that
 
 * add option to set the text top_to_bottom or left_to_right
+
+BUG
+* cosmic text has a bug where if you update the text by adding or modifying a char to one that hasn't been used before, then it will render as an empty spot
+** only when you enter another new char that hasn't been used before, will it render the previously added char, but will then not render the newest char
+
+NOTE
+* cosmic text seems to use same texture for all text
 */
 
 
@@ -95,13 +102,16 @@ pub fn update_text(
             Some(mut computed_text_block))
             = (text,text_computed,text_layout_info,computed_text_block )
         {
-            let mut fonts_loaded=true;
+            // let mut fonts_loaded=true;
             let handle=&text.font;
 
-            if let Some(bevy::asset::LoadState::Loaded) = asset_server.get_load_state(handle) { } else {
-                fonts_loaded=false;
+            let fonts_loaded=if let Some(bevy::asset::LoadState::Loaded) = asset_server.get_load_state(handle) {
+                true
+            } else {
+                // fonts_loaded=false;
                 // println!("noo");
-            }
+                false
+            };
 
             let font_size=text.font_size;//*scale_factor*10.0;
 
@@ -135,7 +145,10 @@ pub fn update_text(
                 };
 
                 //calc total widht/height for hlen/vlen
-                if text.hlen!=0 || text.vlen!=0 {
+                if
+                    // false
+                    text.hlen!=0 || text.vlen!=0
+                {
                     let mut value = if text.hlen!=0 {
                         " ".repeat(text.hlen as usize)
                     } else {
@@ -146,39 +159,71 @@ pub fn update_text(
                         value.push_str("\n ".repeat((text.vlen-1) as usize).as_str());
                     }
 
-                    let text_spans=[(entity, 0 /*depth*/, " ", &TextFont{
-                        font: text.font.clone(), font_size, font_smoothing: FontSmoothing::AntiAliased,
-                        line_height: LineHeight::RelativeToFont(1.2),
-                    },text.color)];
+                    let text_spans=[(entity, 0 /*depth*/,
+                        value.as_str(),
+                        &TextFont{
+                            font: text.font.clone(), font_size, font_smoothing: FontSmoothing::AntiAliased,
+                            line_height: LineHeight::RelativeToFont(1.2),
+                        },
+                        text.color,
+                    )];
 
-                    let mut temp_text_layout_info = TextLayoutInfo::default();
+                    // let mut temp_text_layout_info = TextLayoutInfo::default();
 
-                    if let Ok(()) = text_pipeline.queue_text(
-                        &mut temp_text_layout_info,
-                        &fonts,
+                    if let Ok(mut measure)=text_pipeline.create_text_measure(
+                        entity, &fonts,
                         text_spans.into_iter(),
-                        text_scale_factor as f64,
-                        // 1.0,
+                        text_scale_factor.into(),
                         &TextLayout {justify: text_alignment,linebreak: LineBreak::NoWrap,},
-                        TextBounds{width:None,height:None},
-                        &mut font_atlas_sets,
-                        &mut texture_atlases,
-                        &mut *textures,
                         &mut computed_text_block,
                         &mut font_system,
-                        &mut swash_cache,
-                        // YAxisOrientation::TopToBottom,
                     ) {
+
+                        let size=measure.compute_size(
+                            TextBounds{width:None,height:None},
+                            &mut computed_text_block,
+                            &mut font_system);
+
+
+                        //println!("hmm {size:?}");
+
                         if text.hlen!=0 {
-                            bound_width=Some(temp_text_layout_info.size.x);
-                            new_text_max_size.x=temp_text_layout_info.size.x;
+                            bound_width=Some(size.x);
+                            new_text_max_size.x=size.x;
                         }
 
                         if text.vlen!=0 {
-                            // bound_height=Some(temp_text_layout_info.size.y);
-                            new_text_max_size.y=temp_text_layout_info.size.y;
+                            // bound_height=Some(size.y);
+                            new_text_max_size.y=size.y;
                         }
                     }
+
+                    // if let Ok(()) = text_pipeline.queue_text(
+                    //     &mut temp_text_layout_info,
+                    //     &fonts,
+                    //     text_spans.into_iter(),
+                    //     text_scale_factor as f64,
+                    //     // 1.0,
+                    //     &TextLayout {justify: text_alignment,linebreak: LineBreak::NoWrap,},
+                    //     TextBounds{width:None,height:None},
+                    //     &mut font_atlas_sets,
+                    //     &mut texture_atlases,
+                    //     &mut *textures,
+                    //     &mut computed_text_block,
+                    //     &mut font_system,
+                    //     &mut swash_cache,
+                    //     // YAxisOrientation::TopToBottom,
+                    // ) {
+                    //     if text.hlen!=0 {
+                    //         bound_width=Some(temp_text_layout_info.size.x);
+                    //         new_text_max_size.x=temp_text_layout_info.size.x;
+                    //     }
+
+                    //     if text.vlen!=0 {
+                    //         // bound_height=Some(temp_text_layout_info.size.y);
+                    //         new_text_max_size.y=temp_text_layout_info.size.y;
+                    //     }
+                    // }
                 }
 
                 //
@@ -233,6 +278,8 @@ pub fn update_text(
                     //
                     text.update=false;
                     text_computed.scaling=text_scale_factor;
+
+                    // println!("text is {:?}",text.value);
                 }
                 // println!("goo {new_text_max_size:?}");
             } else { //whats this for again? because inner_size is cleared at top, need to reset it when not updated? what about for image?

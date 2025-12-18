@@ -10,8 +10,14 @@ use bevy::app::*;
 use bevy::asset::prelude::*;
 use bevy::color::Color;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
-use bevy::ecs::prelude::*;
+// use bevy::ecs::prelude::*;
 
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::message::{MessageReader, MessageWriter};
+use bevy::ecs::query::With;
+use bevy::ecs::system::{Commands, Local, Query, Res};
+use bevy::ecs::world::World;
 use bevy::input::keyboard::KeyboardInput;
 use bevy::input::mouse::{MouseButton, MouseButtonInput, MouseScrollUnit, MouseWheel};
 use bevy::input::ButtonState;
@@ -33,6 +39,8 @@ use table_ui::*;
 
 
 fn main() {
+    use bevy::ecs::prelude::*;
+
     let mut app = App::new();
 
     app
@@ -99,7 +107,7 @@ pub fn update_ui_roots(
 
 
 
-#[derive(PartialEq,Eq,Hash)]
+#[derive(PartialEq,Eq,Hash,Copy,Clone)]
 pub enum DeviceType{None,Cursor(i32),Focus(i32),}
 #[derive(Debug,Hash,PartialEq,Eq,Copy,Clone,PartialOrd, Ord)]
 pub enum UiAffectState {
@@ -113,15 +121,25 @@ pub enum UiAffectState {
 #[derive(Component,Default)]
 pub struct UixAffectComputed {
     pub states : HashMap<UiAffectState,HashSet<DeviceType>>, //[state][device]
+    // pub states2 : HashMap<UiAffectState,HashSet<DeviceType>>, //[state][device]
+    // pub bla:bool,
+    pub cur_attrib_inds:HashMap<usize,usize>, //[attrib_ind]=cur_ind
+    // pub deferred_states : HashMap<UiAffectState,HashSet<DeviceType>>, //[state][device]
 }
+
+type UixAffectAttribFunc = Arc<dyn Fn(&mut World,Entity,usize) + Sync+Send>;
 #[derive(Component,Default)]
 #[require(UixAffectComputed)]
-pub struct UixAffect(Vec<AttribFunc>);
+// pub struct UixAffect2(Vec<(AttribFunc2,Vec<(UiAffectState,AttribFunc2)>)>); //[attrib_ind]=(default_attrib,[state_priority]=(state,attrib))
+pub struct UixAffect(Vec<UixAffectAttrib>); //[attrib_ind]=
 
-type AttribQueueFunc=Box<dyn Fn(&mut World) + Sync+Send>;
-type AttribFunc=Arc<dyn Fn(Entity,&HashSet<UiAffectState>)->AttribQueueFunc + Sync+Send>;
-
-fn attrib_setter<C,V,S>(func:fn(&mut C,V) ,default_val:V,state_vals:S,) -> AttribFunc
+pub struct UixAffectAttrib {
+    // cur:Option<usize>, //val_ind
+    // vals:Vec<AttribFunc2>,
+    func : UixAffectAttribFunc,
+    states:HashMap<UiAffectState,usize>,//[state]=val_ind
+}
+fn attrib_setter<C,V,S>(func:fn(&mut C,V) ,default_val:V,state_vals:S,) -> UixAffectAttrib
 where
     C : Component<Mutability = bevy::ecs::component::Mutable>+Default,
     V : Clone + 'static+Send+Sync,
@@ -129,106 +147,197 @@ where
     // F : Fn(&mut C,V) + 'static+Send+Sync,
 {
     // let attrib_states:HashMap<UiAffectState,V>=state_vals.into_iter().collect();
-    let attrib_states:Vec<(UiAffectState,V)>=state_vals.into_iter().collect();
+    // let a:Vec<i32>=[1].into_iter().chain([2].into_iter()).collect();
 
-    Arc::new(move|entity:Entity,cur_states:&HashSet<UiAffectState>|{
-        // let mut states:Vec<_>=cur_states.intersection(&attrib_states.keys().cloned().collect()).cloned().collect();
-        // states.sort();
-        // let v=states.last().map(|state|attrib_states.get(state).cloned().unwrap()).unwrap_or(default_val.clone());
+    let state_vals:Vec<(UiAffectState,V)>=state_vals.into_iter().collect();
+    let states:HashMap<UiAffectState,usize>=state_vals.iter().enumerate().map(|(i,(k,_v))|(*k,i+1)).collect();
+    let vals:Vec<V>=[default_val].into_iter().chain(state_vals.iter().map(|(_k,v)|v.clone())).collect();
 
-        let v=attrib_states.iter().rev().find_map(|(s,v)|cur_states.contains(s).then_some(v)).unwrap_or(&default_val).clone();
+    // let attrib_states:Vec<V>=[default_val].into_iter().chain(state_vals.into_iter()).collect();
 
-        Box::new(move|world:&mut World|{
-            let mut e=world.entity_mut(entity);
-            let mut c=e.entry::<C>().or_default();
-            let mut c=c.get_mut();
-            func(&mut c,v.clone());
-        })
-    })
+    // Arc::new(move|entity:Entity,cur_states:&HashSet<UiAffectState>|{
+    //     // let mut states:Vec<_>=cur_states.intersection(&attrib_states.keys().cloned().collect()).cloned().collect();
+    //     // states.sort();
+    //     // let v=states.last().map(|state|attrib_states.get(state).cloned().unwrap()).unwrap_or(default_val.clone());
+
+    //     let v=attrib_states.iter().rev().find_map(|(s,v)|cur_states.contains(s).then_some(v)).unwrap_or(&default_val).clone();
+
+    //     Box::new(move|world:&mut World|{
+    //         let mut e=world.entity_mut(entity);
+    //         let mut c=e.entry::<C>().or_default();
+    //         let mut c=c.get_mut();
+    //         func(&mut c,v.clone());
+    //     })
+    // })
+    let func=Arc::new(move|world:&mut World,entity:Entity,ind:usize|{
+        let mut e=world.entity_mut(entity);
+        let mut c=e.entry::<C>().or_default();
+        let mut c=c.get_mut();
+
+        let v=vals.get(ind).unwrap().clone();
+        func(&mut c,v);
+    });
+    UixAffectAttrib { func, states }
 }
+
 
 pub fn on_affects<'a>(
     mut affect_query: Query<(Entity,&UixAffect,&mut UixAffectComputed)>,
     mut commands: Commands,
     mut interact_event_reader: MessageReader<UiInteractEvent>,
 ) {
-    let mut new_states: HashMap<Entity,HashMap<UiAffectState,HashSet<DeviceType>>>=Default::default(); //[entity][state][device]
-
+    // let mut new_states: HashMap<Entity,HashMap<UiAffectState,HashSet<DeviceType>>>=Default::default(); //[entity][state][device]
+    // // // let mut removed_states: HashMap<Entity,HashMap<UiAffectState,HashSet<DeviceType>>>=Default::default(); //[entity][state][device]
+    // // let mut cur_states: HashMap<Entity,HashMap<UiAffectState,HashSet<DeviceType>>>=Default::default(); //[entity][state][device]
+    // // // let mut old_states: HashMap<Entity,HashSet<UiAffectState>>=Default::default(); //[entity][state]
+    let mut new_states: HashMap<Entity,HashSet<UiAffectState>>=Default::default(); //[entity][state]
     //
     for ev in interact_event_reader.read() {
         println!("e {ev}");
-        let Ok((_,_,mut affect_computed))=affect_query.get_mut(ev.entity) else {continue;};
+        let Ok((_,_, mut affect_computed))=affect_query.get_mut(ev.entity) else {continue;};
 
-        match ev.event_type {
-            UiInteractMessageType::FocusBegin {device, .. } => {
-                affect_computed.states.entry(UiAffectState::Focus).or_default().insert(DeviceType::Focus(device));
-                new_states.entry(ev.entity).or_default().entry(UiAffectState::Focus).or_default().insert(DeviceType::Focus(device));
-            }
-            UiInteractMessageType::FocusEnd { device,.. } => {
-                affect_computed.states.get_mut(&UiAffectState::Focus).map(|x|x.remove(&DeviceType::Focus(device)));
-            }
-            UiInteractMessageType::CursorPressBegin{device,button,..} => {
-                println!("press begin {device}");
-                affect_computed.states.entry(UiAffectState::Press(button)).or_default().insert(DeviceType::Cursor(device));
-                new_states.entry(ev.entity).or_default().entry(UiAffectState::Press(button)).or_default().insert(DeviceType::Cursor(device));
-            }
-            UiInteractMessageType::CursorPressEnd{device,button,..} => {
-                println!("press end {device}");
-                affect_computed.states.get_mut(&UiAffectState::Press(button)).map(|x|x.remove(&DeviceType::Cursor(device)));
-            }
+        let Some((state,device,is_end))=(match ev.event_type {
+            UiInteractMessageType::FocusBegin {device, .. } => Some((UiAffectState::Focus,DeviceType::Focus(device),false)),
+            UiInteractMessageType::FocusEnd { device,.. } => Some((UiAffectState::Focus,DeviceType::Focus(device),true)),
+            UiInteractMessageType::CursorPressBegin{device,button,..} => Some((UiAffectState::Press(button),DeviceType::Cursor(device),false)),
+            UiInteractMessageType::CursorPressEnd{device,button,..} => Some((UiAffectState::Press(button),DeviceType::Cursor(device),true)),
+            UiInteractMessageType::FocusPressBegin { device, button } => Some((UiAffectState::Press(button),DeviceType::Focus(device),false)),
+            UiInteractMessageType::FocusPressEnd { device, button } => Some((UiAffectState::Press(button),DeviceType::Focus(device),true)),
+            UiInteractMessageType::SelectBegin => Some((UiAffectState::Select,DeviceType::None,false)),
+            UiInteractMessageType::SelectEnd => Some((UiAffectState::Select,DeviceType::None,true)),
+            UiInteractMessageType::CursorHoverBegin{device,..} => Some((UiAffectState::Hover,DeviceType::Cursor(device),false)),
+            UiInteractMessageType::CursorHoverEnd{device,..} => Some((UiAffectState::Hover,DeviceType::Cursor(device),true)),
+            UiInteractMessageType::CursorDragBegin { device, .. } => Some((UiAffectState::Drag,DeviceType::Cursor(device),false)),
+            UiInteractMessageType::CursorDragEnd { device, .. } => Some((UiAffectState::Drag,DeviceType::Cursor(device),true)),
+            UiInteractMessageType::CursorClick{..}=> None,
+            UiInteractMessageType::FocusClick { .. } => None,
+            UiInteractMessageType::CursorDragX{..} => None,
+            UiInteractMessageType::CursorDragY{..} => None,
+            UiInteractMessageType::CursorScroll { .. } => None,
+        }) else {continue;};
 
+        if !is_end {
+            affect_computed.states.entry(state).or_default().insert(device);
 
-            UiInteractMessageType::FocusPressBegin { device, button } => {
-                println!("focus press begin {device}");
-                affect_computed.states.entry(UiAffectState::Press(button)).or_default().insert(DeviceType::Focus(device));
-                new_states.entry(ev.entity).or_default().entry(UiAffectState::Press(button)).or_default().insert(DeviceType::Focus(device));
-            }
-            UiInteractMessageType::FocusPressEnd { device, button } => {
-                println!("focus press end {device}");
-                affect_computed.states.get_mut(&UiAffectState::Press(button)).map(|x|x.remove(&DeviceType::Focus(device)));
-            }
-            UiInteractMessageType::SelectBegin => {
-                affect_computed.states.entry(UiAffectState::Select).or_default().insert(DeviceType::None);
-                new_states.entry(ev.entity).or_default().entry(UiAffectState::Select).or_default().insert(DeviceType::None);
-            }
-            UiInteractMessageType::SelectEnd => {
-                affect_computed.states.get_mut(&UiAffectState::Select).map(|x|x.remove(&DeviceType::None));
-            }
-            UiInteractMessageType::CursorHoverBegin{device,..} => {
-                affect_computed.states.entry(UiAffectState::Hover).or_default().insert(DeviceType::Cursor(device));
-                new_states.entry(ev.entity).or_default().entry(UiAffectState::Hover).or_default().insert(DeviceType::Cursor(device));
-            }
-            UiInteractMessageType::CursorHoverEnd{device,..} => {
-                affect_computed.states.get_mut(&UiAffectState::Hover).map(|x|x.remove(&DeviceType::Cursor(device)));
-            }
+            // cur_states.entry(ev.entity).or_insert_with(||affect_computed.states.clone())
+            //     .entry(state).or_default()
+            //     .insert(device);
 
-            UiInteractMessageType::CursorDragBegin { device, .. } => {
-                affect_computed.states.entry(UiAffectState::Drag).or_default().insert(DeviceType::Cursor(device));
-                new_states.entry(ev.entity).or_default().entry(UiAffectState::Drag).or_default().insert(DeviceType::Cursor(device));
-            }
-            UiInteractMessageType::CursorDragEnd { device, .. } => {
-                affect_computed.states.get_mut(&UiAffectState::Drag).map(|x|x.remove(&DeviceType::Cursor(device)));
-            }
-            UiInteractMessageType::CursorClick{..}=> {}
-            UiInteractMessageType::FocusClick { .. } => {}
-            UiInteractMessageType::CursorDragX{..} => {}
-            UiInteractMessageType::CursorDragY{..} => {}
-            UiInteractMessageType::CursorScroll { .. } => {}
+            // // new_states.entry(ev.entity).or_insert_with(||affect_computed.states.clone())
+            // //     .entry(state).or_default()
+            // //     .insert(device);
+
+            // // removed_states.get_mut(&ev.entity)
+            // //     .and_then(|x|x.get_mut(&state))
+            // //     .map(|x|x.remove(&device));
+
+            // new_states.entry(ev.entity).or_default()
+            //     .entry(state).or_default()
+            //     .insert(device);
+            new_states.entry(ev.entity).or_default()
+                .insert(state);
+
+        } else {
+            affect_computed.states.get_mut(&state).map(|devices|devices.remove(&device));
+
+            // // cur_states.get_mut(&ev.entity)
+            // //     .and_then(|states|states.get_mut(&state))
+            // //     .map(|devices|devices.remove(&device));
+
+            // cur_states.entry(ev.entity).or_insert_with(||affect_computed.states.clone())
+            //     .get_mut(&state)
+            //     .map(|devices|devices.remove(&device));
+
+            // // removed_states.entry(ev.entity)
+            // //     .or_default().entry(state)
+            // //     .or_default().insert(device);
         }
+
     }
 
+    // use bevy::ecs::prelude::*;
+    // use bevy::prelude::*;
     //
-    for (entity, affect,affect_computed) in affect_query.iter() {
-
-        let states:HashSet<UiAffectState>=new_states.get(&entity).map(|x|x.iter()).unwrap_or_default().chain(affect_computed.states.iter())
-            .filter_map(|(&k,v)|(!v.is_empty()).then_some(k))
-            .collect();
-
-        for attrib in affect.0.iter() {
-
-            commands.queue(attrib(entity,&states));
+    for (entity, affect,mut affect_computed) in affect_query.iter_mut() {
+        // let cur_states=cur_states.get(&entity).or_else(||affect_computed.states2);
+        let new_states=new_states.get(&entity);
 
 
+        // if let Some(new_states)=new_states {
+        //     // if !new_states.is_empty() {
+        //     //     affect_computed.bla=true;
+        //     // }
+
+        //     affect_computed.states.clear();
+
+        //     // let a:Vec<i32>=[1].into_iter().chain([2].into_iter()).collect();
+
+        //     for (&state,devices) in new_states.iter().chain(cur_states.unwrap()) {
+        //         affect_computed.states.entry(state).or_default().extend(devices);
+        //     }
+        // } else if let Some(cur_states)=cur_states {
+
+        //     affect_computed.states=cur_states.clone();
+        // } else {
+        //     affect_computed.states=affect_computed.states2.clone();
+        // }
+
+        // if let Some(cur_states)=cur_states {
+        //     affect_computed.states2=cur_states.clone();
+        // } else {
+        //     affect_computed.states2.clear();
+        // }
+
+        // // let states:HashSet<UiAffectState>=new_states.get(&entity).map(|x|x.iter())
+        // //     .unwrap_or_default().chain(cur_states.iter())
+        // //     .filter_map(|(&k,v)|(!v.is_empty()).then_some(k))
+        // //     .collect();
+
+        // // let states:HashSet<UiAffectState>=new_states.map(|x|x.iter().chain(cur_states.unwrap())).unwrap_or_default()
+        // //     .filter_map(|(&k,v)|(!v.is_empty()).then_some(k))
+        // //     .collect();
+
+
+        // let states:HashSet<UiAffectState>=affect_computed.states.iter()
+        //     .filter_map(|(&k,v)|(!v.is_empty()).then_some(k))
+        //     .collect();
+
+
+        // let states2:HashSet<UiAffectState>=affect_computed.states2.iter()
+        //     .filter_map(|(&k,v)|(!v.is_empty()).then_some(k))
+        //     .collect();
+
+        // let dif:Vec<_>=states.difference(&states2).collect();
+
+        // if dif.is_empty() {
+        //     // continue;
+        // }
+        // let deferred_states;
+
+        for (attrib_ind,attrib) in affect.0.iter().enumerate() {
+            // if attrib.cur
+            let func=attrib.func.clone();
+            let val_ind=attrib.states.iter().filter_map(|(k,&v)|{
+                let b=affect_computed.states.get(k).map(|devices|!devices.is_empty()).unwrap_or_default();
+                let b=b || new_states.map(|x|x.contains(k)).unwrap_or_default();
+                b.then_some(v)
+            }).fold(0, |x,y|x.max(y));
+
+            // let cur_attrib_ind=affect_computed.cur_attrib_inds.entry(attrib_ind);
+            // cur_attrib_ind.
+            if affect_computed.cur_attrib_inds.get(&attrib_ind).map(|&last_val_ind|last_val_ind==val_ind).unwrap_or_default() {
+                continue;
+            }
+
+            affect_computed.cur_attrib_inds.insert(attrib_ind,val_ind);
+
+            // let last_val_ind=affect_computed.cur_attrib_inds.get(&attrib_ind);
+            // if last_val_ind.is_none() || *last_val_ind.unwrap()!=val_ind {
+
+            // }
+            // println!("attrib {ind} : {:?} {states:?}",attrib.states);
+            commands.queue(move|world:&mut World|func(world,entity,val_ind));
+            // commands.queue(attrib(entity,&states));
         }
     }
 
@@ -307,8 +416,23 @@ fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<Font
         (UiAffectState::Press(0),Color::linear_rgb(1.0,0.8,0.1))
     ]);
 
+    let text= attrib_setter(
+        |c:&mut UiText,v|{c.value=v;c.update=true;},
+        "abc".into(),
+        [
+            (UiAffectState::Focus,"bbb".into()),
+            (UiAffectState::Press(0),"ccc".into())
+        ]
+    );
 
-
+    // let text= attrib_setter(
+    //     |c:&mut UiText,v|c.color=v,
+    //     Color::linear_rgb(1.0, 0.0, 0.0),
+    //     [
+    //         (UiAffectState::Focus,Color::linear_rgb(0.0, 1.0, 0.0)),
+    //         (UiAffectState::Press(0),Color::linear_rgb(0.0, 0.0, 1.0))
+    //     ]
+    // );
     let c=[rng.gen::<f32>(),rng.gen::<f32>(),rng.gen::<f32>()];
     let col=Color::srgb_from_array(c.map(|c|c*0.8));
     let col2=Color::srgb_from_array(c.map(|c|c));
@@ -317,9 +441,9 @@ fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<Font
     ]);
     commands.entity(entity).insert((
         UixAffect(vec![
-            // attrib_setter(|c:&mut UiColor,v|c.back=v, col, []),
             back_col,
             border_col,
+            text,
         ]),
         UiSize{ width:UiVal::Px(-20.0), height:UiVal::Px(-30.0), },
         UiFocusable{

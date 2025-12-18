@@ -261,7 +261,7 @@ pub fn update_text(
                             panic!("Fatal error when processing text: {}.", e);
                         },
                         Ok(()) => {
-                                            // println!("t {:?}",text_layout_info.size);
+                            // println!("t {:?}",text_layout_info.size);
                             new_text_max_size.x=new_text_max_size.x.max(text_layout_info.size.x);
                             new_text_max_size.y=new_text_max_size.y.max(text_layout_info.size.y);
                         }
@@ -279,7 +279,7 @@ pub fn update_text(
                     text.update=false;
                     text_computed.scaling=text_scale_factor;
 
-                    // println!("text is {:?}",text.value);
+                    println!("text is {:?}",text.value);
                 }
                 // println!("goo {new_text_max_size:?}");
             } else { //whats this for again? because inner_size is cleared at top, need to reset it when not updated? what about for image?

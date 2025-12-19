@@ -66,37 +66,37 @@ pub struct CursorDrags(pub HashMap<(Entity,i32),HashMap<i32,Drag>>); //[(root_en
 //         //[device][root_entity][group]=(cur_focus_entity,focus_entity_stk,hist)
 // }
 
-#[derive(Debug,Clone, Copy,PartialEq, Eq,Hash)]
-pub enum DeviceType {
-    Cursor(i32),
-    Focus(i32),
-}
-impl DeviceType {
-    pub fn is_cursor(&self) -> bool {
-        match self {
-            DeviceType::Cursor(_) => true,
-            DeviceType::Focus(_) => false,
-        }
-    }
-    pub fn is_focus(&self) -> bool {
-        match self {
-            DeviceType::Cursor(_) => false,
-            DeviceType::Focus(_) => true,
-        }
-    }
-    pub fn device(&self) -> i32 {
-        match self {
-            &DeviceType::Cursor(device) => device,
-            &DeviceType::Focus(device) => device,
-        }
-    }
-}
+// #[derive(Debug,Clone, Copy,PartialEq, Eq,Hash)]
+// pub enum DeviceType {
+//     Cursor(i32),
+//     Focus(i32),
+// }
+// impl DeviceType {
+//     pub fn is_cursor(&self) -> bool {
+//         match self {
+//             DeviceType::Cursor(_) => true,
+//             DeviceType::Focus(_) => false,
+//         }
+//     }
+//     pub fn is_focus(&self) -> bool {
+//         match self {
+//             DeviceType::Cursor(_) => false,
+//             DeviceType::Focus(_) => true,
+//         }
+//     }
+//     pub fn device(&self) -> i32 {
+//         match self {
+//             &DeviceType::Cursor(device) => device,
+//             &DeviceType::Focus(device) => device,
+//         }
+//     }
+// }
 
 //using for drag, but requires draggable to have pressable ...  which is bad
-#[derive(Resource,Debug, Default)]
-pub struct UiPressStates {
-    pub device_presseds : HashMap<i32,HashMap<(Entity,DeviceType),(Entity,bool)>>, //[button][(root_entity,device,is_cursor)]=(pressed_entity,pressed)
-}
+// #[derive(Resource,Debug, Default)]
+// pub struct UiPressStates {
+//     pub device_presseds : HashMap<i32,HashMap<(Entity,DeviceType),(Entity,bool)>>, //[button][(root_entity,device,is_cursor)]=(pressed_entity,pressed)
+// }
 
 // #[derive(Resource,Debug, Default)]
 // pub struct UiDragStates {

@@ -34,7 +34,7 @@ impl bevy::app::Plugin for UiInteractPlugin {
             .init_resource::<resources::CursorDevicePointers>()
 
 
-            .init_resource::<resources::UiPressStates>()
+            // .init_resource::<resources::UiPressStates>()
             // .init_resource::<resources::UiDragStates>()
 
             .init_resource::<resources::CursorHovers>()

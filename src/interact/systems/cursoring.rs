@@ -487,7 +487,7 @@ fn do_press_end(
     // let pressable=pressable_query.get(pressed_entity).map(|x|x.1).unwrap(); //can use unwrap, wouldn't be in device_presseds otherwise
 
     //
-    // if is_pressed //always means it will always be pressed (when cursor/focus is no longer on entity) //pressable.always ||
+    // if is_pressed // || pressable.always //always means it will always be pressed (when cursor/focus is no longer on entity)
     { //may be called twice in a row if cursor is moved off the button (once), and then released (twice)
         output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::CursorPressEnd{ device, button,last:true, }});
     }
@@ -515,9 +515,10 @@ fn do_press_cancel(
     //
     // let pressable=pressable_query.get(pressed_entity).map(|x|x.1).unwrap(); //can use unwrap, wouldn't be in device_presseds otherwise
 
-    if //pressable.always ||
-        is_pressed { //always means it will always be pressed (when cursor/focus is no longer on entity)
-        output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::CursorPressEnd{ device, button,last:false, }});
+    if is_pressed // || pressable.always //always means it will always be pressed (when cursor/focus is no longer on entity)
+
+    {
+        output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::CursorPressEnd{ device, button,last:true, }});
     }
 }
 

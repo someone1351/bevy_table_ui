@@ -279,7 +279,7 @@ pub fn update_text(
                     text.update=false;
                     text_computed.scaling=text_scale_factor;
 
-                    println!("text is {:?}",text.value);
+                    // println!("text is {:?}",text.value);
                 }
                 // println!("goo {new_text_max_size:?}");
             } else { //whats this for again? because inner_size is cleared at top, need to reset it when not updated? what about for image?

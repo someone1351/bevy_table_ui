@@ -3,8 +3,8 @@
 // #![allow(unused_variables)]
 // #![allow(unreachable_code)]
 
-use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
+use std::collections::HashSet;
+// use std::sync::Arc;
 
 use bevy::app::*;
 use bevy::asset::prelude::*;
@@ -17,7 +17,6 @@ use bevy::ecs::entity::Entity;
 use bevy::ecs::message::{MessageReader, MessageWriter};
 use bevy::ecs::query::With;
 use bevy::ecs::system::{Commands, Local, Query, Res};
-use bevy::ecs::world::World;
 use bevy::input::keyboard::KeyboardInput;
 use bevy::input::mouse::{MouseButton, MouseButtonInput, MouseScrollUnit, MouseWheel};
 use bevy::input::ButtonState;
@@ -36,7 +35,7 @@ use rand::{Rng,rngs::ThreadRng};
 // use render_core::core_my::CameraMy;
 use table_ui::*;
 
-use crate::affect::{AttribFuncType, UixAffect, UixAffectAttrib, UixAffectState};
+use crate::affect::{create_affect_attrib, UixAffect, UixAffectState};
 
 // #[path = "affect/mod.rs"]
 mod affect;
@@ -111,41 +110,6 @@ pub fn update_ui_roots(
 
 
 
-fn attrib_setter<C,V,S>(func:fn(&mut C,V) ,default_val:V,state_vals:S,) -> UixAffectAttrib
-where
-    C : Component<Mutability = bevy::ecs::component::Mutable>+Default,
-    V : Clone + 'static+Send+Sync,
-    S : IntoIterator<Item=(UixAffectState,V)>,
-{
-    let state_vals:Vec<(UixAffectState,V)>=state_vals.into_iter().collect();
-    let states:HashMap<UixAffectState,usize>=state_vals.iter().enumerate().map(|(i,(k,_v))|(*k,i+1)).collect();
-    // let vals:Vec<V>=[default_val].into_iter().chain(state_vals.iter().map(|(_k,v)|v.clone())).collect();
-
-    let mut out_funcs = Vec::new();
-
-    for v in [default_val.clone()].into_iter().chain(state_vals.iter().map(|(_k,v)|v.clone())) {
-        let func2:AttribFuncType=Arc::new(move|entity:Entity,world:&mut World,|{
-            let mut e=world.entity_mut(entity);
-            let mut c=e.entry::<C>().or_default();
-            let mut c=c.get_mut();
-
-            func(&mut c,v.clone());
-        });
-        out_funcs.push(func2.clone());
-    }
-    // let out_funcs: Vec<AttribFuncType>=[default_val.clone()].into_iter().chain(state_vals.iter().map(|(_k,v)|v.clone())).map(|v|{
-    //     Arc::new(move|entity:Entity,world:&mut World,|{
-    //         let mut e=world.entity_mut(entity);
-    //         let mut c=e.entry::<C>().or_default();
-    //         let mut c=c.get_mut();
-
-    //         func(&mut c,v.clone());
-    //     })
-    // }).collect();
-
-    UixAffectAttrib { funcs:out_funcs, states }
-}
-
 #[derive(Component)]
 pub struct MenuUiRoot;
 
@@ -203,12 +167,12 @@ pub fn setup_ui(
 }
 
 fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<Font>,entity:Entity) {
-    let border_col= attrib_setter(|c:&mut UiColor,v|c.border=v,Color::linear_rgb(0.5,0.5,0.5),[
+    let border_col= create_affect_attrib(|c:&mut UiColor,v|c.border=v,Color::linear_rgb(0.5,0.5,0.5),[
         (UixAffectState::Focus,Color::linear_rgb(0.8,0.6,0.3)),
         (UixAffectState::Press(0),Color::linear_rgb(1.0,0.8,0.1))
     ]);
 
-    let text= attrib_setter(
+    let text= create_affect_attrib(
         |c:&mut UiText,v|{c.value=v;c.update=true;},
         "abc".into(),
         [
@@ -220,7 +184,7 @@ fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<Font
     let c=[rng.gen::<f32>(),rng.gen::<f32>(),rng.gen::<f32>()];
     let col=Color::srgb_from_array(c.map(|c|c*0.8));
     let col2=Color::srgb_from_array(c.map(|c|c));
-    let back_col= attrib_setter(|c:&mut UiColor,v|c.back=v,col,[
+    let back_col= create_affect_attrib(|c:&mut UiColor,v|c.back=v,col,[
         (UixAffectState::Hover,col2)
     ]);
 

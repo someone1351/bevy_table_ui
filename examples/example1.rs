@@ -36,7 +36,10 @@ use rand::{Rng,rngs::ThreadRng};
 // use render_core::core_my::CameraMy;
 use table_ui::*;
 
+use crate::affect::{AttribFuncType, UixAffect, UixAffectAttrib, UixAffectState};
 
+// #[path = "affect/mod.rs"]
+mod affect;
 
 fn main() {
     use bevy::ecs::prelude::*;
@@ -61,6 +64,7 @@ fn main() {
             table_ui::UiInteractPlugin,
             table_ui::UiDisplayPlugin,
             // table_ui::UiAffectPlugin,
+            affect::UixAffectPlugin,
         ))
 
 
@@ -77,9 +81,9 @@ fn main() {
         ))
         .add_systems(Update, (
             update_ui_roots,
-            update_ui_input,
+            update_ui_input.before(UiInteractSystem),
             // update_ui,
-            on_affects,
+            // on_affects,
         ).chain())
         .add_systems(Update, (
             update_input,
@@ -107,33 +111,6 @@ pub fn update_ui_roots(
 
 
 
-#[derive(PartialEq,Eq,Hash,Copy,Clone)]
-pub enum DeviceType{None,Cursor(i32),Focus(i32),}
-#[derive(Debug,Hash,PartialEq,Eq,Copy,Clone,PartialOrd, Ord)]
-pub enum UixAffectState {
-    // None,
-    Select,
-    Hover,
-    Focus,
-    Press(i32),
-    Drag,
-}
-#[derive(Component,Default)]
-pub struct UixAffectComputed {
-    pub states : HashMap<UixAffectState,HashSet<DeviceType>>, //[state][device]
-    pub cur_attrib_inds:HashMap<usize,usize>, //[attrib_ind]=cur_ind
-}
-
-// type UixAffectAttribFunc = Arc<dyn Fn(&mut World,Entity,usize) + Sync+Send>;
-
-#[derive(Component,Default)]
-#[require(UixAffectComputed)]
-pub struct UixAffect(Vec<UixAffectAttrib>); //[attrib_ind]=
-
-pub struct UixAffectAttrib {
-    func : Arc<dyn Fn(&mut World,Entity,usize) + Sync+Send>,
-    states:HashMap<UixAffectState,usize>,//[state]=val_ind
-}
 fn attrib_setter<C,V,S>(func:fn(&mut C,V) ,default_val:V,state_vals:S,) -> UixAffectAttrib
 where
     C : Component<Mutability = bevy::ecs::component::Mutable>+Default,
@@ -142,82 +119,31 @@ where
 {
     let state_vals:Vec<(UixAffectState,V)>=state_vals.into_iter().collect();
     let states:HashMap<UixAffectState,usize>=state_vals.iter().enumerate().map(|(i,(k,_v))|(*k,i+1)).collect();
-    let vals:Vec<V>=[default_val].into_iter().chain(state_vals.iter().map(|(_k,v)|v.clone())).collect();
+    // let vals:Vec<V>=[default_val].into_iter().chain(state_vals.iter().map(|(_k,v)|v.clone())).collect();
 
-    let func=Arc::new(move|world:&mut World,entity:Entity,ind:usize|{
-        let mut e=world.entity_mut(entity);
-        let mut c=e.entry::<C>().or_default();
-        let mut c=c.get_mut();
+    let mut out_funcs = Vec::new();
 
-        let v=vals.get(ind).unwrap().clone();
-        func(&mut c,v);
-    });
-    UixAffectAttrib { func, states }
-}
+    for v in [default_val.clone()].into_iter().chain(state_vals.iter().map(|(_k,v)|v.clone())) {
+        let func2:AttribFuncType=Arc::new(move|entity:Entity,world:&mut World,|{
+            let mut e=world.entity_mut(entity);
+            let mut c=e.entry::<C>().or_default();
+            let mut c=c.get_mut();
 
-pub fn on_affects<'a>(
-    mut affect_query: Query<(Entity,&UixAffect,&mut UixAffectComputed)>,
-    mut commands: Commands,
-    mut interact_event_reader: MessageReader<UiInteractEvent>,
-) {
-    let mut new_states: HashMap<Entity,HashSet<UixAffectState>>=Default::default(); //[entity][state]
-    //
-    for ev in interact_event_reader.read() {
-        println!("e {ev}");
-        let Ok((_,_, mut affect_computed))=affect_query.get_mut(ev.entity) else {continue;};
-
-        let Some((state,device,is_end))=(match ev.event_type {
-            UiInteractMessageType::FocusBegin {device, .. } => Some((UixAffectState::Focus,DeviceType::Focus(device),false)),
-            UiInteractMessageType::FocusEnd { device,.. } => Some((UixAffectState::Focus,DeviceType::Focus(device),true)),
-            UiInteractMessageType::CursorPressBegin{device,button,..} => Some((UixAffectState::Press(button),DeviceType::Cursor(device),false)),
-            UiInteractMessageType::CursorPressEnd{device,button,..} => Some((UixAffectState::Press(button),DeviceType::Cursor(device),true)),
-            UiInteractMessageType::FocusPressBegin { device, button } => Some((UixAffectState::Press(button),DeviceType::Focus(device),false)),
-            UiInteractMessageType::FocusPressEnd { device, button } => Some((UixAffectState::Press(button),DeviceType::Focus(device),true)),
-            UiInteractMessageType::SelectBegin => Some((UixAffectState::Select,DeviceType::None,false)),
-            UiInteractMessageType::SelectEnd => Some((UixAffectState::Select,DeviceType::None,true)),
-            UiInteractMessageType::CursorHoverBegin{device,..} => Some((UixAffectState::Hover,DeviceType::Cursor(device),false)),
-            UiInteractMessageType::CursorHoverEnd{device,..} => Some((UixAffectState::Hover,DeviceType::Cursor(device),true)),
-            UiInteractMessageType::CursorDragBegin { device, .. } => Some((UixAffectState::Drag,DeviceType::Cursor(device),false)),
-            UiInteractMessageType::CursorDragEnd { device, .. } => Some((UixAffectState::Drag,DeviceType::Cursor(device),true)),
-            UiInteractMessageType::CursorClick{..}=> None,
-            UiInteractMessageType::FocusClick { .. } => None,
-            UiInteractMessageType::CursorDragX{..} => None,
-            UiInteractMessageType::CursorDragY{..} => None,
-            UiInteractMessageType::CursorScroll { .. } => None,
-        }) else {continue;};
-
-        if !is_end {
-            affect_computed.states.entry(state).or_default().insert(device);
-            new_states.entry(ev.entity).or_default().insert(state);
-        } else {
-            affect_computed.states.get_mut(&state).map(|devices|devices.remove(&device));
-        }
-
+            func(&mut c,v.clone());
+        });
+        out_funcs.push(func2.clone());
     }
+    // let out_funcs: Vec<AttribFuncType>=[default_val.clone()].into_iter().chain(state_vals.iter().map(|(_k,v)|v.clone())).map(|v|{
+    //     Arc::new(move|entity:Entity,world:&mut World,|{
+    //         let mut e=world.entity_mut(entity);
+    //         let mut c=e.entry::<C>().or_default();
+    //         let mut c=c.get_mut();
 
-    //
-    for (entity, affect,mut affect_computed) in affect_query.iter_mut() {
-        let new_states=new_states.get(&entity);
+    //         func(&mut c,v.clone());
+    //     })
+    // }).collect();
 
-        for (attrib_ind,attrib) in affect.0.iter().enumerate() {
-            // if attrib.cur
-            let func=attrib.func.clone();
-            let val_ind=attrib.states.iter().filter_map(|(k,&v)|{
-                let b=affect_computed.states.get(k).map(|devices|!devices.is_empty()).unwrap_or_default();
-                let b=b || new_states.map(|x|x.contains(k)).unwrap_or_default();
-                b.then_some(v)
-            }).fold(0, |x,y|x.max(y));
-
-            if affect_computed.cur_attrib_inds.get(&attrib_ind).map(|&last_val_ind|last_val_ind==val_ind).unwrap_or_default() {
-                continue;
-            }
-
-            affect_computed.cur_attrib_inds.insert(attrib_ind,val_ind);
-
-            // println!("attrib {ind} : {:?} {states:?}",attrib.states);
-            commands.queue(move|world:&mut World|func(world,entity,val_ind));
-        }
-    }
+    UixAffectAttrib { funcs:out_funcs, states }
 }
 
 #[derive(Component)]
@@ -318,7 +244,7 @@ fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<Font
             // enable: true,
             pressable:true,
             hoverable:true,
-            draggable:true,
+            // draggable:true,
             scrollable:true,
             //press_onlys:[0].into(),
             ..Default::default()

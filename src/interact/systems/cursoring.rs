@@ -108,7 +108,7 @@ pub fn cursor_press_cleanup(
             let b=root_alive && unlocked && pressable_enabled && computed_root_entity==root_entity; //&& entities_presseds_contains
 
             if !b && is_pressed {
-                ui_output_event_writer.write(UiInteractEvent{entity:pressed_entity,event_type:UiInteractMessageType::CursorPressEnd{ device, button }});
+                ui_output_event_writer.write(UiInteractEvent{entity:pressed_entity,event_type:UiInteractMessageType::CursorPressEnd{ device, button,last:true, }});
             }
 
             b
@@ -226,9 +226,10 @@ fn do_drag_press_begin(
     device:i32,
     button:i32,
     device_drags:&mut CursorDrags,
-    roots_pressable_entities:&HashMap<Entity, Vec<Entity>>,
+    roots_cursorable_entities:&HashMap<Entity, Vec<Entity>>,
     device_cursors:&CursorDevicePointers,
     layout_computed_query: Query<&UiLayoutComputed>,
+    pressable_query: Query<(Entity,& UiCursorable)>,
 
     output_event_writer: &mut MessageWriter<UiInteractEvent>,
 ) {
@@ -244,7 +245,7 @@ fn do_drag_press_begin(
     // }
 
     //
-    let Some(draggable_entities)=roots_pressable_entities.get(&root_entity) else {
+    let Some(cursorable_entities)=roots_cursorable_entities.get(&root_entity) else {
         return;
     };
 
@@ -254,11 +255,13 @@ fn do_drag_press_begin(
         return;
     };
 
+
     //(_,&(found_entity,cell_size,_))
-    let Some(found_entity)=draggable_entities.iter().rev().find(|&&entity|{ //&(_,&(_entity,_,rect))
+    let Some(found_entity)=cursorable_entities.iter().rev().find(|&&entity|{ //&(_,&(_entity,_,rect))
+        let pressable=pressable_query.get(entity).map(|x|x.1).unwrap();
         let layout_computed=layout_computed_query.get(entity).unwrap();
         let rect=layout_computed.border_rect();
-        rect.contains_point(cursor)
+        pressable.draggable && rect.contains_point(cursor)
     }).cloned() else {
         return;
     };
@@ -407,13 +410,13 @@ fn do_press_move(
             *is_pressed=true;
 
             // if !pressable_always {
-            output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::CursorPressBegin{ device, button }});
+            output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::CursorPressBegin{ device, button,first:false, }});
             // }
         } else if !cursor_inside && *is_pressed {
             *is_pressed=false;
 
             // if !pressable_always {
-            output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::CursorPressEnd{ device, button }});
+            output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::CursorPressEnd{ device, button,last:false, }});
             // }
         }
     }
@@ -459,7 +462,7 @@ fn do_press_begin(
 
     //
     if let Some(entity)=pressable_entity {
-        output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::CursorPressBegin{ device, button }});
+        output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::CursorPressBegin{ device, button,first:true, }});
 
         device_presseds.0.entry(button).or_default().insert((root_entity,device),(entity,true));
 
@@ -484,9 +487,9 @@ fn do_press_end(
     // let pressable=pressable_query.get(pressed_entity).map(|x|x.1).unwrap(); //can use unwrap, wouldn't be in device_presseds otherwise
 
     //
-    if //pressable.always ||
-        is_pressed { //always means it will always be pressed (when cursor/focus is no longer on entity)
-        output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::CursorPressEnd{ device, button }});
+    // if is_pressed //always means it will always be pressed (when cursor/focus is no longer on entity) //pressable.always ||
+    { //may be called twice in a row if cursor is moved off the button (once), and then released (twice)
+        output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::CursorPressEnd{ device, button,last:true, }});
     }
 
     if is_pressed {
@@ -514,7 +517,7 @@ fn do_press_cancel(
 
     if //pressable.always ||
         is_pressed { //always means it will always be pressed (when cursor/focus is no longer on entity)
-        output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::CursorPressEnd{ device, button }});
+        output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::CursorPressEnd{ device, button,last:false, }});
     }
 }
 
@@ -656,6 +659,7 @@ pub fn update_press_events(
                     &roots_pressable_entities,
                     &device_cursors,
                     layout_computed_query,
+                    pressable_query,
                     &mut output_event_writer,
                 );
 

@@ -243,8 +243,8 @@ TODO
 pub enum UiInteractMessageType {
     CursorHoverBegin{device:i32,}, //don't really need device? like press?
     CursorHoverEnd{device:i32,},
-    CursorPressBegin{device:i32,button:i32}, //,is_cursor:bool //might need hashset of devices?
-    CursorPressEnd{device:i32,button:i32},
+    CursorPressBegin{device:i32,button:i32,first:bool,}, //,is_cursor:bool //might need hashset of devices?
+    CursorPressEnd{device:i32,button:i32,last:bool,},
     CursorClick{device:i32,button:i32,
         // times:u32, //how many times within the frame, most times will be 0, as press/release happens over multiple frames
     },

@@ -1,7 +1,11 @@
 
+#![allow(dead_code)]
+
 use std::{collections::HashMap, sync::Arc};
 
-use bevy::ecs::prelude::*;
+use bevy::ecs::{component::Component, entity::Entity, world::World};
+
+// use bevy::ecs::prelude::*;
 use super::values::*;
 
 pub fn create_affect_attrib<C,V,S>(func:fn(&mut C,V) ,default_val:V,state_vals:S,) -> UixAffectAttrib
@@ -26,6 +30,7 @@ where
         });
         out_funcs.push(func2.clone());
     }
+
     // let out_funcs: Vec<AttribFuncType>=[default_val.clone()].into_iter().chain(state_vals.iter().map(|(_k,v)|v.clone())).map(|v|{
     //     Arc::new(move|entity:Entity,world:&mut World,|{
     //         let mut e=world.entity_mut(entity);

@@ -105,13 +105,15 @@ pub fn update_text(
             // let mut fonts_loaded=true;
             let handle=&text.font;
 
-            let fonts_loaded=if let Some(bevy::asset::LoadState::Loaded) = asset_server.get_load_state(handle) {
-                true
-            } else {
-                // fonts_loaded=false;
-                // println!("noo");
-                false
-            };
+            let fonts_loaded=asset_server.get_load_state(handle).map(|x|x.is_loaded()).unwrap_or_default();
+
+            // if asset_server.get_load_state(handle).map(|x|x.is_loaded()).unwrap_or_default() { //let Some(bevy::asset::LoadState::Loaded) =
+            //     true
+            // } else {
+            //     // fonts_loaded=false;
+            //     // println!("noo");
+            //     false
+            // };
 
             let font_size=text.font_size;//*scale_factor*10.0;
 
@@ -233,7 +235,34 @@ pub fn update_text(
                         line_height: LineHeight::RelativeToFont(1.2),
                     },text.color)];
 
+
+
                     // println!("b {bound_width:?} {bound_height:?}");
+
+                    // match text_pipeline.update_buffer(
+                    //     &fonts, text_spans.into_iter(),
+                    //     LineBreak::WordBoundary,
+                    //     text_alignment,
+                    //     TextBounds{width:bound_width,height:bound_height},
+                    //     text_scale_factor.into(), &mut computed_text_block, &mut font_system
+                    // )
+
+                    // {
+                    //     Err(e @ TextError::FailedToGetGlyphImage(_)) => {
+                    //         panic!("Fatal error when processing font: {}.", e);
+                    //     },
+                    //     Err(e @ TextError::NoSuchFont) => {
+                    //         panic!("Fatal error when processing font: {}.", e);
+                    //     },
+                    //     Err(e @ TextError::FailedToAddGlyph(_)) => {
+                    //         panic!("Fatal error when processing text: {}.", e);
+                    //     },
+                    //     Ok(()) => {
+                    //         // println!("t {:?}",text_layout_info.size);
+                    //         new_text_max_size.x=new_text_max_size.x.max(text_layout_info.size.x);
+                    //         new_text_max_size.y=new_text_max_size.y.max(text_layout_info.size.y);
+                    //     }
+                    // };
                     match text_pipeline.queue_text(
                         &mut text_layout_info,
                         &fonts,
@@ -250,7 +279,8 @@ pub fn update_text(
                         &mut swash_cache,
                         // YAxisOrientation::TopToBottom,
 
-                    ) {
+                    )
+                    {
                         Err(e @ TextError::FailedToGetGlyphImage(_)) => {
                             panic!("Fatal error when processing font: {}.", e);
                         },
@@ -266,6 +296,9 @@ pub fn update_text(
                             new_text_max_size.y=new_text_max_size.y.max(text_layout_info.size.y);
                         }
                     };
+
+                    //
+                    // let x=text_pipeline.update_text_layout();
 
                     //
                     inner_size.width = inner_size.width.max(new_text_max_size.x);

@@ -23,7 +23,7 @@ use bevy::ecs::system::*;
 
 
 use bevy::render::render_resource::*;
-use bevy::text::TextLayoutInfo;
+use bevy::text::{ComputedTextBlock, Justify, TextBackgroundColor, TextColor, TextLayout, TextLayoutInfo};
 
 
 use super::draws::DrawMesh;
@@ -35,7 +35,7 @@ use super::resources::*;
 use super::super::render_core::core_my::TransparentMy;
 use super::super::TestRenderComponent;
 
-use super::super::{components::{UiColor,UiText,UiTextComputed,UiImage},values::{UiTextHAlign,UiTextVAlign}};
+use super::super::{components::{UiColor,UiText,UiTextComputed,UiImage},values::UiTextVAlign};
 use super::super::super::layout::{components::*,values::UiRect};
 //systems
 
@@ -273,14 +273,21 @@ pub fn extract_uinodes2(
         Option<&UiImage>,
         Option<&UiText>,
         Option<&UiTextComputed>,
+
+        Option<&TextColor>,
+        Option<&TextLayout>,
         Option<&TextLayoutInfo>,
+        Option<&ComputedTextBlock>,
+
         // Option<&ChildOf>,
-        // Option<&UiFloat>,
         // Option<&UiEdge>,
         Option<&UiColor>,
+        Option<&UiFloat>,
         // Option<&MyTargetCamera>,
     )> >,
 
+    text_colors: Extract<Query<&TextColor>>,
+    text_background_colors_query: Extract<Query<&TextBackgroundColor>>,
     mut extracted_elements : ResMut<MyUiExtractedElements>,
 
     // camera_query: Extract<Query<(Entity, &Camera)>>,
@@ -315,11 +322,14 @@ pub fn extract_uinodes2(
         image,
         text,
         text_computed,
+        text_color,
+        text_layout,
         text_layout_info,
+        computed_text_block,
         // _parent,
-        // _float,
         // _edge,
         color,
+        float,
     ) in uinode_query.iter() {
         if !layout_computed.visible {
             continue;
@@ -355,12 +365,17 @@ pub fn extract_uinodes2(
         let clamped_inner_height = layout_computed.clamped_rect.height();
 
         let inner_rect=layout_computed.inner_rect();
+        let is_float=float.map(|x|x.float).unwrap_or_default(); //no cell col for floating
+
 
         //
         let padding_color = color.map(|c|c.padding).unwrap_or(Color::NONE);
         let margin_color = color.map(|c|c.margin).unwrap_or(Color::NONE);
         let border_color = color.map(|c|c.border).unwrap_or(Color::NONE);
-        let cell_color = color.map(|c|c.cell).unwrap_or(Color::NONE);
+
+        // let cell_color = if is_float {Color::NONE} else {color.map(|c|c.cell).unwrap_or(Color::NONE)};
+        let cell_color=(!is_float).then_some(()).and_then(|_|color.map(|c|c.cell)).unwrap_or(Color::NONE);
+
         let back_color = color.map(|c|c.back).unwrap_or(Color::NONE);
 
         //
@@ -538,9 +553,15 @@ pub fn extract_uinodes2(
         }
 
         //text
-        if let (Some(text), Some(text_layout_info),Some(text_computed) ) = (
-            text, text_layout_info,text_computed,
+        if let (
+            Some(text),
+            Some(text_layout_info),
+            Some(text_computed),
+            Some(computed_text_block),
+        ) = (
+            text, text_layout_info,text_computed,computed_text_block
         ) {
+            let text_layout=text_layout.cloned().unwrap_or_default();
 
             // let glyph_offset=text_computed.bounds-text_layout_info.size; //only needed for x, since because bevy now handles halign positioning
             // println!("hmm comp={:?} text={:?}, dif={:?},tcomp={:?}",
@@ -549,10 +570,47 @@ pub fn extract_uinodes2(
             //     layout_computed.size-text_layout_info.size,
             //     text_computed.bounds
             // );
+            // for (
+            //     i,
+            //     PositionedGlyph {
+            //         position,
+            //         atlas_info,
+            //         span_index,
+            //         ..
+            //     },
+            // ) in text_layout_info.glyphs.iter().enumerate()
+            // {
+
+            // }
+            // for text_entity in computed_text_block.entities() {
+            //     text_entity.
+            // }
+            // let span_entities=computed_text_block
+            //     .entities()
+            //     .get(*span_index)
+            //     .map(|t| t.entity)
+            //     .unwrap_or(Entity::PLACEHOLDER);
+
+            let mut color = Color::WHITE;
+            let mut current_span: Option<usize> = None;
             for text_glyph in text_layout_info.glyphs.iter() {
-                let color = text.color;
+                if Some(text_glyph.span_index)!=current_span {
+                    let x=computed_text_block.entities().get(text_glyph.span_index)
+                        .map(|t| t.entity)
+                        .unwrap_or(Entity::PLACEHOLDER);
+
+                    color = text_colors.get(x)
+                        .map(|text_color| Color::from(text_color.0))
+                        .unwrap_or_default();
+                    current_span = Some(text_glyph.span_index);
+                }
+
+                // let color = text.color;
+                // let color = text_color.cloned().unwrap_or_default().0;
+                // let color = Color::WHITE;
                 let atlas = texture_atlases.get(text_glyph.atlas_info.texture_atlas).unwrap(); // .clone() //necessary?
-                let glyph_index = text_glyph.atlas_info.location.glyph_index as usize;
+                let glyph_index = text_glyph.atlas_info.location.glyph_index;
+                // text_glyph.
                 let atlas_glyph_rect = atlas.textures[glyph_index].as_rect();
                 let glyph_size=atlas_glyph_rect.size();
 
@@ -562,11 +620,13 @@ pub fn extract_uinodes2(
 
                 if text_computed.bounds.x<=layout_computed.size.x
                 {
-                    glyph_pos.x+=match text.halign {
-                        UiTextHAlign::Left => 0.0,
-                        UiTextHAlign::Center => (layout_computed.size.x-text_computed.bounds.x)*0.5,
-                        UiTextHAlign::Right => layout_computed.size.x-text_computed.bounds.x,
+                    glyph_pos.x+=match text_layout.justify{
+                        Justify::Left => 0.0,
+                        Justify::Center|Justify::Justified => (layout_computed.size.x-text_computed.bounds.x)*0.5,
+                        Justify::Right => layout_computed.size.x-text_computed.bounds.x,
                     };
+
+
 
                 }
 

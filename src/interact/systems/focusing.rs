@@ -785,8 +785,13 @@ fn calc_focus_move(
             };
 
             //
-            let cur_computed = layout_computed_query.get(cur_entity).unwrap();
-            let parent_computed = layout_computed_query.get(parent_entity).unwrap();
+            // let cur_computed = layout_computed_query.get(cur_entity).unwrap();
+            // let parent_computed = layout_computed_query.get(parent_entity).unwrap();
+
+            //
+
+            let Ok(cur_computed) = layout_computed_query.get(cur_entity) else {continue;};
+            let Ok(parent_computed) = layout_computed_query.get(parent_entity) else {continue;};
 
             //
             let stk_len = stk.len();
@@ -918,12 +923,14 @@ fn calc_focus_move(
     // } else { //if move_tab
     } else if let Some(&focus_stk_last_entity)=focus_entity_stk.last() { //just init if no focus
         if let Ok(children)=children_query.get(focus_stk_last_entity) {
-            stk.extend(children.iter().map(|child_entity|FocusMoveWork {
-                entity: child_entity,
-                from_bounds: vec![],
-                to_bound: (0,0),
-                focus_depth: 0,
-                valid: true,
+            stk.extend(children.iter().filter_map(|child_entity|{
+                layout_computed_query.contains(child_entity).then_some(FocusMoveWork {
+                    entity: child_entity,
+                    from_bounds: vec![],
+                    to_bound: (0,0),
+                    focus_depth: 0,
+                    valid: true,
+                })
             }));
         }
 
@@ -1121,7 +1128,9 @@ fn calc_focus_move(
 
             if let Ok(children)=children_query.get(entity) {
                 for child_entity in children.iter() {
-                    let child_computed = layout_computed_query.get(child_entity).unwrap();
+                    // let child_computed = layout_computed_query.get(child_entity).unwrap();
+
+                    let Ok(child_computed) = layout_computed_query.get(child_entity)else{continue;};
 
                     //
                     let new_to_len=if move_vert {

@@ -172,15 +172,31 @@ fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<Font
         (UixAffectState::Press(0),Color::linear_rgb(1.0,0.8,0.1))
     ]);
 
-    let text= create_affect_attrib(
-        |c:&mut UiText,v|{c.value=v;c.update=true;},
-        "abc".into(),
+    // let text= create_affect_attrib(
+    //     |c:&mut UiText,v|{c.value=v;c.update=true;},
+    //     "abc".into(),
+    //     [
+    //         (UixAffectState::Focus,"bbb".into()),
+    //         (UixAffectState::Press(0),"ccc".into())
+    //     ]
+    // );
+
+    let width= create_affect_attrib(
+        |c:&mut UiSize,v|{c.width=v;},
+        UiVal::None,
         [
-            (UixAffectState::Focus,"bbb".into()),
-            (UixAffectState::Press(0),"ccc".into())
+            (UixAffectState::Focus,UiVal::Px(100.0)),
+            (UixAffectState::Press(0),UiVal::Px(150.0))
         ]
     );
-
+    let text= create_affect_attrib(
+        |c:&mut MyText2d,v|{c.0=v;},
+        "abc".into(),
+        [
+            (UixAffectState::Focus,"byb".into()),
+            (UixAffectState::Press(0),"czc".into())
+        ]
+    );
     let c=[rng.gen::<f32>(),rng.gen::<f32>(),rng.gen::<f32>()];
     let col=Color::srgb_from_array(c.map(|c|c*0.8));
     let col2=Color::srgb_from_array(c.map(|c|c));
@@ -193,6 +209,7 @@ fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<Font
             back_col,
             border_col,
             text,
+            // width,
         ]),
         UiSize{ width:UiVal::Px(-20.0), height:UiVal::Px(-30.0), },
         UiFocusable{
@@ -219,17 +236,30 @@ fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<Font
             border: UiRectVal::new_scalar(UiVal::Px(5.0)),
             margin: UiRectVal::new_scalar(UiVal::Px(5.0)),
             ..Default::default() },
+
+        TextFont{ font: font.clone(), font_size: 15.0, ..Default::default() },
+        TextColor(Color::linear_rgb(1.0,0.0,0.0)),
+        // TextColor(Color::linear_rgb(1.0,0.0,0.0)),
+        TextLayout{ justify: Justify::Right, linebreak: LineBreak::WordBoundary },
+        // TextLayoutInfo{ scale_factor: todo!(), glyphs: todo!(), section_rects: todo!(), size: todo!() },
+        // TextBounds{ width: todo!(), height: todo!() },
+        MyText2d(format!("{entity}")),
         UiText{
-            value:format!("{entity}"),
-            font_size: 15.0,
+            // value:format!("{entity}"),
+            // font_size: 15.0,
             // halign:UiTextHAlign::Left,
             // valign:UiTextVAlign::Top,
-            halign:UiTextHAlign::Right,
+            // halign:UiTextHAlign::Right,
             valign:UiTextVAlign::Bottom,
-            font: font.clone(),
-            color: Color::linear_rgb(1.0,1.0,1.0),
+            // font: font.clone(),
+            // color: Color::linear_rgb(1.0,1.0,1.0),
             ..Default::default()
         },
+    )).with_child((
+        TextSpan(format!("{entity}")),
+
+        TextFont{ font: font.clone(), font_size: 15.0, ..Default::default() },
+        TextColor(Color::linear_rgb(0.0,0.0,1.0)),
     ));
 }
 
@@ -571,9 +601,26 @@ fn update_input(
 struct FpsText;
 
 fn setup_fps(
-    // mut commands: Commands,
-    // asset_server: Res<AssetServer>,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
 ) {
+
+    let font: Handle<Font>=asset_server.load("fonts/FiraMono-Medium.ttf");
+
+
+    commands.spawn((
+        UiRoot::default(),
+
+        TextFont{ font: font.clone(), font_size: 15.0, ..Default::default() },
+        TextColor(Color::WHITE),
+        UiAlign{ halign: UiVal::Scale(1.0), valign: UiVal::Scale(0.0) },
+        MyText2d("aaa".into()),
+        // TextSpan(format!("aaa")),
+        UiText{..Default::default()},
+
+    ));
+
+
     // let font = asset_server.load("fonts/FiraMono-Medium.ttf");
 
     // commands.spawn((
@@ -596,7 +643,7 @@ fn show_fps(
         let v=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS);
         let fps = v.and_then(|x|x.value()).map(|x|x.round()).unwrap_or_default();
         let avg = v.and_then(|x|x.average()).unwrap_or_default();
-        text.0 =format!("{fps:.0} {avg:.0}");
+        // text.0 =format!("{fps:.0} {avg:.0}");
     }
 }
 

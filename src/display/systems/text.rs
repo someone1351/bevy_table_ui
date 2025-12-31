@@ -14,6 +14,9 @@ NOTE
 
 
 
+use std::collections::HashMap;
+
+use bevy::color::Color;
 use bevy::ecs::prelude::*;
 use bevy::asset::prelude::*;
 // use bevy::hierarchy::prelude::*;
@@ -22,7 +25,7 @@ use bevy::image::{Image, TextureAtlasLayout};
 use bevy::math::Vec2;
 // use bevy::render::texture::Image;
 // use bevy::sprite::TextureAtlasLayout;
-use bevy::text::{ComputedTextBlock, CosmicFontSystem, Font, FontAtlasSets, FontSmoothing, Justify, LineBreak, LineHeight, SwashCache, TextBounds, TextError, TextFont, TextLayout, TextLayoutInfo, TextPipeline, };
+use bevy::text::{ComputedTextBlock, CosmicFontSystem, Font, FontAtlasSets, FontSmoothing, Justify, LineBreak, LineHeight, SwashCache, TextBounds, TextError, TextFont, TextLayout, TextLayoutInfo, TextPipeline, TextSpan, };
 // use bevy::window::Window;
 
 
@@ -35,6 +38,67 @@ use super::super::components::*;
 // use super::super::utils::*;
 use super::super::values::*;
 
+pub fn update_text_bounds(
+
+    root_query: Query<&UiRoot,With<UiLayoutComputed>>,
+
+
+    mut ui_query: Query<(Entity,
+        Option<&UiSize>,
+        &UiLayoutComputed,
+        &mut UiInnerSize,
+        Option<&mut UiText>,
+        Option<&mut TextLayoutInfo>,
+        Option<&mut UiTextComputed>,
+        Option<&mut ComputedTextBlock>,
+        &TextFont,
+        Option<& TextLayout>,
+        Option<& TextSpan>,
+        &mut TextBounds,
+        // Option<& TextColor>,
+    )>,
+) {
+
+    for (entity,
+        layout_size,
+        &layout_computed,
+        mut inner_size,
+        text,
+        text_layout_info,
+        text_computed,
+        computed_text_block,
+        text_font,
+        text_layout,
+        text_span,
+        mut text_bounds,
+    ) in ui_query.iter_mut() {
+        if !layout_computed.enabled {
+            continue;
+        }
+
+        //
+        let ui_layout_size=layout_size.cloned().unwrap_or_default();
+        let text_layout=text_layout.cloned().unwrap_or_default();
+
+        if text_layout.linebreak==LineBreak::NoWrap {
+            if text_bounds.width.is_some() {
+                text_bounds.width=None;
+            }
+        } else {
+
+            let  bound_width=(layout_computed.size.x>=0.0).then_some(layout_computed.size.x);
+
+            // if bound_width.is_some() {
+            if text_bounds.width !=bound_width {
+                text_bounds.width=bound_width;
+            }
+            // }
+        }
+
+
+        // let  bound_height=None;//(layout_computed.size.y>=0.0).then_some(layout_computed.size.y);
+    }
+}
 
 pub fn update_text(
     asset_server: Res<AssetServer>,
@@ -52,10 +116,22 @@ pub fn update_text(
         Option<&mut TextLayoutInfo>,
         Option<&mut UiTextComputed>,
         Option<&mut ComputedTextBlock>,
+        &TextFont,
+        Option<& TextLayout>,
+        // Option<& TextSpan>,
+        // Ref<TextSpan>,
+        // Ref<MyText2d>,
+
+        // Option<& TextColor>,
     )>,
     root_query: Query<&UiRoot,With<UiLayoutComputed>>,
     mut font_system: ResMut<CosmicFontSystem>,
     mut swash_cache: ResMut<SwashCache>,
+
+
+    mut text_reader: TextMyReader,
+
+    mut tests:Local<HashMap<Entity,bool>>,
 ) {
 
     for (entity,
@@ -66,6 +142,9 @@ pub fn update_text(
         text_layout_info,
         text_computed,
         computed_text_block,
+        text_font,
+        text_layout,
+        // text_span,
     ) in ui_query.iter_mut()
     {
         let layout_size=layout_size.cloned().unwrap_or_default();
@@ -103,7 +182,7 @@ pub fn update_text(
             = (text,text_computed,text_layout_info,computed_text_block )
         {
             // let mut fonts_loaded=true;
-            let handle=&text.font;
+            let handle=&text_font.font;
 
             let fonts_loaded=asset_server.get_load_state(handle).map(|x|x.is_loaded()).unwrap_or_default();
 
@@ -115,7 +194,7 @@ pub fn update_text(
             //     false
             // };
 
-            let font_size=text.font_size;//*scale_factor*10.0;
+            let font_size=text_font.font_size;//*scale_factor*10.0;
 
             //need to check if layout_computed.size has changed if using it for text wrap?
             //  eg what if you change the size from 0 to -50
@@ -133,18 +212,42 @@ pub fn update_text(
 
             // let tex_updated=true;
             //
-            if tex_updated &&
-                fonts_loaded {
+
+            if computed_text_block.needs_rerender() && fonts_loaded {
+
+            }
+            if computed_text_block.needs_rerender() {
+                println!("ree");
+            }
+            let was_test=tests.get(&entity).cloned().unwrap_or_default();
+
+            if //tex_updated &&
+            // (computed_text_block.needs_rerender()
+            // //||text_span.is_changed()
+            // ||was_test
+            // ) &&
+                fonts_loaded
+
+            {
+                // println!("ree2");
+
+                if was_test {
+                    tests.remove(&entity);
+                } else {
+                    tests.insert(entity,true);
+                }
+                let text_layout=text_layout.cloned().unwrap_or_default();
+
                 let mut bound_width=(layout_computed.size.x>=0.0).then_some(layout_computed.size.x);
                 let  bound_height=None;//(layout_computed.size.y>=0.0).then_some(layout_computed.size.y);
 
                 let mut new_text_max_size= Vec2::ZERO;
 
-                let text_alignment = match text.halign {
-                    UiTextHAlign::Center => Justify::Center,
-                    UiTextHAlign::Left => Justify::Left,
-                    UiTextHAlign::Right => Justify::Right,
-                };
+                // let text_alignment = match text.halign {
+                //     UiTextHAlign::Center => Justify::Center,
+                //     UiTextHAlign::Left => Justify::Left,
+                //     UiTextHAlign::Right => Justify::Right,
+                // };
 
                 //calc total widht/height for hlen/vlen
                 if
@@ -164,10 +267,11 @@ pub fn update_text(
                     let text_spans=[(entity, 0 /*depth*/,
                         value.as_str(),
                         &TextFont{
-                            font: text.font.clone(), font_size, font_smoothing: FontSmoothing::AntiAliased,
+                            font: text_font.font.clone(), font_size, font_smoothing: FontSmoothing::AntiAliased,
                             line_height: LineHeight::RelativeToFont(1.2),
                         },
-                        text.color,
+                        // text.color,
+                        Color::WHITE,
                     )];
 
                     // let mut temp_text_layout_info = TextLayoutInfo::default();
@@ -176,7 +280,7 @@ pub fn update_text(
                         entity, &fonts,
                         text_spans.into_iter(),
                         text_scale_factor.into(),
-                        &TextLayout {justify: text_alignment,linebreak: LineBreak::NoWrap,},
+                        &TextLayout {linebreak: LineBreak::NoWrap,..Default::default()},
                         &mut computed_text_block,
                         &mut font_system,
                     ) {
@@ -230,10 +334,21 @@ pub fn update_text(
 
                 //
                 {
-                    let text_spans=[(entity, 0 /*depth*/, text.value.as_str(), &TextFont{
-                        font: text.font.clone(), font_size, font_smoothing: FontSmoothing::AntiAliased,
-                        line_height: LineHeight::RelativeToFont(1.2),
-                    },text.color)];
+                    // let text_spans=[(
+                    //     entity, 0 /*depth*/,
+                    //     // text.value.as_str(),
+                    //     // text_span.map(|x|x.0.as_str()).unwrap_or_default(),
+                    //     text_span.0.as_str(),
+                    //     text_font,
+                    //     // &TextFont{
+                    //     //     font: text.font.clone(),
+                    //     //     font_size,
+                    //     //     font_smoothing: FontSmoothing::AntiAliased,
+                    //     //     line_height: LineHeight::RelativeToFont(1.2),
+                    //     // },
+                    //     // text.color,
+                    //     Color::WHITE,
+                    // )];
 
 
 
@@ -263,13 +378,16 @@ pub fn update_text(
                     //         new_text_max_size.y=new_text_max_size.y.max(text_layout_info.size.y);
                     //     }
                     // };
+                    // TextPipeline::update_buffer and then TextPipeline::update_text_layout.
                     match text_pipeline.queue_text(
                         &mut text_layout_info,
                         &fonts,
-                        text_spans.into_iter(),
+                        // text_spans.into_iter(),
+                        text_reader.iter(entity),
                         text_scale_factor as f64,
                         // 1.0,
-                        &TextLayout {justify: text_alignment,linebreak: LineBreak::WordBoundary,},
+                        // &TextLayout {justify: text_alignment,linebreak: LineBreak::WordBoundary,},
+                        &text_layout,
                         TextBounds{width:bound_width,height:bound_height},
                         &mut font_atlas_sets,
                         &mut texture_atlases,
@@ -285,7 +403,8 @@ pub fn update_text(
                             panic!("Fatal error when processing font: {}.", e);
                         },
                         Err(e @ TextError::NoSuchFont) => {
-                            panic!("Fatal error when processing font: {}.", e);
+                            // panic!("Fatal error when processing font: {}.", e);
+                            println!("Fatal error when processing font: {}.", e);
                         },
                         Err(e @ TextError::FailedToAddGlyph(_)) => {
                             panic!("Fatal error when processing text: {}.", e);
@@ -296,6 +415,8 @@ pub fn update_text(
                             new_text_max_size.y=new_text_max_size.y.max(text_layout_info.size.y);
                         }
                     };
+
+                    //
 
                     //
                     // let x=text_pipeline.update_text_layout();

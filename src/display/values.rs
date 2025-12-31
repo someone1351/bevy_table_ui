@@ -6,13 +6,13 @@ use bevy::reflect::Reflect;
 // impl std::fmt::Display for UiTextAlignParseError { fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result { write!(f,"{self:?}") } }
 // impl std::error::Error for UiTextAlignParseError { fn description(&self) -> &str { "" } }
 
-#[derive(Reflect,Debug, Default, Clone,Copy,PartialEq,Eq)]
-pub enum UiTextHAlign {
-    #[default]
-    Center,
-    Left,
-    Right,
-}
+// #[derive(Reflect,Debug, Default, Clone,Copy,PartialEq,Eq)]
+// pub enum UiTextHAlign {
+//     #[default]
+//     Center,
+//     Left,
+//     Right,
+// }
 
 #[derive(Reflect,Debug, Default, Clone,Copy,PartialEq,Eq)]
 pub enum UiTextVAlign {
@@ -22,15 +22,15 @@ pub enum UiTextVAlign {
     Bottom,
 }
 
-impl UiTextHAlign {
-    pub fn as_str(&self) -> &str {
-        match self {
-            Self::Center => "center",
-            Self::Left => "left",
-            Self::Right => "right",
-        }
-    }
-}
+// impl UiTextHAlign {
+//     pub fn as_str(&self) -> &str {
+//         match self {
+//             Self::Center => "center",
+//             Self::Left => "left",
+//             Self::Right => "right",
+//         }
+//     }
+// }
 
 impl UiTextVAlign {
     pub fn as_str(&self) -> &str {
@@ -41,28 +41,28 @@ impl UiTextVAlign {
         }
     }
 }
-impl ToString for UiTextHAlign {
-    fn to_string(&self) -> String {
-        self.as_str().to_string()
-    }
-}
+// impl ToString for UiTextHAlign {
+//     fn to_string(&self) -> String {
+//         self.as_str().to_string()
+//     }
+// }
 impl ToString for UiTextVAlign {
     fn to_string(&self) -> String {
         self.as_str().to_string()
     }
 }
-impl std::str::FromStr for UiTextHAlign {
-    type Err = ();
+// impl std::str::FromStr for UiTextHAlign {
+//     type Err = ();
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "left" => Ok(UiTextHAlign::Left),
-            "right" => Ok(UiTextHAlign::Right),
-            "center"|"" => Ok(UiTextHAlign::Center),
-            _ => Err(())
-        }
-    }
-}
+//     fn from_str(s: &str) -> Result<Self, Self::Err> {
+//         match s {
+//             "left" => Ok(UiTextHAlign::Left),
+//             "right" => Ok(UiTextHAlign::Right),
+//             "center"|"" => Ok(UiTextHAlign::Center),
+//             _ => Err(())
+//         }
+//     }
+// }
 
 impl std::str::FromStr for UiTextVAlign {
     type Err = ();

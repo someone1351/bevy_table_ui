@@ -4,7 +4,7 @@ version = "0.1.1"
 edition = "2021"
 
 [dependencies]
-bevy = { version = "0.17.2", default-features = false, features = [
+bevy = { version = "0.17", default-features = false, features = [
     "bevy_render","bevy_asset","bevy_color","bevy_image","bevy_text","trace",
     #"bevy_window",
     #"serialize","x11", "bevy_render", "bevy_asset","bevy_color","multi_threaded"

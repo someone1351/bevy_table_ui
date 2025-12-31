@@ -67,10 +67,15 @@ impl Default for UiImage {
 #[require(UiLayoutComputed)]
 pub struct UiTextComputed{
     pub max_size: Vec2, //what is this for?
+
+    //TextBounds{ width: todo!(), height: todo!() },
     pub bounds: Vec2, //box size that text sits in including empty space, unlike text_layout.logical_size which is only for text itself
+
+    //TextLayoutInfo{ scale_factor: todo!(), glyphs: todo!(), section_rects: todo!(), size: todo!() },
     pub scaling:f32,
 
 
+    //prob don't need
     //from ui_size, to check if they have changed
     pub width_used:UiVal,
     pub height_used:UiVal,
@@ -82,23 +87,94 @@ pub struct UiTextComputed{
 //     pub min_len : usize,
 // }
 
+// #[derive(Component,Reflect,Debug, Default, Clone,Copy,PartialEq,Eq)]
+// pub enum UiTextVAlign2 {
+//     #[default]
+//     Center,
+//     Top,
+//     Bottom,
+// }
+
+// #[derive(Component, Debug,  Clone,  )]
+// #[require(UiLayoutComputed,UiInnerSize,UiTextComputed,TextLayoutInfo,ComputedTextBlock)]
+// pub struct UiText(String);
+
+// #[derive(Component, Debug,  Clone,  )]
+// #[require(UiLayoutComputed,UiInnerSize,UiTextComputed,TextLayoutInfo,ComputedTextBlock)]
+// pub struct UiTextPre(String);
+
+// #[derive(Component, Debug,  Clone,  )]
+// pub struct UiTextVAlign2(UiTextVAlign);
+
+#[derive(Component, Clone, Debug, Default, bevy::prelude::Deref, bevy::prelude::DerefMut, Reflect)]
+#[reflect(Component,  Debug, Clone)]
+
+#[require(UiLayoutComputed,UiInnerSize,UiTextComputed,TextLayoutInfo,ComputedTextBlock)]
+pub struct MyText2d(pub String);
+
+pub type TextMyReader<'w, 's> = bevy::text::TextReader<'w, 's, MyText2d>;
+pub type TextMyWriter<'w, 's> = bevy::text::TextWriter<'w, 's, MyText2d>;
+
+impl MyText2d {
+    /// Makes a new 2d text component.
+    pub fn new(text: impl Into<String>) -> Self {
+        Self(text.into())
+    }
+}
+
+impl bevy::text::TextRoot for MyText2d {}
+
+impl bevy::text::TextSpanAccess for MyText2d {
+    fn read_span(&self) -> &str {
+        self.as_str()
+    }
+    fn write_span(&mut self) -> &mut String {
+        &mut *self
+    }
+}
+
+impl From<&str> for MyText2d {
+    fn from(value: &str) -> Self {
+        Self(String::from(value))
+    }
+}
+
+impl From<String> for MyText2d {
+    fn from(value: String) -> Self {
+        Self(value)
+    }
+}
+
 #[derive(Component, Debug,  Clone,  )]
 #[require(UiLayoutComputed,UiInnerSize,UiTextComputed,TextLayoutInfo,ComputedTextBlock)]
 pub struct UiText {
+    // text:String,
+    // pre:String,
     // pub sections: Vec<UiTextSection>,
     // pub section : TextSection,
 
-    pub value: String,
-    pub font: Handle<Font>,
-    pub font_size: f32,
-    pub color: Color,
+    //TextFont
+    // pub font: Handle<Font>,
+    // pub font_size: f32,
 
-    pub hlen : u32,
-    pub vlen : u32,
+    //TextLayout
+    // pub halign : UiTextHAlign,
+
+    //TextColor
+    // pub color: Color,
+
+    //TextSpan
+    // pub value: String,
+
+
+    pub hlen : u32, //calcs boundary
+    pub vlen : u32, //calcs boundary
+    pub valign : UiTextVAlign, //only used in display code
+
+    //
+
 
     // pub alignment: TextAlignment,
-    pub halign : UiTextHAlign,
-    pub valign : UiTextVAlign,
 
     pub update : bool,
 }
@@ -116,16 +192,16 @@ impl Default for UiText {
 
         Self {
             // sections : vec![Default::default()],
-            value:String::new(),
+            // value:String::new(),
 
-            font: Default::default(),
-            font_size: 12.0,
-            color: Color::WHITE,
+            // font: Default::default(),
+            // font_size: 12.0,
+            // color: Color::WHITE,
 
             hlen : 0,
             vlen : 0,
 
-            halign : Default::default(),
+            // halign : Default::default(),
             valign : Default::default(),
 
             update : true,

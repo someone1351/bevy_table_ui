@@ -3,6 +3,8 @@ use bevy::app::PostUpdate;
 use bevy::ecs::prelude::*;
 // use bevy::render;
 
+use crate::MyText2d;
+
 use super::super::layout;
 use super::render::render_setup;
 // use super::TestRenderPlugin;
@@ -76,6 +78,8 @@ impl bevy::app::Plugin for UiDisplayPlugin {
             .add_systems(PostUpdate,
                 (
                     systems::update_image,
+                    bevy::text::detect_text_needs_rerender::<MyText2d>,
+                    systems::update_text_bounds, //need to run before text_bounds is checked for change
                     systems::update_text,
                 ).chain().after(layout::systems::ui_init_computeds)
                 .before(

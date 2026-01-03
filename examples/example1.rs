@@ -3,7 +3,7 @@
 // #![allow(unused_variables)]
 // #![allow(unreachable_code)]
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 // use std::sync::Arc;
 
 use bevy::app::*;
@@ -85,7 +85,7 @@ fn main() {
         ).chain())
         .add_systems(Update, (
             update_input,
-            show_fps.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(100))),
+            show_fps, //.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(100))),
         ))
         ;
 
@@ -107,12 +107,12 @@ pub fn setup_ui(
 
     let root_entity= commands.spawn((
         UiRoot::default(),
-        UiGap{hgap:UiVal::Px(20.0),vgap:UiVal::None},
+        // UiGap{hgap:UiVal::Px(20.0),vgap:UiVal::None},
     )).id();
 
 
-    // let entity=commands.entity(root_entity).with_child(()).id();
-    // create_ui_box(&mut commands, &mut rng, font.clone(),entity);
+    let entity=commands.entity(root_entity).with_child(()).id();
+    create_ui_box(&mut commands, &mut rng, font.clone(),entity);
 
     // commands.entity(root_entity).with_child((
     //     TextFont{ font: font.clone(), font_size: 15.0, ..Default::default() },
@@ -252,11 +252,11 @@ fn show_fps(
         if *b==0 {
             text.0="aba".into();
             println!("done0");
-        } else if *b==1 {
-            text.0="aca".into();
-            println!("done1");
-
         }
+        // else if *b==1 {
+        //     text.0="aca".into();
+        //     println!("done1");
+        // }
 
     }
 
@@ -265,7 +265,7 @@ fn show_fps(
     }
 
     if let Ok(root_entity)=marker_query2.single_mut() {
-        let mut handles=HashSet::new();
+        let mut handles=BTreeSet::new();
         for text_layout_info in uinode_query.iter() {
 
             for text_glyph in text_layout_info.glyphs.iter() {

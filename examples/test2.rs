@@ -1,9 +1,15 @@
 // mod my_text;
 
+use std::collections::BTreeSet;
+
 use bevy::{platform::collections::HashSet, prelude::*, text::TextLayoutInfo};
 
 // use my_text::*;
 use bevy_table_ui::{self as table_ui, CameraUi, MyText, UiAlign, UiColor, UiImage, UiRoot, UiSize, UiText};
+
+mod common;
+mod affect;
+use common::*;
 
 fn main() {
     App::new()
@@ -39,15 +45,21 @@ fn setup(
     //init text
     commands.spawn((
         UiRoot::default(),
+        // TextMarker,
+        // MyText::new("aaa"),
+        // UiText::default(),
+        // TextFont {font: asset_server.load("fonts/FiraMono-Medium.ttf"),font_size: 42.0, ..Default::default()},
+        // TextColor(Color::linear_rgb(1.0, 0.2, 0.2)),
+        // TextLayout{ justify: Justify::Center, ..Default::default() },
+        // UiSize::scale(0.5, 0.5),
+        UiAlign::top_left(),
+        UiColor::default().back(Color::linear_rgb(0.0, 0.0, 0.5))
+    )).with_child((
         TextMarker,
         MyText::new("aaa"),
         UiText::default(),
         TextFont {font: asset_server.load("fonts/FiraMono-Medium.ttf"),font_size: 42.0, ..Default::default()},
         TextColor(Color::linear_rgb(1.0, 0.2, 0.2)),
-        // TextLayout{ justify: Justify::Center, ..Default::default() },
-        // UiSize::scale(0.5, 0.5),
-        UiAlign::top_left(),
-        UiColor::default().back(Color::linear_rgb(0.0, 0.0, 0.5))
     ));
 
     // commands.spawn((
@@ -60,7 +72,7 @@ fn setup(
     commands.spawn((
         DisplayAtlasMarker,
         UiRoot::default(),
-        UiColor::default().back(Color::linear_rgb(0.5, 0.9, 0.5)),
+        UiColor::default().back(Color::linear_rgb(0.1, 0.5, 0.2)),
         // UiSize::scale(1.0, 1.0),
 
     ));
@@ -68,42 +80,45 @@ fn setup(
 
 
 
-pub fn update_ui_roots(
-    windows: Query<&Window>,
-    mut root_query: Query<&mut UiRoot,>,
-) {
-
-    let window_size=windows.single()
-        .and_then(|window|Ok((window.width(),window.height())))
-        .unwrap_or_default();
-
-    for mut x in root_query.iter_mut() {
-        x.width=window_size.0;
-        x.height=window_size.1;
-    }
-}
 
 
 fn text_update_system(
-    mut text_marker_query: Query<&mut MyText, With<TextMarker>>,
-    mut text_changed:Local<usize>,
+    // mut text_marker_query: Query<&mut MyText, With<TextMarker>>,
+    mut text_query: Query<&mut MyText, >,
+    mut b:Local<usize>,
 ) {
-    if let Ok(mut text)=text_marker_query.single_mut() {
-        if *text_changed==0 {
+    for mut text in text_query.iter_mut() {
+        if *b==0 {
             text.0="aba".into();
-            *text_changed+=1;
+            println!("done0");
         }
-        // else if *text_changed==1 {
+        // else if *b==1 {
         //     text.0="aca".into();
-        //    *text_changed+=1;
+        //     println!("done1");
         // }
-        // else {
-        //     text.0="aca".to_string();
-        //     text.0.push_str("ac".repeat(*text_changed).as_str());
-        //    *text_changed+=1;
-        // }
-        // println!("text is {:?}",text.0);
+
     }
+
+    if *b<2 {
+        *b+=1;
+    }
+
+    // if let Ok(mut text)=text_marker_query.single_mut() {
+    //     if *text_changed==0 {
+    //         text.0="aba".into();
+    //         *text_changed+=1;
+    //     }
+    //     // else if *text_changed==1 {
+    //     //     text.0="aca".into();
+    //     //    *text_changed+=1;
+    //     // }
+    //     // else {
+    //     //     text.0="aca".to_string();
+    //     //     text.0.push_str("ac".repeat(*text_changed).as_str());
+    //     //    *text_changed+=1;
+    //     // }
+    //     // println!("text is {:?}",text.0);
+    // }
 }
 
 
@@ -116,7 +131,7 @@ fn atlas_display_system(
 
 ) {
     if let Ok(root_entity)=display_atlas_query.single() {
-        let mut handles=HashSet::new();
+        let mut handles=BTreeSet::new();
 
         //
         for text_layout_info in text_layout_info_query.iter() {
@@ -127,7 +142,7 @@ fn atlas_display_system(
             }
         }
 
-        println!("h {},c {}",handles.len(),display_atlas_children_query.single().map(|x|x.len()).unwrap_or_default());
+        // println!("h {},c {}",handles.len(),display_atlas_children_query.single().map(|x|x.len()).unwrap_or_default());
 
         //
         commands.entity(root_entity).despawn_children();

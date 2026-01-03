@@ -138,6 +138,35 @@ pub struct UiAlign {
     pub valign : UiVal,
 }
 
+impl UiAlign {
+    pub fn top_left() -> Self {
+        Self { halign: UiVal::Scale(0.0), valign: UiVal::Scale(0.0) }
+    }
+    pub fn top_right() -> Self {
+        Self { halign: UiVal::Scale(1.0), valign: UiVal::Scale(0.0) }
+    }
+    pub fn bottom_left() -> Self {
+        Self { halign: UiVal::Scale(0.0), valign: UiVal::Scale(1.0) }
+    }
+    pub fn bottom_right() -> Self {
+        Self { halign: UiVal::Scale(1.0), valign: UiVal::Scale(1.0) }
+    }
+    pub fn left() -> Self {
+        Self { halign: UiVal::Scale(0.0), valign: UiVal::None }
+    }
+    pub fn right() -> Self {
+        Self { halign: UiVal::Scale(1.0), valign: UiVal::None }
+    }
+    pub fn top() -> Self {
+        Self { halign: UiVal::None, valign: UiVal::Scale(0.0) }
+    }
+    pub fn bottom() -> Self {
+        Self { halign: UiVal::None, valign: UiVal::Scale(1.0) }
+    }
+    pub fn center() -> Self {
+        Self::default()
+    }
+}
 
 // #[derive(Reflect,Component, Default, Debug, Copy, Clone)]
 // pub struct UiAspect {

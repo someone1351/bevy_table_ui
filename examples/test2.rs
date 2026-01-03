@@ -3,7 +3,7 @@
 use bevy::{platform::collections::HashSet, prelude::*, text::TextLayoutInfo};
 
 // use my_text::*;
-use bevy_table_ui::{self as table_ui, CameraUi, MyText, UiColor, UiImage, UiRoot, UiSize, UiText};
+use bevy_table_ui::{self as table_ui, CameraUi, MyText, UiAlign, UiColor, UiImage, UiRoot, UiSize, UiText};
 
 fn main() {
     App::new()
@@ -23,7 +23,7 @@ fn main() {
 }
 
 #[derive(Component)]
-struct TextMarkerMarker;
+struct TextMarker;
 
 #[derive(Component)]
 struct DisplayAtlasMarker;
@@ -39,12 +39,15 @@ fn setup(
     //init text
     commands.spawn((
         UiRoot::default(),
-        TextMarkerMarker,
-        // Text::new("aaa"),
+        TextMarker,
         MyText::new("aaa"),
         UiText::default(),
         TextFont {font: asset_server.load("fonts/FiraMono-Medium.ttf"),font_size: 42.0, ..Default::default()},
         TextColor(Color::linear_rgb(1.0, 0.2, 0.2)),
+        // TextLayout{ justify: Justify::Center, ..Default::default() },
+        // UiSize::scale(0.5, 0.5),
+        UiAlign::top_left(),
+        UiColor::default().back(Color::linear_rgb(0.0, 0.0, 0.5))
     ));
 
     // commands.spawn((
@@ -58,18 +61,8 @@ fn setup(
         DisplayAtlasMarker,
         UiRoot::default(),
         UiColor::default().back(Color::linear_rgb(0.5, 0.9, 0.5)),
-        UiSize::scale(1.0, 1.0),
+        // UiSize::scale(1.0, 1.0),
 
-        // Node {
-        //     width: percent(100),
-        //     height: percent(100),
-        //     flex_direction: FlexDirection::Row, // Stack children vertically
-        //     align_items: AlignItems::Center, // Center horizontally
-        //     justify_content: JustifyContent::Center, // Center vertically
-        //     row_gap: Val::Px(12.0),
-        //     column_gap: Val::Px(12.0),
-        //     ..Default::default()
-        // },
     ));
 }
 
@@ -92,7 +85,7 @@ pub fn update_ui_roots(
 
 
 fn text_update_system(
-    mut text_marker_query: Query<&mut MyText, With<TextMarkerMarker>>,
+    mut text_marker_query: Query<&mut MyText, With<TextMarker>>,
     mut text_changed:Local<usize>,
 ) {
     if let Ok(mut text)=text_marker_query.single_mut() {

@@ -287,7 +287,7 @@ pub fn extract_uinodes2(
     )> >,
 
     text_colors: Extract<Query<&TextColor>>,
-    text_background_colors_query: Extract<Query<&TextBackgroundColor>>,
+    _text_background_colors_query: Extract<Query<&TextBackgroundColor>>,
     mut extracted_elements : ResMut<MyUiExtractedElements>,
 
     // camera_query: Extract<Query<(Entity, &Camera)>>,

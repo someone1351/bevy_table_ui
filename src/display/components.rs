@@ -19,6 +19,12 @@ pub struct UiColor {
     pub cell : Color,
 }
 
+impl UiColor {
+    pub fn back(&self,back:Color) -> Self {
+        Self { back, ..*self }
+    }
+}
+
 impl Default for UiColor {
     fn default() -> Self {
         Self { back: Color::NONE, padding: Color::NONE, border: Color::NONE, margin: Color::NONE, cell: Color::NONE }
@@ -110,21 +116,21 @@ pub struct UiTextComputed{
 #[reflect(Component,  Debug, Clone)]
 
 #[require(UiLayoutComputed,UiInnerSize,UiTextComputed,TextLayoutInfo,ComputedTextBlock)]
-pub struct MyText2d(pub String);
+pub struct MyText(pub String);
 
-pub type TextMyReader<'w, 's> = bevy::text::TextReader<'w, 's, MyText2d>;
-pub type TextMyWriter<'w, 's> = bevy::text::TextWriter<'w, 's, MyText2d>;
+pub type MyTextReader<'w, 's> = bevy::text::TextReader<'w, 's, MyText>;
+// pub type TextMyWriter<'w, 's> = bevy::text::TextWriter<'w, 's, MyText>;
 
-impl MyText2d {
+impl MyText {
     /// Makes a new 2d text component.
     pub fn new(text: impl Into<String>) -> Self {
         Self(text.into())
     }
 }
 
-impl bevy::text::TextRoot for MyText2d {}
+impl bevy::text::TextRoot for MyText {}
 
-impl bevy::text::TextSpanAccess for MyText2d {
+impl bevy::text::TextSpanAccess for MyText {
     fn read_span(&self) -> &str {
         self.as_str()
     }
@@ -133,13 +139,13 @@ impl bevy::text::TextSpanAccess for MyText2d {
     }
 }
 
-impl From<&str> for MyText2d {
+impl From<&str> for MyText {
     fn from(value: &str) -> Self {
         Self(String::from(value))
     }
 }
 
-impl From<String> for MyText2d {
+impl From<String> for MyText {
     fn from(value: String) -> Self {
         Self(value)
     }
@@ -147,6 +153,7 @@ impl From<String> for MyText2d {
 
 #[derive(Component, Debug,  Clone,  )]
 #[require(UiLayoutComputed,UiInnerSize,UiTextComputed,TextLayoutInfo,ComputedTextBlock)]
+
 pub struct UiText {
     // text:String,
     // pre:String,

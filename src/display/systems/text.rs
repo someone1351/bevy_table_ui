@@ -8,8 +8,12 @@ BUG
 * cosmic text has a bug where if you update the text by adding or modifying a char to one that hasn't been used before, then it will render as an empty spot
 ** only when you enter another new char that hasn't been used before, will it render the previously added char, but will then not render the newest char
 
+* the problem is i'm updating stuff, then immediate running queue_text which checks for component updated flag?,
+** instead need to separate them into dif systems? ie things that update components, then thing that runs queue_text?
 NOTE
 * cosmic text seems to use same texture for all text
+
+
 */
 
 
@@ -112,11 +116,11 @@ pub fn update_text(
         Option<&UiSize>,
         &UiLayoutComputed,
         &mut UiInnerSize,
-        Option<&mut UiText>,
-        Option<&mut TextLayoutInfo>,
-        Option<&mut UiTextComputed>,
-        Option<&mut ComputedTextBlock>,
-        &TextFont,
+        &mut UiText,
+        &mut TextLayoutInfo,
+        &mut UiTextComputed,
+        &mut ComputedTextBlock,
+        // &TextFont,
         Option<& TextLayout>,
         // Option<& TextSpan>,
         // Ref<TextSpan>,
@@ -129,24 +133,35 @@ pub fn update_text(
     mut swash_cache: ResMut<SwashCache>,
 
 
-    mut text_reader: TextMyReader,
+    mut text_reader: MyTextReader,
 
-    mut tests:Local<HashMap<Entity,bool>>,
+    // mut tests:Local<HashMap<Entity,bool>>,
 ) {
+
+    // for (x,y) in texture_atlases.iter() {
+    //     for t in y.textures {
+
+    //     }
+
+    // }
+    // for x in font_atlas_sets. {
+
+    // }
 
     for (entity,
         layout_size,
         &layout_computed,
         mut inner_size,
         text,
-        text_layout_info,
-        text_computed,
-        computed_text_block,
-        text_font,
+        mut text_layout_info,
+        mut text_computed,
+        mut computed_text_block,
+        // text_font,
         text_layout,
         // text_span,
     ) in ui_query.iter_mut()
     {
+        // println!("hmm {}",layout_computed.enabled);
         let layout_size=layout_size.cloned().unwrap_or_default();
         if !layout_computed.enabled {
             // println!("{entity:?} {computed:?}");
@@ -161,9 +176,9 @@ pub fn update_text(
         //     // continue;
         // }
 
-        let root_entity=root_query.get(layout_computed.root_entity).unwrap();
-        let scale_factor=root_entity.scaling.max(0.0);
-        let text_scale_factor=scale_factor*root_entity.text_scaling.max(0.0);
+        let root=root_query.get(layout_computed.root_entity).unwrap();
+        let scale_factor=root.scaling.max(0.0);
+        let text_scale_factor=scale_factor*root.text_scaling.max(0.0);
 
         inner_size.width = 0.0;
         inner_size.height = 0.0;
@@ -174,17 +189,29 @@ pub fn update_text(
 
 
         //text here!
-        if let (
-            Some(mut text),
-            Some(mut text_computed),
-            Some(mut text_layout_info),
-            Some(mut computed_text_block))
-            = (text,text_computed,text_layout_info,computed_text_block )
+        // if let (
+        //     Some(mut text),
+        //     Some(mut text_computed),
+        //     Some(mut text_layout_info),
+        //     Some(mut computed_text_block))
+        //     = (text,text_computed,text_layout_info,computed_text_block )
         {
             // let mut fonts_loaded=true;
-            let handle=&text_font.font;
+            // let handle=&text_font.font;
 
-            let fonts_loaded=asset_server.get_load_state(handle).map(|x|x.is_loaded()).unwrap_or_default();
+            // let fonts_loaded=asset_server.get_load_state(handle).map(|x|x.is_loaded()).unwrap_or_default();
+
+
+            //
+            if text_layout_info.scale_factor!=text_scale_factor {
+
+            }
+
+            //text_bounds modified (only need w)
+            //font size modified ??
+            //TextLayout aka align/break modified
+
+            //
 
             // if asset_server.get_load_state(handle).map(|x|x.is_loaded()).unwrap_or_default() { //let Some(bevy::asset::LoadState::Loaded) =
             //     true
@@ -194,17 +221,17 @@ pub fn update_text(
             //     false
             // };
 
-            let font_size=text_font.font_size;//*scale_factor*10.0;
+            // let font_size=text_font.font_size;//*scale_factor*10.0;
 
             //need to check if layout_computed.size has changed if using it for text wrap?
             //  eg what if you change the size from 0 to -50
             //    can store ui_size's width/height in text_computed
             //  eg what about if image of dif size is used, and changes inner size (with ui_size being <0)?
-            let tex_updated= text.update || text_computed.scaling!=text_scale_factor
-                || text_computed.width_used!=layout_size.width
-                || text_computed.height_used!=layout_size.height
-                // ||text_computed.bounds!=
-                ;
+            // let tex_updated= text.update || text_computed.scaling!=text_scale_factor
+            //     || text_computed.width_used!=layout_size.width
+            //     || text_computed.height_used!=layout_size.height
+            //     // ||text_computed.bounds!=
+            //     ;
 
             //update
             text_computed.width_used=layout_size.width;
@@ -213,29 +240,30 @@ pub fn update_text(
             // let tex_updated=true;
             //
 
-            if computed_text_block.needs_rerender() && fonts_loaded {
+            // if computed_text_block.needs_rerender() && fonts_loaded {
 
-            }
-            if computed_text_block.needs_rerender() {
-                println!("ree");
-            }
-            let was_test=tests.get(&entity).cloned().unwrap_or_default();
+            // }
+            // if computed_text_block.needs_rerender() {
+            //     println!("ree");
+            // }
+            // let was_test=tests.get(&entity).cloned().unwrap_or_default();
 
             if //tex_updated &&
-            // (computed_text_block.needs_rerender()
-            // //||text_span.is_changed()
-            // ||was_test
-            // ) &&
-                fonts_loaded
-
+            // // (
+            // computed_text_block.needs_rerender() &&
+            // // //||text_span.is_changed()
+            // // ||was_test
+            // // ) &&
+                // fonts_loaded //|| true
+                true
             {
                 // println!("ree2");
 
-                if was_test {
-                    tests.remove(&entity);
-                } else {
-                    tests.insert(entity,true);
-                }
+                // if was_test {
+                //     tests.remove(&entity);
+                // } else {
+                //     tests.insert(entity,true);
+                // }
                 let text_layout=text_layout.cloned().unwrap_or_default();
 
                 let mut bound_width=(layout_computed.size.x>=0.0).then_some(layout_computed.size.x);
@@ -250,87 +278,87 @@ pub fn update_text(
                 // };
 
                 //calc total widht/height for hlen/vlen
-                if
-                    // false
-                    text.hlen!=0 || text.vlen!=0
-                {
-                    let mut value = if text.hlen!=0 {
-                        " ".repeat(text.hlen as usize)
-                    } else {
-                        " ".to_string()
-                    };
+                // if
+                //     // false
+                //     text.hlen!=0 || text.vlen!=0
+                // {
+                //     let mut value = if text.hlen!=0 {
+                //         " ".repeat(text.hlen as usize)
+                //     } else {
+                //         " ".to_string()
+                //     };
 
-                    if text.vlen>1 {
-                        value.push_str("\n ".repeat((text.vlen-1) as usize).as_str());
-                    }
+                //     if text.vlen>1 {
+                //         value.push_str("\n ".repeat((text.vlen-1) as usize).as_str());
+                //     }
 
-                    let text_spans=[(entity, 0 /*depth*/,
-                        value.as_str(),
-                        &TextFont{
-                            font: text_font.font.clone(), font_size, font_smoothing: FontSmoothing::AntiAliased,
-                            line_height: LineHeight::RelativeToFont(1.2),
-                        },
-                        // text.color,
-                        Color::WHITE,
-                    )];
+                //     let text_spans=[(entity, 0 /*depth*/,
+                //         value.as_str(),
+                //         &TextFont{
+                //             font: text_font.font.clone(), font_size, font_smoothing: FontSmoothing::AntiAliased,
+                //             line_height: LineHeight::RelativeToFont(1.2),
+                //         },
+                //         // text.color,
+                //         Color::WHITE,
+                //     )];
 
-                    // let mut temp_text_layout_info = TextLayoutInfo::default();
+                //     // let mut temp_text_layout_info = TextLayoutInfo::default();
 
-                    if let Ok(mut measure)=text_pipeline.create_text_measure(
-                        entity, &fonts,
-                        text_spans.into_iter(),
-                        text_scale_factor.into(),
-                        &TextLayout {linebreak: LineBreak::NoWrap,..Default::default()},
-                        &mut computed_text_block,
-                        &mut font_system,
-                    ) {
+                //     if let Ok(mut measure)=text_pipeline.create_text_measure(
+                //         entity, &fonts,
+                //         text_spans.into_iter(),
+                //         text_scale_factor.into(),
+                //         &TextLayout {linebreak: LineBreak::NoWrap,..Default::default()},
+                //         &mut computed_text_block,
+                //         &mut font_system,
+                //     ) {
 
-                        let size=measure.compute_size(
-                            TextBounds{width:None,height:None},
-                            &mut computed_text_block,
-                            &mut font_system);
+                //         let size=measure.compute_size(
+                //             TextBounds{width:None,height:None},
+                //             &mut computed_text_block,
+                //             &mut font_system);
 
 
-                        //println!("hmm {size:?}");
+                //         //println!("hmm {size:?}");
 
-                        if text.hlen!=0 {
-                            bound_width=Some(size.x);
-                            new_text_max_size.x=size.x;
-                        }
+                //         if text.hlen!=0 {
+                //             bound_width=Some(size.x);
+                //             new_text_max_size.x=size.x;
+                //         }
 
-                        if text.vlen!=0 {
-                            // bound_height=Some(size.y);
-                            new_text_max_size.y=size.y;
-                        }
-                    }
+                //         if text.vlen!=0 {
+                //             // bound_height=Some(size.y);
+                //             new_text_max_size.y=size.y;
+                //         }
+                //     }
 
-                    // if let Ok(()) = text_pipeline.queue_text(
-                    //     &mut temp_text_layout_info,
-                    //     &fonts,
-                    //     text_spans.into_iter(),
-                    //     text_scale_factor as f64,
-                    //     // 1.0,
-                    //     &TextLayout {justify: text_alignment,linebreak: LineBreak::NoWrap,},
-                    //     TextBounds{width:None,height:None},
-                    //     &mut font_atlas_sets,
-                    //     &mut texture_atlases,
-                    //     &mut *textures,
-                    //     &mut computed_text_block,
-                    //     &mut font_system,
-                    //     &mut swash_cache,
-                    //     // YAxisOrientation::TopToBottom,
-                    // ) {
-                    //     if text.hlen!=0 {
-                    //         bound_width=Some(temp_text_layout_info.size.x);
-                    //         new_text_max_size.x=temp_text_layout_info.size.x;
-                    //     }
+                //     // if let Ok(()) = text_pipeline.queue_text(
+                //     //     &mut temp_text_layout_info,
+                //     //     &fonts,
+                //     //     text_spans.into_iter(),
+                //     //     text_scale_factor as f64,
+                //     //     // 1.0,
+                //     //     &TextLayout {justify: text_alignment,linebreak: LineBreak::NoWrap,},
+                //     //     TextBounds{width:None,height:None},
+                //     //     &mut font_atlas_sets,
+                //     //     &mut texture_atlases,
+                //     //     &mut *textures,
+                //     //     &mut computed_text_block,
+                //     //     &mut font_system,
+                //     //     &mut swash_cache,
+                //     //     // YAxisOrientation::TopToBottom,
+                //     // ) {
+                //     //     if text.hlen!=0 {
+                //     //         bound_width=Some(temp_text_layout_info.size.x);
+                //     //         new_text_max_size.x=temp_text_layout_info.size.x;
+                //     //     }
 
-                    //     if text.vlen!=0 {
-                    //         // bound_height=Some(temp_text_layout_info.size.y);
-                    //         new_text_max_size.y=temp_text_layout_info.size.y;
-                    //     }
-                    // }
-                }
+                //     //     if text.vlen!=0 {
+                //     //         // bound_height=Some(temp_text_layout_info.size.y);
+                //     //         new_text_max_size.y=temp_text_layout_info.size.y;
+                //     //     }
+                //     // }
+                // }
 
                 //
                 {
@@ -384,7 +412,7 @@ pub fn update_text(
                         &fonts,
                         // text_spans.into_iter(),
                         text_reader.iter(entity),
-                        text_scale_factor as f64,
+                        text_scale_factor.into(),
                         // 1.0,
                         // &TextLayout {justify: text_alignment,linebreak: LineBreak::WordBoundary,},
                         &text_layout,
@@ -430,7 +458,7 @@ pub fn update_text(
                     text_computed.bounds=layout_computed.size.max(new_text_max_size); //layout_computed.size before it's possibly recalculated?
 
                     //
-                    text.update=false;
+                    // text.update=false;
                     text_computed.scaling=text_scale_factor;
 
                     // println!("text is {:?}",text.value);

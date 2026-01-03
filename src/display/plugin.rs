@@ -3,7 +3,7 @@ use bevy::app::PostUpdate;
 use bevy::ecs::prelude::*;
 // use bevy::render;
 
-use crate::MyText2d;
+use crate::MyText;
 
 use super::super::layout;
 use super::render::render_setup;
@@ -75,17 +75,23 @@ impl bevy::app::Plugin for UiDisplayPlugin {
             // )
             //TestRenderPlugin,
             .add_plugins((CorePipelinePlugin, ))
-            .add_systems(PostUpdate,
+            .add_systems(
+                // bevy::app::Update,
+                PostUpdate,
                 (
+                    bevy::text::detect_text_needs_rerender::<MyText>,
                     systems::update_image,
-                    bevy::text::detect_text_needs_rerender::<MyText2d>,
-                    systems::update_text_bounds, //need to run before text_bounds is checked for change
+                    // systems::update_text_bounds, //need to run before text_bounds is checked for change
                     systems::update_text,
-                ).chain().after(layout::systems::ui_init_computeds)
-                .before(
-                    // layout::plugin::UiLayoutSystem
-                    layout::systems::ui_calc_rows_cols
-                )
+                ).chain()
+                    .after(layout::systems::ui_init_computeds)
+                    .before(layout::systems::ui_calc_rows_cols) // layout::plugin::UiLayoutSystem
+                    .after(bevy::text::remove_dropped_font_atlas_sets)
+                    //
+                    // .after(bevy::camera::CameraUpdateSystems)
+                    // .after(bevy::app::AnimationSystems)
+                    // // calculate_bounds_text2d.in_set(VisibilitySystems::CalculateBounds),
+                    //
                 ,
             )
         ;

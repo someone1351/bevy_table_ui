@@ -154,6 +154,15 @@ pub struct UiSize {
     // pub inner_height : f32, //px
 }
 
+impl UiSize {
+    pub fn scale(w:f32,h:f32) -> UiSize{
+        UiSize { width: UiVal::Scale(w), height: UiVal::Scale(h) }
+    }
+    pub fn px(w:f32,h:f32) -> UiSize{
+        UiSize { width: UiVal::Px(w), height: UiVal::Px(h) }
+    }
+}
+
 #[derive(Reflect,Component, Default, Debug, Copy, Clone)]
 #[require(UiLayoutComputed)]
 pub struct UiInnerSize { //used for external things like text and images
@@ -161,6 +170,8 @@ pub struct UiInnerSize { //used for external things like text and images
     pub height : f32,
 
 }
+
+//should UiRoot be empty and camera provide its fields?
 
 #[derive(Reflect,Component, Debug, Copy, Clone)]
 #[require(UiLayoutComputed)]

@@ -44,7 +44,9 @@ impl bevy::app::Plugin for UiLayoutPlugin {
             .register_type::<UiInnerSize>()
             .register_type::<UiLayoutComputed>()
 
-            .add_systems(PostUpdate,
+            .add_systems(
+                // bevy::app::Update,
+                PostUpdate,
                 (
                     ui_init_computeds,
                     ui_calc_rows_cols,
@@ -53,8 +55,12 @@ impl bevy::app::Plugin for UiLayoutPlugin {
                     ui_calc_computed_pos,
                     ui_calc_computed_clamp,
                 ).chain().in_set(UiLayoutSystem)
-            )
-            ;
+                    // .after(bevy::text::remove_dropped_font_atlas_sets)
+                    // .after(bevy::app::AnimationSystems)
+                    // .after(bevy::camera::CameraUpdateSystems)
+                    // .after(bevy::asset::AssetEventSystems)
+                )
+                ;
 
     }
 }

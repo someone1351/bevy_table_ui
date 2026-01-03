@@ -88,7 +88,7 @@ fn text_update_system(
     mut b:Local<usize>,
 ) {
     for mut text in text_query.iter_mut() {
-        if *b==0 {
+        if *b==90 {
             text.0="aba".into();
             println!("done0");
         }
@@ -99,7 +99,7 @@ fn text_update_system(
 
     }
 
-    if *b<2 {
+    if *b<100 {
         *b+=1;
     }
 

@@ -107,7 +107,7 @@ pub fn setup_ui(
 
     let root_entity= commands.spawn((
         UiRoot::default(),
-        // UiGap{hgap:UiVal::Px(20.0),vgap:UiVal::None},
+        UiGap{hgap:UiVal::Px(20.0),vgap:UiVal::None},
     )).id();
 
 
@@ -285,7 +285,9 @@ fn show_fps(
 
         for handle in handles {
             commands.entity(root_entity).with_child((
-                UiImage{handle, ..Default::default()},
+                UiImage{handle,width_scale:0.75,height_scale:0.75, ..Default::default()},
+                UiColor::default().back(Color::linear_rgb(0.4, 0.4, 0.4,),),
+
             ));
         }
     }

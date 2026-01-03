@@ -393,8 +393,8 @@ pub fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<
         UixAffect(vec![
             back_col,
             border_col,
-            text,
-            // width,
+            // text,
+            // // width,
         ]),
         UiSize{ width:UiVal::Px(-20.0), height:UiVal::Px(-30.0), },
         UiFocusable{
@@ -429,6 +429,7 @@ pub fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<
         // TextLayoutInfo{ scale_factor: todo!(), glyphs: todo!(), section_rects: todo!(), size: todo!() },
         // TextBounds{ width: todo!(), height: todo!() },
         // MyText2d(format!("{entity}")),
+        MyText::new("aaa"),
         UiText{
             // value:format!("{entity}"),
             // font_size: 15.0,

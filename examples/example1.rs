@@ -14,6 +14,7 @@ use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
+use bevy::ecs::message::MessageReader;
 use bevy::ecs::query::With;
 use bevy::ecs::system::{Commands, Local, Query, Res, ResMut};
 use bevy::image::Image;
@@ -82,17 +83,54 @@ fn main() {
             update_ui_input.before(UiInteractSystem),
             // update_ui,
             // on_affects,
-        ).chain())
-        .add_systems(Update, (
             update_input,
             show_fps, //.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(100))),
-        ))
+            on_affects2,
+        ).chain())
+        // .add_systems(Update, (
+        // ))
         ;
 
     app.run();
 }
 
 
+
+pub fn on_affects2<'a>(
+    mut commands: Commands,
+    mut interact_event_reader: MessageReader<UiInteractEvent>,
+    mut text_query: Query< &mut MyText,>,
+) {
+
+    //
+    for ev in interact_event_reader.read() {
+
+        match ev.event_type {
+            UiInteractMessageType::CursorPressBegin {  .. }
+            |UiInteractMessageType::FocusPressBegin { .. } => {
+                text_query.get_mut(ev.entity).unwrap().0="aca".into();
+
+            }
+            UiInteractMessageType::CursorPressEnd {  ..}
+            |UiInteractMessageType::FocusPressEnd { .. } => {
+
+            }
+
+            UiInteractMessageType::FocusBegin { .. } => {
+                text_query.get_mut(ev.entity).unwrap().0="aba".into();
+
+            }
+            UiInteractMessageType::FocusEnd { .. } => {
+                text_query.get_mut(ev.entity).unwrap().0="aaa".into();
+            }
+            _ => {}
+        }
+            // commands.queue(move|world:&mut World|func(entity,world,));
+
+    }
+
+
+}
 
 
 
@@ -123,6 +161,7 @@ pub fn setup_ui(
     // ));
 
     commands.entity(root_entity).with_child((
+        FpsText,
         UiRoot::default(),
         // TextMarker,
         // Text::new("aaa"),
@@ -237,7 +276,9 @@ fn setup_fps(
 fn show_fps(
     diagnostics: Res<DiagnosticsStore>,
     // mut marker_query: Query< (Entity,&mut MyText),With<FpsText>>,
-    mut text_query: Query< &mut MyText,>,
+    mut text_query: Query< &mut MyText,
+        // With<FpsText>
+    >,
     mut marker_query2: Query< Entity,With<TextAtlasMarker>>,
 
     mut commands: Commands,
@@ -249,7 +290,7 @@ fn show_fps(
 
 ) {
     for mut text in text_query.iter_mut() {
-        if *b==0 {
+        if *b==8 {
             text.0="aba".into();
             println!("done0");
         }
@@ -260,7 +301,7 @@ fn show_fps(
 
     }
 
-    if *b<2 {
+    if *b<10 {
         *b+=1;
     }
 

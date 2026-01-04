@@ -4,13 +4,14 @@ use std::collections::HashMap;
 
 
 
-use bevy::asset::{AssetEvent, AssetId, Assets, };
+use bevy::asset::{AssetEvent, Assets, };
 use bevy::camera::visibility::RenderLayers;
 use bevy::color::Color;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::query::With;
 use bevy::image::{Image, TextureAtlasLayout};
 use bevy::math::{FloatOrd, Vec2};
+// use bevy::platform::collections::HashSet;
 // use bevy::platform::collections::HashSet;
 use bevy::prelude::{ MessageReader, Msaa};
 use bevy::render::render_asset::RenderAssets;
@@ -33,7 +34,7 @@ use super::components::*;
 use super::resources::*;
 
 use super::super::render_core::core_my::TransparentMy;
-use super::super::TestRenderComponent;
+// use super::super::TestRenderComponent;
 
 use super::super::{components::{UiColor,UiText,UiTextComputed,UiImage},values::UiTextVAlign};
 use super::super::super::layout::{components::*,values::UiRect};
@@ -42,49 +43,54 @@ use super::super::super::layout::{components::*,values::UiRect};
 fn create_image_bind_group(
     render_device: &RenderDevice,
     mesh2d_pipeline: &MyUiPipeline,
-    image_bind_groups: &mut MyUiImageBindGroups,
-    handle:Option<AssetId<Image>>,
+    // image_bind_groups: &mut MyUiImageBindGroups,
+    // handle:Option<AssetId<Image>>,
     gpu_image:&GpuImage,
-) {
+) -> BindGroup {
 
-    let bind_group=render_device.create_bind_group(
+    // let bind_group=
+    render_device.create_bind_group(
         "my_ui_material_bind_group",
         &mesh2d_pipeline.image_layout, &[
             BindGroupEntry {binding: 0, resource: BindingResource::TextureView(&gpu_image.texture_view),},
             BindGroupEntry {binding: 1, resource: BindingResource::Sampler(&gpu_image.sampler),},
         ]
-    );
+    )
+    // ;
 
-    let image_id=handle.clone();//.map(|x|x.id());
-    image_bind_groups.values.insert(image_id, bind_group);
+    // let image_id=handle.clone();//.map(|x|x.id());
+    // image_bind_groups.values.insert(image_id, bind_group);
+
+    // bind_group
 }
-fn create_image_bind_group2(
-    render_device: &RenderDevice,
-    mesh2d_pipeline: &MyUiPipeline,
-    gpu_images: &RenderAssets<GpuImage>,
-    image_bind_groups: &mut MyUiImageBindGroups,
-    handle:Option<AssetId<Image>>,
-) {
+// fn create_image_bind_group2(
+//     render_device: &RenderDevice,
+//     mesh2d_pipeline: &MyUiPipeline,
+//     gpu_images: &RenderAssets<GpuImage>,
+//     // image_bind_groups: &mut MyUiImageBindGroups,
+//     // handle:Option<AssetId<Image>>,
+//     // handle:Option<AssetId<Image>>,
+// ) {
 
 
-    //
-    let image_id=handle.clone();//.map(|x|x.id());
-    // let image_id=test.handle.id();
-    //
-    if image_bind_groups.values.contains_key(&image_id) {
-        return;
-    }
+//     //
+//     // let image_id=handle.clone();//.map(|x|x.id());
+//     // // let image_id=test.handle.id();
+//     // //
+//     // if image_bind_groups.values.contains_key(&image_id) {
+//     //     return;
+//     // }
 
-    let Some(image_id)=image_id else {
-        return;
-    };
+//     // let Some(image_id)=image_id else {
+//     //     return;
+//     // };
 
-    let Some(gpu_image)=gpu_images.get(image_id) else {
-        return;
-    };
+//     let Some(gpu_image)=gpu_images.get(image_id) else {
+//         return;
+//     };
 
-    create_image_bind_group(render_device,mesh2d_pipeline,image_bind_groups,handle,gpu_image);
-}
+//     create_image_bind_group(render_device,mesh2d_pipeline,image_bind_groups,handle,gpu_image);
+// }
 
 pub fn dummy_image_setup(
     render_device: Res<RenderDevice>,
@@ -102,47 +108,59 @@ pub fn dummy_image_setup(
 
 
     let gpu_image=create_dummy_image(&render_device,&render_queue);
-    create_image_bind_group(&render_device,&mesh2d_pipeline,&mut image_bind_groups,None,&gpu_image);
+    let bind_group=create_image_bind_group(&render_device,&mesh2d_pipeline,&gpu_image);
+    image_bind_groups.values.insert(None,bind_group);
 
 }
 
 
 
 
+//for tests
+// pub fn extract_images(
+//     // mut commands: Commands,
+//     uinode_query: Extract<Query<(
+//         Entity,
+//         &TestRenderComponent,
+//     )> >,
+//     mut image_asset_events: Extract<MessageReader<AssetEvent<Image>>>,
 
-pub fn extract_images(
-    // mut commands: Commands,
-    uinode_query: Extract<Query<(
-        Entity,
-        &TestRenderComponent,
-    )> >,
-    mut image_asset_events: Extract<MessageReader<AssetEvent<Image>>>,
+//     render_device: Res<RenderDevice>,
+//     mesh2d_pipeline: Res<MyUiPipeline>,
+//     mut image_bind_groups: ResMut<MyUiImageBindGroups>,
+//     gpu_images: Res<RenderAssets<GpuImage>>,
+// ) {
 
-    render_device: Res<RenderDevice>,
-    mesh2d_pipeline: Res<MyUiPipeline>,
-    mut image_bind_groups: ResMut<MyUiImageBindGroups>,
-    gpu_images: Res<RenderAssets<GpuImage>>,
+//     for event in image_asset_events.read()
+//     {
+//         match event {
+//             AssetEvent::Removed { id } | AssetEvent::Modified { id } => {
+//                 image_bind_groups.values.remove(&Some(id.clone()));//.unwrap();
+//             }
+//             _ =>{}
+//         }
+//     }
+
+//     for (_entity, test,  ) in uinode_query.iter() {
+//         if test.handle.is_some() {
+//             let handle=test.handle.clone().map(|h|h.id());
+//             create_image_bind_group2(&render_device,&mesh2d_pipeline,&gpu_images,&mut image_bind_groups,handle);
+//         }
+//     }
+// }
+
+
+pub fn extract_sprite_events(
+    mut events: ResMut<MySpriteAssetEvents>,
+    mut image_events: Extract<MessageReader<AssetEvent<Image>>>,
 ) {
+    let MySpriteAssetEvents { ref mut images } = *events;
+    images.clear();
 
-    for event in image_asset_events.read()
-    {
-        match event {
-            AssetEvent::Removed { id } | AssetEvent::Modified { id } => {
-                image_bind_groups.values.remove(&Some(id.clone()));//.unwrap();
-            }
-            _ =>{}
-        }
-    }
-
-    for (_entity, test,  ) in uinode_query.iter() {
-        if test.handle.is_some() {
-            let handle=test.handle.clone().map(|h|h.id());
-            create_image_bind_group2(&render_device,&mesh2d_pipeline,&gpu_images,&mut image_bind_groups,handle);
-        }
+    for event in image_events.read() {
+        images.push(*event);
     }
 }
-
-
 pub fn extract_images2(
     // mut commands: Commands,
     uinode_query: Extract<Query<(
@@ -151,24 +169,60 @@ pub fn extract_images2(
         Option<&TextLayoutInfo>,
         // Option<&MyTargetCamera>,
     )> >,
-    mut image_asset_events: Extract<MessageReader<AssetEvent<Image>>>,
+    // mut image_asset_events: Extract<MessageReader<AssetEvent<Image>>>,
+    events: Res<MySpriteAssetEvents>,
 
     render_device: Res<RenderDevice>,
     mesh2d_pipeline: Res<MyUiPipeline>,
     mut image_bind_groups: ResMut<MyUiImageBindGroups>,
     gpu_images: Res<RenderAssets<GpuImage>>,
+    // mut gpu_images: ResMut<RenderAssets<GpuImage>>,
 ) {
 
-    for event in image_asset_events.read()
-    {
+    for event in &events.images {
         match event {
-            AssetEvent::Removed { id } | AssetEvent::Modified { id } => {
-                image_bind_groups.values.remove(&Some(id.clone()));//.unwrap();
+            AssetEvent::Added { .. } |
+            AssetEvent::Unused { .. } |
+            // Images don't have dependencies
+            AssetEvent::LoadedWithDependencies { .. } => {}
+            AssetEvent::Modified { id } | AssetEvent::Removed { id } => {
+                image_bind_groups.values.remove(&Some(id.clone()));
             }
-            _ =>{}
-        }
+        };
     }
 
+
+    // let mut modifieds=HashSet::new();
+    // for event in image_asset_events.read()
+    // {
+
+    //     match event {
+    //         AssetEvent::Modified { id } => {
+    //             println!("modified {id}");
+    //             image_bind_groups.values.remove(&Some(id.clone()));//.unwrap();
+    //             // gpu_images.remove(id.clone());
+    //             modifieds.insert(id);
+    //         }
+    //         AssetEvent::Removed { id }  => {
+    //             println!("removed {id}");
+    //             image_bind_groups.values.remove(&Some(id.clone()));//.unwrap();
+    //             // gpu_images.remove(id.clone());
+    //         }
+    //         AssetEvent::Added { id }|AssetEvent::Unused { id }|AssetEvent::LoadedWithDependencies { id } => {
+
+    //             modifieds.insert(id);
+    //             // image_bind_groups.values.remove(&Some(id.clone()));
+    //         }
+
+    //     }
+    // }
+
+    // image_bind_groups.values.retain(|image_id,_|{
+    //     image_id.is_some() && gpu_images.get(image_id.unwrap().clone()).is_some()
+    // });
+// image_bind_groups.values.clear();
+
+    // let mut handles=HashSet::new();
 
     for (
         layout_computed,
@@ -181,9 +235,19 @@ pub fn extract_images2(
 
         //image
         if image.is_some() {
-            let handle=image.map(|x|x.handle.clone()).map(|h|h.id());
+            // let handle=image.map(|x|x.handle.clone()).map(|h|h.id());
+            let image_id=image.unwrap().handle.id();
 
-            create_image_bind_group2(&render_device,&mesh2d_pipeline,&gpu_images,&mut image_bind_groups,handle);
+            if let Some(gpu_image)=gpu_images.get(image_id) {
+                image_bind_groups.values.entry(Some(image_id.clone())).or_insert_with(||{
+                    create_image_bind_group(&render_device,&mesh2d_pipeline,&gpu_image)
+                });
+            }
+
+            // if !handles.contains(&handle) {
+            //     create_image_bind_group2(&render_device,&mesh2d_pipeline,&gpu_images,&mut image_bind_groups,Some(handle));
+            //     handles.insert(handle);
+            // }
         }
 
         //text
@@ -191,68 +255,88 @@ pub fn extract_images2(
             // text_pipeline.get_glyphs(&entity)
          {
             for text_glyph in text_layout.glyphs.iter() {
-
-                let handle=Some(text_glyph.atlas_info.texture.clone());
                 // let handle: Option<bevy::prelude::Handle<Image>>=Some(handle);
+                let image_id=text_glyph.atlas_info.texture.clone();
 
-                create_image_bind_group2(&render_device,&mesh2d_pipeline,&gpu_images,&mut image_bind_groups,handle);
+                // if !handles.contains(&image_id) //&& modifieds.contains(&image_id)
+                // {
+                    if let Some(gpu_image)=gpu_images.get(image_id) {
+                        // // if modifieds.contains(&image_id) {
+                        // //     println!("yess {image_id}");
+                        // // }
+                        // image_bind_groups.values.insert(Some(image_id),create_image_bind_group(&render_device,&mesh2d_pipeline,&gpu_image));
+                        // // if image_bind_groups.values.contains_key(&Some(image_id)) {
+                        // //     image_bind_groups.values.remove(&Some(image_id));
+                        // // }
+                        // // // image_bind_groups.values.insert(Some(image_id),create_image_bind_group(&render_device,&mesh2d_pipeline,&gpu_image));
+                        image_bind_groups.values.entry(Some(image_id.clone())).or_insert_with(||{
+                            create_image_bind_group(&render_device,&mesh2d_pipeline,&gpu_image)
+                        });
+                        // handles.insert(image_id);
+                    }
+                // }
 
+                // if !handles.contains(&handle) {
+                //     create_image_bind_group2(&render_device,&mesh2d_pipeline,&gpu_images,&mut image_bind_groups,Some(handle));
+                //     handles.insert(handle);
+                // }
             }
         }
     }
 
 }
 
-pub fn extract_uinodes(
-    mut commands: Commands,
-    uinode_query: Extract<Query<(
-        Entity,
-        &TestRenderComponent,
-        Option<&RenderLayers>,
-    )> >,
-    mut extracted_elements : ResMut<MyUiExtractedElements>,
-    // default_ui_camera: Extract<MyDefaultUiCamera>,
-    // cameras: Extract<Query<(RenderEntity, &MyCameraView), With<CameraTest>, >>,
-    // mapping: Extract<Query<RenderEntity>>,
-) {
+//for tests
+// pub fn extract_uinodes(
+//     mut commands: Commands,
+//     uinode_query: Extract<Query<(
+//         Entity,
+//         &TestRenderComponent,
+//         Option<&RenderLayers>,
+//     )> >,
+//     mut extracted_elements : ResMut<MyUiExtractedElements>,
+//     // default_ui_camera: Extract<MyDefaultUiCamera>,
+//     // cameras: Extract<Query<(RenderEntity, &MyCameraView), With<CameraTest>, >>,
+//     // mapping: Extract<Query<RenderEntity>>,
+// ) {
 
-    extracted_elements.elements.clear();
+//     extracted_elements.elements.clear();
 
 
-    // let Some(camera_entity) = default_ui_camera.get() else {return;};
+//     // let Some(camera_entity) = default_ui_camera.get() else {return;};
 
-    // let Ok(render_camera_entity) = mapping.get(camera_entity) else { return; };
+//     // let Ok(render_camera_entity) = mapping.get(camera_entity) else { return; };
 
-    // let camera_entity=render_camera_entity;
+//     // let camera_entity=render_camera_entity;
 
-    for (entity, test, render_layers, ) in uinode_query.iter() {
-        let x= test.x;
-        let y= test.y;
-        let x2= test.x+test.w;
-        let y2= test.y+test.h;
+//     for (entity, test, render_layers, ) in uinode_query.iter() {
+//         let x= test.x;
+//         let y= test.y;
+//         let x2= test.x+test.w;
+//         let y2= test.y+test.h;
 
-        let render_layers=render_layers.cloned().unwrap_or_else(||RenderLayers::layer(0));
+//         let render_layers=render_layers.cloned().unwrap_or_else(||RenderLayers::layer(0));
 
-        extracted_elements.elements.push(MyUiExtractedElement{
-            entity:commands.spawn((TemporaryRenderEntity,)).id(), //is this needed? instead spawn entity later?
-            main_entity:entity.into(),
-            // camera_entity,
-            // x: test.x,
-            // y: test.y,
-            // x2: test.x+test.w,
-            // y2: test.y+test.h,
-            color: test.col,
-            depth: 0,
-            render_layers,
-            image: test.handle.clone().map(|h|h.id()),
-            bl: Vec2::new(x, y2),
-            br: Vec2::new(x2, y2),
-            tl: Vec2::new(x, y),
-            tr: Vec2::new(x2, y),
-            ..Default::default()
-        });
-    }
-}
+//         extracted_elements.elements.push(MyUiExtractedElement{
+//             entity:commands.spawn((TemporaryRenderEntity,)).id(), //is this needed? instead spawn entity later?
+//             main_entity:entity.into(),
+//             // camera_entity,
+//             // x: test.x,
+//             // y: test.y,
+//             // x2: test.x+test.w,
+//             // y2: test.y+test.h,
+//             color: test.col,
+//             depth: 0,
+//             render_layers,
+//             image: test.handle.clone().map(|h|h.id()),
+//             bl: Vec2::new(x, y2),
+//             br: Vec2::new(x2, y2),
+//             tl: Vec2::new(x, y),
+//             tr: Vec2::new(x2, y),
+//             ..Default::default()
+//         });
+//     }
+// }
 
 
 
@@ -295,7 +379,7 @@ pub fn extract_uinodes2(
     // mapping: Extract<Query<RenderEntity>>,
 ) {
 
-    // extracted_elements.elements.clear();
+    extracted_elements.elements.clear();
 
 
     // for (entity, test, render_layers, ) in uinode_query.iter() {
@@ -322,7 +406,7 @@ pub fn extract_uinodes2(
         image,
         text,
         text_computed,
-        text_color,
+        _text_color,
         text_layout,
         text_layout_info,
         computed_text_block,

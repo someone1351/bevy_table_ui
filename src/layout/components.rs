@@ -190,6 +190,9 @@ impl UiSize {
     pub fn px(w:f32,h:f32) -> UiSize{
         UiSize { width: UiVal::Px(w), height: UiVal::Px(h) }
     }
+    pub fn max() -> UiSize{
+        Self::scale(1.0,1.0)
+    }
 }
 
 #[derive(Reflect,Component, Default, Debug, Copy, Clone)]

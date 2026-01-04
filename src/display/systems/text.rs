@@ -471,3 +471,80 @@ pub fn update_text(
         }
     }
 }
+
+
+
+pub fn my_text_update_system2(
+    fonts: Res<Assets<Font>>,
+    mut textures: ResMut<Assets<Image>>,
+    mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
+    mut font_atlas_sets: ResMut<FontAtlasSets>,
+    mut text_pipeline: ResMut<TextPipeline>,
+
+    mut ui_query: Query<(Entity,
+        &mut TextLayoutInfo,
+        &mut ComputedTextBlock,
+        Option<& TextLayout>,
+        Option<& TextBounds>,
+
+    ),With<MyText>>,
+    mut font_system: ResMut<CosmicFontSystem>,
+    mut swash_cache: ResMut<SwashCache>,
+    mut text_reader: MyTextReader,
+) {
+
+    for (entity,
+        mut text_layout_info,
+        mut computed_text_block,
+        text_layout,
+        text_bounds,
+    ) in ui_query.iter_mut() {
+
+
+        if
+            // computed_text_block.needs_rerender() &&
+           true
+
+        {
+
+            let text_layout=text_layout.cloned().unwrap_or_default();
+            let text_bounds=text_bounds.cloned().unwrap_or_default();
+
+
+            //
+            match text_pipeline.queue_text(
+                &mut text_layout_info,
+                &fonts,
+                text_reader.iter(entity),
+                1.0,
+                &text_layout,
+                text_bounds,
+                &mut font_atlas_sets,
+                &mut texture_atlases,
+                &mut *textures,
+                &mut computed_text_block,
+                &mut font_system,
+                &mut swash_cache,
+                // YAxisOrientation::TopToBottom,
+
+            )
+            {
+                Err(e @ TextError::FailedToGetGlyphImage(_)) => {
+                    panic!("Fatal error when processing font: {}.", e);
+                },
+                Err(e @ TextError::NoSuchFont) => {
+                    // panic!("Fatal error when processing font: {}.", e);
+                    println!("Fatal error when processing font: {}.", e);
+                },
+                Err(e @ TextError::FailedToAddGlyph(_)) => {
+                    panic!("Fatal error when processing text: {}.", e);
+                },
+                Ok(()) => {
+                    // println!("t {:?}",text_layout_info.size);
+                }
+            };
+
+
+        }
+    }
+}

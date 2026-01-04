@@ -75,18 +75,39 @@ impl bevy::app::Plugin for UiDisplayPlugin {
             // )
             //TestRenderPlugin,
             .add_plugins((CorePipelinePlugin, ))
+            // .add_systems(
+            //     PostUpdate, (
+            //         bevy::text::detect_text_needs_rerender::<MyText>,
+            //         systems::my_text_update_system2,
+            //     ).chain()
+            //         .after(bevy::text::remove_dropped_font_atlas_sets)
+            // )
+            .add_systems(
+                PostUpdate,
+                (
+                    bevy::text::detect_text_needs_rerender::<MyText>,
+                    systems::my_text_update_system2
+                ).chain()
+                    .after(bevy::text::remove_dropped_font_atlas_sets)
+                    // .after(bevy::camera::CameraUpdateSystems)
+                    // .after(bevy::app::AnimationSystems)
+                    // calculate_bounds_text2d.in_set(VisibilitySystems::CalculateBounds),
+                ,
+
+            )
             .add_systems(
                 // bevy::app::Update,
                 PostUpdate,
                 (
-                    bevy::text::detect_text_needs_rerender::<MyText>,
+                    // bevy::text::detect_text_needs_rerender::<MyText>,
                     systems::update_image,
                     // systems::update_text_bounds, //need to run before text_bounds is checked for change
-                    systems::update_text,
+                    // systems::update_text,
+                    // systems::my_text_update_system2,
                 ).chain()
                     .after(layout::systems::ui_init_computeds)
                     .before(layout::systems::ui_calc_rows_cols) // layout::plugin::UiLayoutSystem
-                    .after(bevy::text::remove_dropped_font_atlas_sets)
+                    // .after(bevy::text::remove_dropped_font_atlas_sets)
                     //
                     // .after(bevy::camera::CameraUpdateSystems)
                     // .after(bevy::app::AnimationSystems)

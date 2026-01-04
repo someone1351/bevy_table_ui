@@ -60,6 +60,7 @@ fn setup(
         UiText::default(),
         TextFont {font: asset_server.load("fonts/FiraMono-Medium.ttf"),font_size: 42.0, ..Default::default()},
         TextColor(Color::linear_rgb(1.0, 0.2, 0.2)),
+        UiSize::px(100.0, 400.0),
     ));
 
     // commands.spawn((
@@ -88,7 +89,7 @@ fn text_update_system(
     mut b:Local<usize>,
 ) {
     for mut text in text_query.iter_mut() {
-        if *b==90 {
+        if *b==52 {
             text.0="aba".into();
             println!("done0");
         }

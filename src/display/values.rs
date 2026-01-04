@@ -1,4 +1,4 @@
-use bevy::reflect::Reflect;
+// use bevy::reflect::Reflect;
 
 
 // #[derive(Debug)]
@@ -14,13 +14,13 @@ use bevy::reflect::Reflect;
 //     Right,
 // }
 
-#[derive(Reflect,Debug, Default, Clone,Copy,PartialEq,Eq)]
-pub enum UiTextVAlign {
-    #[default]
-    Center,
-    Top,
-    Bottom,
-}
+// #[derive(Reflect,Debug, Default, Clone,Copy,PartialEq,Eq)]
+// pub enum UiTextVAlign {
+//     #[default]
+//     Center,
+//     Top,
+//     Bottom,
+// }
 
 // impl UiTextHAlign {
 //     pub fn as_str(&self) -> &str {
@@ -32,47 +32,47 @@ pub enum UiTextVAlign {
 //     }
 // }
 
-impl UiTextVAlign {
-    pub fn as_str(&self) -> &str {
-        match self {
-            Self::Center => "center",
-            Self::Top => "top",
-            Self::Bottom => "bottom",
-        }
-    }
-}
-// impl ToString for UiTextHAlign {
+// impl UiTextVAlign {
+//     pub fn as_str(&self) -> &str {
+//         match self {
+//             Self::Center => "center",
+//             Self::Top => "top",
+//             Self::Bottom => "bottom",
+//         }
+//     }
+// }
+// // impl ToString for UiTextHAlign {
+// //     fn to_string(&self) -> String {
+// //         self.as_str().to_string()
+// //     }
+// // }
+// impl ToString for UiTextVAlign {
 //     fn to_string(&self) -> String {
 //         self.as_str().to_string()
 //     }
 // }
-impl ToString for UiTextVAlign {
-    fn to_string(&self) -> String {
-        self.as_str().to_string()
-    }
-}
-// impl std::str::FromStr for UiTextHAlign {
+// // impl std::str::FromStr for UiTextHAlign {
+// //     type Err = ();
+
+// //     fn from_str(s: &str) -> Result<Self, Self::Err> {
+// //         match s {
+// //             "left" => Ok(UiTextHAlign::Left),
+// //             "right" => Ok(UiTextHAlign::Right),
+// //             "center"|"" => Ok(UiTextHAlign::Center),
+// //             _ => Err(())
+// //         }
+// //     }
+// // }
+
+// impl std::str::FromStr for UiTextVAlign {
 //     type Err = ();
 
 //     fn from_str(s: &str) -> Result<Self, Self::Err> {
 //         match s {
-//             "left" => Ok(UiTextHAlign::Left),
-//             "right" => Ok(UiTextHAlign::Right),
-//             "center"|"" => Ok(UiTextHAlign::Center),
+//             "top" => Ok(UiTextVAlign::Top),
+//             "bottom" => Ok(UiTextVAlign::Bottom),
+//             "center"|"" => Ok(UiTextVAlign::Center),
 //             _ => Err(())
 //         }
 //     }
 // }
-
-impl std::str::FromStr for UiTextVAlign {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "top" => Ok(UiTextVAlign::Top),
-            "bottom" => Ok(UiTextVAlign::Bottom),
-            "center"|"" => Ok(UiTextVAlign::Center),
-            _ => Err(())
-        }
-    }
-}

@@ -5,7 +5,7 @@ use std::collections::BTreeSet;
 use bevy::{platform::collections::HashSet, prelude::*, text::TextLayoutInfo};
 
 // use my_text::*;
-use bevy_table_ui::{self as table_ui, CameraUi, MyText, UiAlign, UiColor, UiImage, UiRoot, UiSize, UiText};
+use bevy_table_ui::{self as table_ui, CameraUi, UiText, UiAlign, UiColor, UiImage, UiRoot, UiSize, };
 
 mod common;
 mod affect;
@@ -56,8 +56,8 @@ fn setup(
         UiColor::default().back(Color::linear_rgb(0.0, 0.0, 0.5))
     )).with_child((
         TextMarker,
-        MyText::new("aaa"),
-        UiText::default(),
+        UiText::new("aaa"),
+        // UiText::default(),
         TextFont {font: asset_server.load("fonts/FiraMono-Medium.ttf"),font_size: 42.0, ..Default::default()},
         TextColor(Color::linear_rgb(1.0, 0.2, 0.2)),
         UiSize::px(100.0, 400.0),
@@ -85,7 +85,7 @@ fn setup(
 
 fn text_update_system(
     // mut text_marker_query: Query<&mut MyText, With<TextMarker>>,
-    mut text_query: Query<&mut MyText, >,
+    mut text_query: Query<&mut UiText, >,
     mut b:Local<usize>,
 ) {
     for mut text in text_query.iter_mut() {

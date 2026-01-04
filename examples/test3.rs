@@ -90,8 +90,7 @@ fn setup(
         // bevy_table_ui::UiRoot::default(),
         // TextMarker,
         // Text::new("aaa"),
-        bevy_table_ui::MyText::new("aaa"),
-        bevy_table_ui::UiText::default(),
+        bevy_table_ui::UiText::new("aaa"),
         TextFont {font: asset_server.load("fonts/FiraMono-Medium.ttf"),font_size: 42.0, ..Default::default()},
         TextColor(Color::linear_rgb(1.0, 0.2, 0.2)),
         bevy_table_ui::UiSize::px(90.0, 55.0),
@@ -142,11 +141,11 @@ fn text_update_system(
     if let Ok(entity)=text_marker_query.single() {
         if *text_changed==50 {
             commands.queue(move|world: &mut World|{
-                world.entity_mut(entity).get_mut::<bevy_table_ui::MyText>().unwrap().0="aba".into();
+                world.entity_mut(entity).get_mut::<bevy_table_ui::UiText>().unwrap().0="aba".into();
             });
         }        if *text_changed==90 {
             commands.queue(move|world: &mut World|{
-                world.entity_mut(entity).get_mut::<bevy_table_ui::MyText>().unwrap().0="aca".into();
+                world.entity_mut(entity).get_mut::<bevy_table_ui::UiText>().unwrap().0="aca".into();
             });
         }
         if *text_changed<100 {

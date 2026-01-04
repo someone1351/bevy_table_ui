@@ -85,7 +85,7 @@ fn main() {
             // on_affects,
             update_input,
             show_fps, //.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(100))),
-            on_affects2,
+            // on_affects2,
         ).chain())
         // .add_systems(Update, (
         // ))
@@ -96,42 +96,6 @@ fn main() {
 
 
 
-pub fn on_affects2<'a>(
-    mut commands: Commands,
-    mut interact_event_reader: MessageReader<UiInteractEvent>,
-    mut text_query: Query< &mut MyText,>,
-) {
-
-    //
-    for ev in interact_event_reader.read() {
-
-        match ev.event_type {
-            UiInteractMessageType::CursorPressBegin {  .. }
-            |UiInteractMessageType::FocusPressBegin { .. } => {
-                text_query.get_mut(ev.entity).unwrap().0="aca".into();
-
-            }
-            UiInteractMessageType::CursorPressEnd {  ..}
-            |UiInteractMessageType::FocusPressEnd { .. } => {
-
-            }
-
-            UiInteractMessageType::FocusBegin { .. } => {
-                text_query.get_mut(ev.entity).unwrap().0="aba".into();
-
-            }
-            UiInteractMessageType::FocusEnd { .. } => {
-                text_query.get_mut(ev.entity).unwrap().0="aaa".into();
-            }
-            _ => {}
-        }
-            // commands.queue(move|world:&mut World|func(entity,world,));
-
-    }
-
-
-}
-
 
 
 
@@ -139,9 +103,9 @@ pub fn setup_ui(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
-    // let mut rng: ThreadRng = rand::thread_rng();
+    let mut rng: ThreadRng = rand::thread_rng();
 
-    // let font: Handle<Font>=asset_server.load("fonts/FiraMono-Medium.ttf");
+    let font: Handle<Font>=asset_server.load("fonts/FiraMono-Medium.ttf");
 
     let root_entity= commands.spawn((
         UiRoot::default(),
@@ -149,68 +113,67 @@ pub fn setup_ui(
     )).id();
 
 
-    // let entity=commands.entity(root_entity).with_child((
-    //     UiSize::px(90.0, 55.0),
-    // )).id();
-    // create_ui_box(&mut commands, &mut rng, font.clone(),entity);
+    // // let entity=commands.entity(root_entity).with_child((
+    // //     UiSize::px(90.0, 55.0),
+    // // )).id();
+    // // create_ui_box(&mut commands, &mut rng, font.clone(),entity);
+
+    // // commands.entity(root_entity).with_child((
+    // //     TextFont{ font: font.clone(), font_size: 15.0, ..Default::default() },
+    // //     TextColor(Color::linear_rgb(1.0,0.0,0.0)),
+    // //     TextLayout{ justify: Justify::Right, linebreak: LineBreak::WordBoundary },
+    // //     UiText{valign:UiTextVAlign::Bottom,..Default::default()},
+    // //     MyText::new("aaa"),
+    // // ));
 
     // commands.entity(root_entity).with_child((
-    //     TextFont{ font: font.clone(), font_size: 15.0, ..Default::default() },
-    //     TextColor(Color::linear_rgb(1.0,0.0,0.0)),
-    //     TextLayout{ justify: Justify::Right, linebreak: LineBreak::WordBoundary },
-    //     UiText{valign:UiTextVAlign::Bottom,..Default::default()},
-    //     MyText::new("aaa"),
+    //     FpsText,
+    //     UiRoot::default(),
+    //     // TextMarker,
+    //     // Text::new("aaa"),
+    //     UiText::new("aaa"),
+    //     TextFont {font: asset_server.load("fonts/FiraMono-Medium.ttf"),font_size: 42.0, ..Default::default()},
+    //     TextColor(Color::linear_rgb(1.0, 0.2, 0.2)),
+    //     UiSize::px(90.0, 55.0),
+    //     UiAlign::top(),
     // ));
 
-    commands.entity(root_entity).with_child((
-        FpsText,
-        UiRoot::default(),
-        // TextMarker,
-        // Text::new("aaa"),
-        MyText::new("aaa"),
-        UiText::default(),
-        TextFont {font: asset_server.load("fonts/FiraMono-Medium.ttf"),font_size: 42.0, ..Default::default()},
-        TextColor(Color::linear_rgb(1.0, 0.2, 0.2)),
-        UiSize::px(90.0, 55.0),
-        UiAlign::top(),
-    ));
+    let left_container_entity=commands.spawn((
+        UiSpan{ span: 1 },
+        UiColor{back:Color::srgb(0.5,0.5,0.5),..Default::default()},
+        UiGap{hgap:UiVal::Px(30.0),vgap:UiVal::Px(30.0)},
+        UiEdge{ padding: UiRectVal::new_px(30.0), ..Default::default() },
+        UiFill{ hfill: UiVal::None, vfill: UiVal::Scale(1.0) }
+    )).id();
 
-    // let left_container_entity=commands.spawn((
-    //     UiSpan{ span: 1 },
-    //     UiColor{back:Color::srgb(0.5,0.5,0.5),..Default::default()},
-    //     UiGap{hgap:UiVal::Px(30.0),vgap:UiVal::Px(30.0)},
-    //     UiEdge{ padding: UiRectVal::new_px(30.0), ..Default::default() },
-    //     UiFill{ hfill: UiVal::None, vfill: UiVal::Scale(1.0) }
-    // )).id();
+    let right_container_entity=commands.spawn((
+        UiSpan{ span: 3 },
+        UiColor{back:Color::srgb(0.5,0.5,0.5),..Default::default()},
+        UiGap{hgap:UiVal::Px(30.0),vgap:UiVal::Px(30.0)},
+        UiEdge{ padding: UiRectVal::new_px(30.0), ..Default::default() },
+    )).id();
 
-    // let right_container_entity=commands.spawn((
-    //     UiSpan{ span: 3 },
-    //     UiColor{back:Color::srgb(0.5,0.5,0.5),..Default::default()},
-    //     UiGap{hgap:UiVal::Px(30.0),vgap:UiVal::Px(30.0)},
-    //     UiEdge{ padding: UiRectVal::new_px(30.0), ..Default::default() },
-    // )).id();
+    commands.entity(root_entity).add_children(&[left_container_entity,right_container_entity]);
 
-    // commands.entity(root_entity).add_children(&[left_container_entity,right_container_entity]);
+    commands.entity(left_container_entity).with_children(|parent|{
+        for _ in 0..2 {
+            let entity=parent.spawn(()).id();
+            create_ui_box(&mut parent.commands(), &mut rng, font.clone(),entity);
 
-    // commands.entity(left_container_entity).with_children(|parent|{
-    //     for _ in 0..2 {
-    //         let entity=parent.spawn(()).id();
-    //         create_ui_box(&mut parent.commands(), &mut rng, font.clone(),entity);
-
-    //         parent.commands().entity(entity).with_children(|parent|{
-    //             for _ in 0..2 {
-    //                 let entity=parent.spawn(()).id();
-    //                 create_ui_box(&mut parent.commands(), &mut rng, font.clone(),entity);
-    //             }
-    //         });
-    //     }
-    // });
-    // commands.entity(right_container_entity).with_children(|parent|{
-    //     for _ in 0..9 {
-    //         let entity=parent.spawn(()).id();
-    //         create_ui_box(&mut parent.commands(), &mut rng, font.clone(),entity);
-    //     }
-    // });
+            parent.commands().entity(entity).with_children(|parent|{
+                for _ in 0..2 {
+                    let entity=parent.spawn(()).id();
+                    create_ui_box(&mut parent.commands(), &mut rng, font.clone(),entity);
+                }
+            });
+        }
+    });
+    commands.entity(right_container_entity).with_children(|parent|{
+        for _ in 0..9 {
+            let entity=parent.spawn(()).id();
+            create_ui_box(&mut parent.commands(), &mut rng, font.clone(),entity);
+        }
+    });
 
 }
 
@@ -281,7 +244,7 @@ fn setup_fps(
 fn show_fps(
     diagnostics: Res<DiagnosticsStore>,
     // mut marker_query: Query< (Entity,&mut MyText),With<FpsText>>,
-    mut text_query: Query< &mut MyText,
+    mut text_query: Query< &mut UiText,
         // With<FpsText>
     >,
     mut marker_query2: Query< Entity,With<TextAtlasMarker>>,
@@ -295,7 +258,7 @@ fn show_fps(
 
 ) {
     for mut text in text_query.iter_mut() {
-        if *b==1 {
+        if *b==55 {
             text.0="aba".into();
             println!("done0");
         }
@@ -306,7 +269,7 @@ fn show_fps(
 
     }
 
-    if *b<10 {
+    if *b<100 {
         *b+=1;
     }
 

@@ -116,21 +116,21 @@ pub struct UiTextComputed{
 #[reflect(Component,  Debug, Clone)]
 
 #[require(UiLayoutComputed,UiInnerSize,UiTextComputed,TextLayoutInfo,ComputedTextBlock)]
-pub struct MyText(pub String);
+pub struct UiText(pub String);
 
-pub type MyTextReader<'w, 's> = bevy::text::TextReader<'w, 's, MyText>;
+pub type UiTextReader<'w, 's> = bevy::text::TextReader<'w, 's, UiText>;
 // pub type TextMyWriter<'w, 's> = bevy::text::TextWriter<'w, 's, MyText>;
 
-impl MyText {
+impl UiText {
     /// Makes a new 2d text component.
     pub fn new(text: impl Into<String>) -> Self {
         Self(text.into())
     }
 }
 
-impl bevy::text::TextRoot for MyText {}
+impl bevy::text::TextRoot for UiText {}
 
-impl bevy::text::TextSpanAccess for MyText {
+impl bevy::text::TextSpanAccess for UiText {
     fn read_span(&self) -> &str {
         self.as_str()
     }
@@ -139,79 +139,87 @@ impl bevy::text::TextSpanAccess for MyText {
     }
 }
 
-impl From<&str> for MyText {
+impl From<&str> for UiText {
     fn from(value: &str) -> Self {
         Self(String::from(value))
     }
 }
 
-impl From<String> for MyText {
+impl From<String> for UiText {
     fn from(value: String) -> Self {
         Self(value)
     }
 }
 
-#[derive(Component, Debug,  Clone,  )]
-#[require(UiLayoutComputed,UiInnerSize,UiTextComputed,TextLayoutInfo,ComputedTextBlock)]
+// #[derive(Component, Debug,  Clone,  )]
+// #[require(UiLayoutComputed,UiInnerSize,UiTextComputed,TextLayoutInfo,ComputedTextBlock)]
 
-pub struct UiText {
-    // text:String,
-    // pre:String,
-    // pub sections: Vec<UiTextSection>,
-    // pub section : TextSection,
+// pub struct UiText {
+//     // text:String,
+//     // pre:String,
+//     // pub sections: Vec<UiTextSection>,
+//     // pub section : TextSection,
 
-    //TextFont
-    // pub font: Handle<Font>,
-    // pub font_size: f32,
+//     //TextFont
+//     // pub font: Handle<Font>,
+//     // pub font_size: f32,
 
-    //TextLayout
-    // pub halign : UiTextHAlign,
+//     //TextLayout
+//     // pub halign : UiTextHAlign,
 
-    //TextColor
-    // pub color: Color,
+//     //TextColor
+//     // pub color: Color,
 
-    //TextSpan
-    // pub value: String,
-
-
-    pub hlen : u32, //calcs boundary
-    pub vlen : u32, //calcs boundary
-    pub valign : UiTextVAlign, //only used in display code
-
-    //
+//     //TextSpan
+//     // pub value: String,
 
 
-    // pub alignment: TextAlignment,
+//     pub hlen : u32, //calcs boundary
+//     pub vlen : u32, //calcs boundary
+//     pub valign : UiTextVAlign, //only used in display code
 
-    pub update : bool,
-}
+//     //
 
-impl Default for UiText {
-    fn default() -> Self {
-        // let sections = vec![TextSection {
-        //     value : String::new(),
-        //     style : TextStyle {
-        //         font : Font::,
-        //         font_size:16.0,
-        //         color : Color::GRAY,
-        //     }
-        // }];
 
-        Self {
-            // sections : vec![Default::default()],
-            // value:String::new(),
+//     // pub alignment: TextAlignment,
 
-            // font: Default::default(),
-            // font_size: 12.0,
-            // color: Color::WHITE,
+//     pub update : bool,
+// }
 
-            hlen : 0,
-            vlen : 0,
+// impl Default for UiText {
+//     fn default() -> Self {
+//         // let sections = vec![TextSection {
+//         //     value : String::new(),
+//         //     style : TextStyle {
+//         //         font : Font::,
+//         //         font_size:16.0,
+//         //         color : Color::GRAY,
+//         //     }
+//         // }];
 
-            // halign : Default::default(),
-            valign : Default::default(),
+//         Self {
+//             // sections : vec![Default::default()],
+//             // value:String::new(),
 
-            update : true,
-        }
-    }
+//             // font: Default::default(),
+//             // font_size: 12.0,
+//             // color: Color::WHITE,
+
+//             hlen : 0,
+//             vlen : 0,
+
+//             // halign : Default::default(),
+//             valign : Default::default(),
+
+//             update : true,
+//         }
+//     }
+// }
+
+#[derive(Component,Reflect,Debug, Default, Clone,Copy,PartialEq,Eq)]
+pub enum UiTextVAlign {
+    #[default]
+    Center,
+    Top,
+    Bottom,
 }

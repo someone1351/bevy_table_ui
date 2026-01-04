@@ -3,8 +3,8 @@
 
 use std::collections::HashSet;
 
-use bevy::{app::AppExit, asset::Handle, color::Color, ecs::prelude::*, input::{keyboard::{KeyCode, KeyboardInput}, mouse::{MouseButton, MouseButtonInput, MouseScrollUnit, MouseWheel}, ButtonState}, math::Vec2, text::{Font, Justify, LineBreak, TextColor, TextFont, TextLayout}, window::Window};
-use bevy_table_ui::{MyText, UiColor, UiCursorable, UiEdge, UiFocusable, UiInteractInputMessage, UiRectVal, UiRoot, UiSize, UiText, UiTextVAlign, UiVal};
+use bevy::{app::AppExit, asset::Handle, color::Color, ecs::prelude::*, input::{keyboard::{KeyCode, KeyboardInput}, mouse::{MouseButton, MouseButtonInput, MouseScrollUnit, MouseWheel}, ButtonState}, math::Vec2, text::{Font, Justify, LineBreak, TextColor, TextFont, TextLayout, TextSpan}, window::Window};
+use bevy_table_ui::{UiText, UiColor, UiCursorable, UiEdge, UiFocusable, UiInteractInputMessage, UiRectVal, UiRoot, UiSize,  UiTextVAlign, UiVal};
 
 use super::affect::{create_affect_attrib, UixAffect, UixAffectState};
 use rand::{Rng,rngs::ThreadRng};
@@ -375,7 +375,7 @@ pub fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<
     // );
 
     let text= create_affect_attrib(
-        |c:&mut MyText,v|{c.0=v;},
+        |c:&mut UiText,v|{c.0=v;},
         "aaa".into(),
         [
             (UixAffectState::Focus,"aba".into()),
@@ -393,7 +393,7 @@ pub fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<
         UixAffect(vec![
             back_col,
             border_col,
-            // text,
+            text,
             // // width,
         ]),
         UiSize{ width:UiVal::Px(-20.0), height:UiVal::Px(-30.0), },
@@ -429,24 +429,24 @@ pub fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<
         // TextLayoutInfo{ scale_factor: todo!(), glyphs: todo!(), section_rects: todo!(), size: todo!() },
         // TextBounds{ width: todo!(), height: todo!() },
         // MyText2d(format!("{entity}")),
-        MyText::new("aaa"),
-        UiText{
-            // value:format!("{entity}"),
-            // font_size: 15.0,
-            // halign:UiTextHAlign::Left,
-            // valign:UiTextVAlign::Top,
-            // halign:UiTextHAlign::Right,
-            valign:UiTextVAlign::Bottom,
-            // font: font.clone(),
-            // color: Color::linear_rgb(1.0,1.0,1.0),
-            ..Default::default()
-        },
+        // UiText::new("aaa"),
+        // UiText{
+        //     // value:format!("{entity}"),
+        //     // font_size: 15.0,
+        //     // halign:UiTextHAlign::Left,
+        //     // valign:UiTextVAlign::Top,
+        //     // halign:UiTextHAlign::Right,
+        //     valign:UiTextVAlign::Bottom,
+        //     // font: font.clone(),
+        //     // color: Color::linear_rgb(1.0,1.0,1.0),
+        //     ..Default::default()
+        // },
     ))
-    // .with_child((
-    //     TextSpan(format!("{entity}")),
+    .with_child((
+        TextSpan(format!("{entity}")),
 
-    //     TextFont{ font: font.clone(), font_size: 15.0, ..Default::default() },
-    //     TextColor(Color::linear_rgb(0.0,0.0,1.0)),
-    // ))
+        TextFont{ font: font.clone(), font_size: 15.0, ..Default::default() },
+        TextColor(Color::linear_rgb(0.0,0.0,1.0)),
+    ))
     ;
 }

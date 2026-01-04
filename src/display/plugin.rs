@@ -3,7 +3,7 @@ use bevy::app::PostUpdate;
 use bevy::ecs::prelude::*;
 // use bevy::render;
 
-use crate::MyText;
+use crate::UiText;
 
 use super::super::layout;
 use super::render::render_setup;
@@ -85,7 +85,7 @@ impl bevy::app::Plugin for UiDisplayPlugin {
             .add_systems(
                 PostUpdate,
                 (
-                    bevy::text::detect_text_needs_rerender::<MyText>,
+                    bevy::text::detect_text_needs_rerender::<UiText>,
                     systems::my_text_update_system2
                 ).chain()
                     .after(bevy::text::remove_dropped_font_atlas_sets)
@@ -102,7 +102,7 @@ impl bevy::app::Plugin for UiDisplayPlugin {
                     // bevy::text::detect_text_needs_rerender::<MyText>,
                     systems::update_image,
                     // systems::update_text_bounds, //need to run before text_bounds is checked for change
-                    // systems::update_text,
+                    systems::update_text,
                     // systems::my_text_update_system2,
                 ).chain()
                     .after(layout::systems::ui_init_computeds)

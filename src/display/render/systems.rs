@@ -27,6 +27,8 @@ use bevy::render::render_resource::*;
 use bevy::text::{ComputedTextBlock, Justify, TextBackgroundColor, TextColor, TextLayout, TextLayoutInfo};
 
 
+use crate::UiText;
+
 use super::draws::DrawMesh;
 use super::dummy_image::create_dummy_image;
 use super::pipelines::*;
@@ -36,7 +38,7 @@ use super::resources::*;
 use super::super::render_core::core_my::TransparentMy;
 // use super::super::TestRenderComponent;
 
-use super::super::{components::{UiColor,UiText,UiTextComputed,UiImage},values::UiTextVAlign};
+use super::super::components::{UiColor,UiTextComputed,UiImage,UiTextVAlign};
 use super::super::super::layout::{components::*,values::UiRect};
 //systems
 
@@ -356,6 +358,7 @@ pub fn extract_uinodes2(
         &UiLayoutComputed,
         Option<&UiImage>,
         Option<&UiText>,
+        Option<&UiTextVAlign>,
         Option<&UiTextComputed>,
 
         Option<&TextColor>,
@@ -405,6 +408,7 @@ pub fn extract_uinodes2(
         layout_computed,
         image,
         text,
+        text_valign,
         text_computed,
         _text_color,
         text_layout,
@@ -724,7 +728,8 @@ pub fn extract_uinodes2(
                 // }
 
                 if text_layout_info.size.y<=layout_computed.size.y {
-                    glyph_pos.y+=match text.valign {
+                    let text_valign=text_valign.cloned().unwrap_or_default();
+                    glyph_pos.y+=match text_valign {
                         UiTextVAlign::Top => 0.0,
                         UiTextVAlign::Center => (layout_computed.size.y-text_layout_info.size.y)*0.5,
                         UiTextVAlign::Bottom => layout_computed.size.y-text_layout_info.size.y,

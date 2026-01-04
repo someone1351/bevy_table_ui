@@ -47,61 +47,61 @@ pub fn update_text_bounds(
     root_query: Query<&UiRoot,With<UiLayoutComputed>>,
 
 
-    mut ui_query: Query<(Entity,
-        Option<&UiSize>,
-        &UiLayoutComputed,
-        &mut UiInnerSize,
-        Option<&mut UiText>,
-        Option<&mut TextLayoutInfo>,
-        Option<&mut UiTextComputed>,
-        Option<&mut ComputedTextBlock>,
-        &TextFont,
-        Option<& TextLayout>,
-        Option<& TextSpan>,
-        &mut TextBounds,
-        // Option<& TextColor>,
-    )>,
+    // mut ui_query: Query<(Entity,
+    //     Option<&UiSize>,
+    //     &UiLayoutComputed,
+    //     &mut UiInnerSize,
+    //     Option<&mut UiText>,
+    //     Option<&mut TextLayoutInfo>,
+    //     Option<&mut UiTextComputed>,
+    //     Option<&mut ComputedTextBlock>,
+    //     &TextFont,
+    //     Option<& TextLayout>,
+    //     Option<& TextSpan>,
+    //     &mut TextBounds,
+    //     // Option<& TextColor>,
+    // )>,
 ) {
 
-    for (entity,
-        layout_size,
-        &layout_computed,
-        mut inner_size,
-        text,
-        text_layout_info,
-        text_computed,
-        computed_text_block,
-        text_font,
-        text_layout,
-        text_span,
-        mut text_bounds,
-    ) in ui_query.iter_mut() {
-        if !layout_computed.enabled {
-            continue;
-        }
+    // for (entity,
+    //     layout_size,
+    //     &layout_computed,
+    //     mut inner_size,
+    //     text,
+    //     text_layout_info,
+    //     text_computed,
+    //     computed_text_block,
+    //     text_font,
+    //     text_layout,
+    //     text_span,
+    //     mut text_bounds,
+    // ) in ui_query.iter_mut() {
+    //     if !layout_computed.enabled {
+    //         continue;
+    //     }
 
-        //
-        let ui_layout_size=layout_size.cloned().unwrap_or_default();
-        let text_layout=text_layout.cloned().unwrap_or_default();
+    //     //
+    //     let ui_layout_size=layout_size.cloned().unwrap_or_default();
+    //     let text_layout=text_layout.cloned().unwrap_or_default();
 
-        if text_layout.linebreak==LineBreak::NoWrap {
-            if text_bounds.width.is_some() {
-                text_bounds.width=None;
-            }
-        } else {
+    //     if text_layout.linebreak==LineBreak::NoWrap {
+    //         if text_bounds.width.is_some() {
+    //             text_bounds.width=None;
+    //         }
+    //     } else {
 
-            let  bound_width=(layout_computed.size.x>=0.0).then_some(layout_computed.size.x);
+    //         let  bound_width=(layout_computed.size.x>=0.0).then_some(layout_computed.size.x);
 
-            // if bound_width.is_some() {
-            if text_bounds.width !=bound_width {
-                text_bounds.width=bound_width;
-            }
-            // }
-        }
+    //         // if bound_width.is_some() {
+    //         if text_bounds.width !=bound_width {
+    //             text_bounds.width=bound_width;
+    //         }
+    //         // }
+    //     }
 
 
-        // let  bound_height=None;//(layout_computed.size.y>=0.0).then_some(layout_computed.size.y);
-    }
+    //     // let  bound_height=None;//(layout_computed.size.y>=0.0).then_some(layout_computed.size.y);
+    // }
 }
 
 pub fn update_text(
@@ -116,7 +116,7 @@ pub fn update_text(
         Option<&UiSize>,
         &UiLayoutComputed,
         &mut UiInnerSize,
-        &mut UiText,
+        // &mut UiText,
         &mut TextLayoutInfo,
         &mut UiTextComputed,
         &mut ComputedTextBlock,
@@ -127,13 +127,13 @@ pub fn update_text(
         // Ref<MyText2d>,
 
         // Option<& TextColor>,
-    )>,
+    ),With<UiText>>,
     root_query: Query<&UiRoot,With<UiLayoutComputed>>,
     mut font_system: ResMut<CosmicFontSystem>,
     mut swash_cache: ResMut<SwashCache>,
 
 
-    mut text_reader: MyTextReader,
+    mut text_reader: UiTextReader,
 
     // mut tests:Local<HashMap<Entity,bool>>,
 ) {
@@ -152,7 +152,7 @@ pub fn update_text(
         layout_size,
         &layout_computed,
         mut inner_size,
-        text,
+        // text,
         mut text_layout_info,
         mut text_computed,
         mut computed_text_block,
@@ -487,10 +487,10 @@ pub fn my_text_update_system2(
         Option<& TextLayout>,
         Option<& TextBounds>,
 
-    ),With<MyText>>,
+    ),With<UiText>>,
     mut font_system: ResMut<CosmicFontSystem>,
     mut swash_cache: ResMut<SwashCache>,
-    mut text_reader: MyTextReader,
+    mut text_reader: UiTextReader,
 ) {
 
     for (entity,

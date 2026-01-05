@@ -131,6 +131,12 @@ pub struct UiSpan {
     pub span : u32,
 }
 
+impl UiSpan {
+    pub fn new(span:u32) -> Self {
+        Self{span}
+    }
+}
+
 #[derive(Reflect,Component, Default, Debug, Clone, Copy)]
 #[require(UiLayoutComputed)]
 pub struct UiAlign {
@@ -255,6 +261,7 @@ pub struct UiLayoutComputed {
     pub unlocked : bool,
 
     pub root_entity : Entity,
+    pub camera_entity : Entity,
 }
 
 impl UiLayoutComputed {
@@ -319,6 +326,7 @@ impl Default for UiLayoutComputed {
             enabled: false,
             unlocked: false,
             root_entity: Entity::PLACEHOLDER,
+            camera_entity: Entity::PLACEHOLDER,
         }
     }
 }

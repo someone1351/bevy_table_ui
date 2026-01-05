@@ -2,7 +2,7 @@
 
 use std::collections::BTreeSet;
 
-use bevy::{camera::visibility::RenderLayers, platform::collections::HashSet, prelude::*, text::TextLayoutInfo};
+use bevy::{camera::{visibility::RenderLayers, Viewport}, platform::collections::HashSet, prelude::*, text::TextLayoutInfo};
 // use bevy_table_ui::{MyText, UiDisplayPlugin, UiLayoutPlugin};
 
 // use my_text::*;
@@ -50,7 +50,7 @@ fn setup(
         Camera2d,
         Camera {
             clear_color,
-            order: 1,
+            order: 0,
             ..Default::default()
         },
         RenderLayers::layer(0),
@@ -60,7 +60,14 @@ fn setup(
         bevy_table_ui::CameraUi,
         Camera {
             clear_color,
-            order: 0,
+            order: 1,
+            viewport: Some(Viewport {
+                // physical_position: UVec2::new(500, 0),
+
+                physical_position: UVec2::new(300, 0),
+                physical_size: UVec2::new(800, 700),
+                ..Default::default()
+            }),
             ..Default::default()
         },
         RenderLayers::layer(1),

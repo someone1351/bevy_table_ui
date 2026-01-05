@@ -54,6 +54,10 @@ path = "examples/test2.rs"
 name = "test3"
 path = "examples/test3.rs"
 
+[[example]]
+name = "test4"
+path = "examples/test4.rs"
+
 [features]
 trace = []
 webgl = []

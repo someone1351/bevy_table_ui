@@ -77,6 +77,11 @@ text need to clip where it goes out of bounds
 TODO 12
 * could remove scroll, and instead use align, and have the body size be scale -2.0,
 ** would need it scrolled to bottom/right, could use extra flag, eg halign_clip true or halign_clamp true
+
+TODO
+* have camera transform just move the camera around the ui world
+* have root be an enum eg PrimaryWindow,Window(Entity),Custom{}
+** or UiRoot{scale,x,y,w,h,scaling,text_scaling,type}
 */
 
 
@@ -107,7 +112,9 @@ pub fn ui_init_computeds(
     root_query: Query<(Entity,&UiRoot),With<UiLayoutComputed>>,
 
     children_query: Query<&Children,With<UiLayoutComputed>>,
-    parent_query: Query<&ChildOf,With<UiLayoutComputed>>,
+    parent_query: Query<&ChildOf,
+        // With<UiLayoutComputed>
+        >,
 
     size_query: Query<&UiSize,>,
 
@@ -148,6 +155,14 @@ pub fn ui_init_computeds(
         }
     });
 
+    //
+    // for &(root_entity,ui_root) in roots.iter() {
+    //     for ancestor in parent_query.iter_ancestors(root_entity) {
+
+    //     }
+    // }
+
+    //
     let mut order=0;
 
     for (root_entity,root) in roots {

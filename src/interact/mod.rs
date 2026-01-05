@@ -4,6 +4,11 @@ pub mod resources;
 pub mod plugin;
 pub mod messages;
 mod vals;
+
+pub use components::*;
+pub use plugin::*;
+pub use messages::*;
+
 // use bevy::app::PostUpdate;
 /*
 TODO

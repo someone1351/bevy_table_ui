@@ -3,7 +3,9 @@ use bevy::app::PostUpdate;
 use bevy::ecs::prelude::*;
 // use bevy::render;
 
-use crate::UiText;
+// use crate::UiText;
+
+use super::components::*;
 
 use super::super::layout;
 use super::render::render_setup;

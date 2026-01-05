@@ -31,11 +31,13 @@ use bevy::ecs::prelude::*;
 // use bevy::hierarchy::prelude::*;
 
 
-use crate::interact::vals::FocusMove;
-use crate::FocusDevicePresseds;
-use crate::FocusMoveHist2;
-// use crate::FocusMoveHists;
-use crate::FocusStates;
+use super::super::resources::*;
+use super::super::vals::*;
+
+// use crate::FocusDevicePresseds;
+// use crate::FocusMoveHist2;
+// // use crate::FocusMoveHists;
+// use crate::FocusStates;
 
 use super::super::components::*;
 // use super::super::resources::*;

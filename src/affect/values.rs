@@ -3,7 +3,7 @@ use std::{collections::HashMap, sync::Arc};
 use bevy::ecs::prelude::*;
 
 #[derive(Debug,Hash,PartialEq,Eq,Copy,Clone,PartialOrd, Ord)]
-pub enum UixAffectState {
+pub enum UiAffectState {
     // None,
     Select,
     Hover,
@@ -28,8 +28,8 @@ pub enum DeviceType{None,Cursor(i32),Focus(i32),}
 
 // type UixAffectAttribFunc = Arc<dyn Fn(&mut World,Entity,usize) + Sync+Send>;
 
-pub struct UixAffectAttrib {
+pub struct UiAffectAttrib {
     // func : UixAffectAttribFunc,
     pub funcs:Vec<Arc<dyn Fn(Entity,&mut World,) + Sync+Send>>,
-    pub states:HashMap<UixAffectState,usize>,//[state]=val_ind
+    pub states:HashMap<UiAffectState,usize>,//[state]=val_ind
 }

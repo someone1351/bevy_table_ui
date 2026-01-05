@@ -27,7 +27,9 @@ use bevy::render::render_resource::*;
 use bevy::text::{ComputedTextBlock, Justify, TextBackgroundColor, TextColor, TextLayout, TextLayoutInfo};
 
 
-use crate::UiText;
+// use crate::UiText;
+
+use crate::display::UiText;
 
 use super::draws::DrawMesh;
 use super::dummy_image::create_dummy_image;

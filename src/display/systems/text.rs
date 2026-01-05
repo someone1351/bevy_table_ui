@@ -33,14 +33,13 @@ use bevy::text::{ComputedTextBlock, CosmicFontSystem, Font, FontAtlasSets, FontS
 // use bevy::window::Window;
 
 
-use crate::UiSize;
 
-use super::super::super::layout::components::{UiLayoutComputed, UiInnerSize,UiRoot};
+use super::super::super::layout::components::{UiLayoutComputed, UiInnerSize,UiRoot,UiSize};
 
 use super::super::components::*;
 // use super::super::resources::*;
 // use super::super::utils::*;
-use super::super::values::*;
+// use super::super::values::*;
 
 pub fn update_text_bounds(
 

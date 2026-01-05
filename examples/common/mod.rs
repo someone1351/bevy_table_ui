@@ -4,9 +4,13 @@
 use std::collections::HashSet;
 
 use bevy::{app::AppExit, asset::Handle, color::Color, ecs::prelude::*, input::{keyboard::{KeyCode, KeyboardInput}, mouse::{MouseButton, MouseButtonInput, MouseScrollUnit, MouseWheel}, ButtonState}, math::Vec2, text::{Font, Justify, LineBreak, TextColor, TextFont, TextLayout, TextSpan}, window::Window};
-use bevy_table_ui::{UiText, UiColor, UiCursorable, UiEdge, UiFocusable, UiInteractInputMessage, UiRectVal, UiRoot, UiSize,  UiTextVAlign, UiVal};
+use bevy_table_ui::affect::*;
+use bevy_table_ui::interact::*;
+use bevy_table_ui::display::*;
+use bevy_table_ui::layout::*;
+// {affect::{components::UixAffect, utils::create_affect_attrib, values::UixAffectState}, UiColor, UiCursorable, UiEdge, UiFocusable, UiInteractInputMessage, UiRectVal, UiRoot, UiSize, UiText, UiTextVAlign, UiVal};
 
-use super::affect::{create_affect_attrib, UixAffect, UixAffectState};
+// use bevy_table_ui::affect::{create_affect_attrib, UixAffect, UixAffectState};
 use rand::{Rng,rngs::ThreadRng};
 
 pub fn generate_screenshot_path<P>(dir : P, prefix : &str, ext : &str) -> Option<std::path::PathBuf>
@@ -352,8 +356,8 @@ pub fn update_ui_input(
 
 pub fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<Font>,entity:Entity) {
     let border_col= create_affect_attrib(|c:&mut UiColor,v|c.border=v,Color::linear_rgb(0.5,0.5,0.5),[
-        (UixAffectState::Focus,Color::linear_rgb(0.8,0.6,0.3)),
-        (UixAffectState::Press(0),Color::linear_rgb(1.0,0.8,0.1))
+        (UiAffectState::Focus,Color::linear_rgb(0.8,0.6,0.3)),
+        (UiAffectState::Press(0),Color::linear_rgb(1.0,0.8,0.1))
     ]);
 
     // let text= create_affect_attrib(
@@ -378,19 +382,19 @@ pub fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<
         |c:&mut UiText,v|{c.0=v;},
         "aaa".into(),
         [
-            (UixAffectState::Focus,"aba".into()),
-            (UixAffectState::Press(0),"aca".into())
+            (UiAffectState::Focus,"aba".into()),
+            (UiAffectState::Press(0),"aca".into())
         ]
     );
     let c=[rng.gen::<f32>(),rng.gen::<f32>(),rng.gen::<f32>()];
     let col=Color::srgb_from_array(c.map(|c|c*0.8));
     let col2=Color::srgb_from_array(c.map(|c|c));
     let back_col= create_affect_attrib(|c:&mut UiColor,v|c.back=v,col,[
-        (UixAffectState::Hover,col2)
+        (UiAffectState::Hover,col2)
     ]);
 
     commands.entity(entity).insert((
-        UixAffect(vec![
+        UiAffect(vec![
             back_col,
             border_col,
             text,

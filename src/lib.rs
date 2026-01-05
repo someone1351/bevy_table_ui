@@ -7,18 +7,26 @@
 // #![allow(unused_assignments)]
 // #[allow(unused_parens)]
 
-mod layout;
-mod interact;
-mod display;
-// mod affect;
+pub mod layout;
+pub mod interact;
+pub mod display;
+pub mod affect;
+
+// pub use layout::*;
+// pub use interact::*;
+// pub use display::*;
+// pub use affect::*;
 
 pub use layout::{plugin::*,components::*,values::*,};
 pub use interact::{plugin::*,components::*,resources::*,messages::*};
-pub use display::{plugin::*,components::*,values::*};
-// pub use affect::{plugin::*,components::*};
+pub use display::{plugin::*,components::*,CameraUi};
 
-pub use display::render_core::core_my::CameraUi; //mesh
-pub use display::TestRenderComponent;
+
+// pub use affect::{plugin::*,components::*,values::*,utils::*};
+// // pub use affect::{plugin::*,components::*};
+
+// pub use display::render_core::core_my::CameraUi; //mesh
+// pub use display::TestRenderComponent;
 
 /*
 DONE

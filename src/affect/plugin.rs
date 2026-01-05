@@ -8,7 +8,7 @@ use super::systems::*;
 use bevy::app::*;
 // use bevy::app::Update;
 use bevy::ecs::prelude::*;
-use bevy_table_ui::UiInteractSystem;
+use super::super::interact::plugin::UiInteractSystem;
 // use bevy::input::InputSystems;
 
 
@@ -16,9 +16,9 @@ use bevy_table_ui::UiInteractSystem;
 pub struct UiAffectSystem;
 
 #[derive(Default)]
-pub struct UixAffectPlugin;
+pub struct UiAffectPlugin;
 
-impl bevy::app::Plugin for UixAffectPlugin {
+impl bevy::app::Plugin for UiAffectPlugin {
     fn build(&self, app: &mut bevy::app::App) {
         app
 

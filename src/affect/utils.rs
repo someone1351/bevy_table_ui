@@ -8,14 +8,14 @@ use bevy::ecs::{component::Component, entity::Entity, world::World};
 // use bevy::ecs::prelude::*;
 use super::values::*;
 
-pub fn create_affect_attrib<C,V,S>(func:fn(&mut C,V) ,default_val:V,state_vals:S,) -> UixAffectAttrib
+pub fn create_affect_attrib<C,V,S>(func:fn(&mut C,V) ,default_val:V,state_vals:S,) -> UiAffectAttrib
 where
     C : Component<Mutability = bevy::ecs::component::Mutable>+Default,
     V : Clone + 'static+Send+Sync,
-    S : IntoIterator<Item=(UixAffectState,V)>,
+    S : IntoIterator<Item=(UiAffectState,V)>,
 {
-    let state_vals:Vec<(UixAffectState,V)>=state_vals.into_iter().collect();
-    let states:HashMap<UixAffectState,usize>=state_vals.iter().enumerate().map(|(i,(k,_v))|(*k,i+1)).collect();
+    let state_vals:Vec<(UiAffectState,V)>=state_vals.into_iter().collect();
+    let states:HashMap<UiAffectState,usize>=state_vals.iter().enumerate().map(|(i,(k,_v))|(*k,i+1)).collect();
     // let vals:Vec<V>=[default_val].into_iter().chain(state_vals.iter().map(|(_k,v)|v.clone())).collect();
 
     let mut out_funcs = Vec::new();
@@ -41,5 +41,5 @@ where
     //     })
     // }).collect();
 
-    UixAffectAttrib { funcs:out_funcs, states }
+    UiAffectAttrib { funcs:out_funcs, states }
 }

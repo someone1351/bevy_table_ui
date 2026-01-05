@@ -7,7 +7,6 @@ use bevy::{camera::{visibility::RenderLayers, Viewport}, platform::collections::
 
 // use my_text::*;
 
-mod affect;
 mod common;
 use common::*;
 

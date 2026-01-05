@@ -1,11 +1,11 @@
-use bevy::{asset::Handle, color::Color, ecs::prelude::*, math::Vec2, prelude::Image, reflect::Reflect, text::{ComputedTextBlock, Font, TextLayoutInfo}};
+use bevy::{asset::Handle, color::Color, ecs::prelude::*, math::Vec2, prelude::Image, reflect::Reflect, text::{ComputedTextBlock, TextLayoutInfo}};
 
 
-use crate::UiVal;
 
 use super::super::layout::components::{UiInnerSize,UiLayoutComputed};
+use super::super::layout::values::*;
 // use bevy::prelude::*;
-use super::values::*;
+// use super::values::*;
 
 #[derive(Reflect,Component, Debug, Clone,Copy)]
 #[require(UiLayoutComputed)]

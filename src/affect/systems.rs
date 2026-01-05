@@ -2,35 +2,35 @@
 use std::collections::{HashMap, HashSet};
 
 use bevy::ecs::prelude::*;
-use bevy_table_ui::{UiInteractEvent, UiInteractMessageType};
+use super::super::interact::messages::{UiInteractEvent, UiInteractMessageType};
 use super::components::*;
 use super::values::*;
 
 
 pub fn on_affects<'a>(
-    mut affect_query: Query<(Entity,&UixAffect,&mut UixAffectComputed)>,
+    mut affect_query: Query<(Entity,&UiAffect,&mut UiAffectComputed)>,
     mut commands: Commands,
     mut interact_event_reader: MessageReader<UiInteractEvent>,
 ) {
-    let mut new_states: HashMap<Entity,HashSet<UixAffectState>>=Default::default(); //[entity][state]
+    let mut new_states: HashMap<Entity,HashSet<UiAffectState>>=Default::default(); //[entity][state]
     //
     for ev in interact_event_reader.read() {
         println!("e {ev}");
         let Ok((_,_, mut affect_computed))=affect_query.get_mut(ev.entity) else {continue;};
 
         let Some((state,device,is_end))=(match ev.event_type {
-            UiInteractMessageType::FocusBegin {device, .. } => Some((UixAffectState::Focus,DeviceType::Focus(device),false)),
-            UiInteractMessageType::FocusEnd { device,.. } => Some((UixAffectState::Focus,DeviceType::Focus(device),true)),
-            UiInteractMessageType::CursorPressBegin{device,button,..} => Some((UixAffectState::Press(button),DeviceType::Cursor(device),false)),
-            UiInteractMessageType::CursorPressEnd{device,button,..} => Some((UixAffectState::Press(button),DeviceType::Cursor(device),true)),
-            UiInteractMessageType::FocusPressBegin { device, button } => Some((UixAffectState::Press(button),DeviceType::Focus(device),false)),
-            UiInteractMessageType::FocusPressEnd { device, button } => Some((UixAffectState::Press(button),DeviceType::Focus(device),true)),
-            UiInteractMessageType::SelectBegin => Some((UixAffectState::Select,DeviceType::None,false)),
-            UiInteractMessageType::SelectEnd => Some((UixAffectState::Select,DeviceType::None,true)),
-            UiInteractMessageType::CursorHoverBegin{device,..} => Some((UixAffectState::Hover,DeviceType::Cursor(device),false)),
-            UiInteractMessageType::CursorHoverEnd{device,..} => Some((UixAffectState::Hover,DeviceType::Cursor(device),true)),
-            UiInteractMessageType::CursorDragBegin { device, .. } => Some((UixAffectState::Drag,DeviceType::Cursor(device),false)),
-            UiInteractMessageType::CursorDragEnd { device, .. } => Some((UixAffectState::Drag,DeviceType::Cursor(device),true)),
+            UiInteractMessageType::FocusBegin {device, .. } => Some((UiAffectState::Focus,DeviceType::Focus(device),false)),
+            UiInteractMessageType::FocusEnd { device,.. } => Some((UiAffectState::Focus,DeviceType::Focus(device),true)),
+            UiInteractMessageType::CursorPressBegin{device,button,..} => Some((UiAffectState::Press(button),DeviceType::Cursor(device),false)),
+            UiInteractMessageType::CursorPressEnd{device,button,..} => Some((UiAffectState::Press(button),DeviceType::Cursor(device),true)),
+            UiInteractMessageType::FocusPressBegin { device, button } => Some((UiAffectState::Press(button),DeviceType::Focus(device),false)),
+            UiInteractMessageType::FocusPressEnd { device, button } => Some((UiAffectState::Press(button),DeviceType::Focus(device),true)),
+            UiInteractMessageType::SelectBegin => Some((UiAffectState::Select,DeviceType::None,false)),
+            UiInteractMessageType::SelectEnd => Some((UiAffectState::Select,DeviceType::None,true)),
+            UiInteractMessageType::CursorHoverBegin{device,..} => Some((UiAffectState::Hover,DeviceType::Cursor(device),false)),
+            UiInteractMessageType::CursorHoverEnd{device,..} => Some((UiAffectState::Hover,DeviceType::Cursor(device),true)),
+            UiInteractMessageType::CursorDragBegin { device, .. } => Some((UiAffectState::Drag,DeviceType::Cursor(device),false)),
+            UiInteractMessageType::CursorDragEnd { device, .. } => Some((UiAffectState::Drag,DeviceType::Cursor(device),true)),
             UiInteractMessageType::CursorClick{..}=> None,
             UiInteractMessageType::FocusClick { .. } => None,
             UiInteractMessageType::CursorDragX{..} => None,

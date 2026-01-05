@@ -8,7 +8,6 @@ use bevy::{platform::collections::HashSet, prelude::*, text::TextLayoutInfo};
 use bevy_table_ui::{self as table_ui, CameraUi, UiText, UiAlign, UiColor, UiImage, UiRoot, UiSize, };
 
 mod common;
-mod affect;
 use common::*;
 
 fn main() {

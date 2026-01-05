@@ -26,6 +26,7 @@ use bevy::DefaultPlugins;
 use bevy::prelude::{Msaa, PluginGroup };
 
 
+use bevy_table_ui::CameraUi;
 use bevy_table_ui as table_ui;
 use rand::rngs::ThreadRng;
 // use rand::Rng;
@@ -35,7 +36,7 @@ use table_ui::*;
 
 
 // #[path = "affect/mod.rs"]
-mod affect;
+// mod affect;
 mod common;
 
 use common::*;
@@ -63,7 +64,7 @@ fn main() {
             table_ui::UiInteractPlugin,
             table_ui::UiDisplayPlugin,
             // table_ui::UiAffectPlugin,
-            affect::UixAffectPlugin,
+            affect::UiAffectPlugin,
         ))
 
 

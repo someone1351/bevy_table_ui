@@ -4,10 +4,8 @@
 use std::collections::HashSet;
 
 use bevy::{app::AppExit, asset::Handle, color::Color, ecs::prelude::*, input::{keyboard::{KeyCode, KeyboardInput}, mouse::{MouseButton, MouseButtonInput, MouseScrollUnit, MouseWheel}, ButtonState}, math::Vec2, text::{Font, Justify, LineBreak, TextColor, TextFont, TextLayout, TextSpan}, window::Window};
-use bevy_table_ui::affect::*;
-use bevy_table_ui::interact::*;
-use bevy_table_ui::display::*;
-use bevy_table_ui::layout::*;
+
+use bevy_table_ui::*;
 // {affect::{components::UixAffect, utils::create_affect_attrib, values::UixAffectState}, UiColor, UiCursorable, UiEdge, UiFocusable, UiInteractInputMessage, UiRectVal, UiRoot, UiSize, UiText, UiTextVAlign, UiVal};
 
 // use bevy_table_ui::affect::{create_affect_attrib, UixAffect, UixAffectState};

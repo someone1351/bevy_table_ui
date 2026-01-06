@@ -78,6 +78,11 @@ pub struct UiGap {
     pub vgap : UiVal,
 }
 
+impl UiGap {
+    pub fn px(hgap:f32,vgap:f32) -> Self{
+        Self { hgap:UiVal::Px(hgap), vgap:UiVal::Px(vgap) }
+    }
+}
 #[derive(Reflect,Component, Default, Debug, Clone, Copy)]
 #[require(UiLayoutComputed)]
 pub struct UiExpand {
@@ -90,6 +95,12 @@ pub struct UiExpand {
 pub struct UiFill {
     pub hfill : UiVal,
     pub vfill : UiVal,
+}
+
+impl UiFill {
+    pub fn max() -> Self {
+        Self { hfill: UiVal::Scale(1.0), vfill: UiVal::Scale(1.0) }
+    }
 }
 
 #[derive(Reflect,Component, Default, Debug, Clone, Copy)]

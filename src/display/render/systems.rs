@@ -644,7 +644,7 @@ pub fn extract_uinodes2(
 
         //text
         if let (
-            Some(text),
+            Some(_text),
             Some(text_layout_info),
             Some(text_computed),
             Some(computed_text_block),

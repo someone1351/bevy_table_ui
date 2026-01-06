@@ -3,7 +3,7 @@
 // #![allow(unused_variables)]
 // #![allow(unreachable_code)]
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 // use std::sync::Arc;
 
 use bevy::app::*;
@@ -14,7 +14,6 @@ use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 
 use bevy::ecs::component::Component;
 use bevy::ecs::entity::Entity;
-use bevy::ecs::message::MessageReader;
 use bevy::ecs::query::With;
 use bevy::ecs::system::{Commands, Local, Query, Res, ResMut};
 use bevy::image::Image;

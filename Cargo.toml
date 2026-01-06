@@ -40,15 +40,11 @@ path = "src/lib.rs"
 
 [[example]]
 name = "example1"
-path = "examples/example1.rs"
+path = "examples/example1/mod.rs"
 
 [[example]]
 name = "test1"
 path = "examples/test1.rs"
-
-[[example]]
-name = "test2"
-path = "examples/test2.rs"
 
 [[example]]
 name = "test3"

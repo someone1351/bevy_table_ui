@@ -20,7 +20,7 @@ pub mod affect;
 pub use layout::{plugin::*,components::*,values::*,};
 pub use interact::{plugin::*,components::*,resources::*,messages::*};
 pub use display::{plugin::*,components::*,CameraUi};
-pub use affect::{plugin::*,components::*,utils::*,values::*};
+pub use affect::{plugin::*,components::*,helper::*,values::*};
 
 
 // pub use affect::{plugin::*,components::*,values::*,utils::*};

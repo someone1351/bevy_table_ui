@@ -1,22 +1,14 @@
-// mod my_text;
 
-use std::collections::BTreeSet;
+use bevy::{camera::{visibility::RenderLayers, Viewport}, prelude::*};
 
-use bevy::{camera::{visibility::RenderLayers, Viewport}, platform::collections::HashSet, prelude::*, text::TextLayoutInfo};
-
-// use my_text::*;
-use bevy_table_ui::{self as table_ui, CameraUi, UiAlign, UiColor, UiImage, UiRoot, UiSize, UiSpan, UiText };
-
-mod common;
-use common::*;
+use bevy_table_ui::*;
 
 fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
-            // MyTextPlugin,
-            table_ui::UiLayoutPlugin,
-            table_ui::UiDisplayPlugin,
+            UiLayoutPlugin,
+            UiDisplayPlugin,
         ))
         .add_systems(Startup, (setup,))
         .add_systems(Update, (
@@ -26,10 +18,20 @@ fn main() {
 }
 
 
+pub fn update_ui_roots(
+    windows: Query<&Window>,
+    mut root_query: Query<&mut UiRoot,>,
+) {
+    if let Ok(window)=windows.single() {
+        for mut ui_root in root_query.iter_mut() {
+            ui_root.width=window.width();
+            ui_root.height=window.height();
+        }
+    }
+}
 
 fn setup(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
 ) {
     //init camera
     commands.spawn((

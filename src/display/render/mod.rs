@@ -75,7 +75,7 @@ pub fn render_setup(app: &mut App) {
             dummy_image_setup,
             // extract_images,
             extract_images2,
-            extract_sprite_events,
+            extract_sprite_events, //only works after extract_images, but then image bind_groups are then updated one frame late, think updating texture makes the iamge flash
             // extract_events,
             // extract_uinodes,
             extract_uinodes2,

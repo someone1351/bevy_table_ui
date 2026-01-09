@@ -708,16 +708,16 @@ pub fn extract_uinodes2(
 
                 let atlas_size=atlas.size.as_vec2();
 
-                if text_computed.bounds.x<=layout_computed.size.x
+                // if text_computed.bounds.x<=layout_computed.size.x
+                if layout_computed.custom_size.x<=layout_computed.size.x
                 {
                     glyph_pos.x+=match text_layout.justify{
                         Justify::Left => 0.0,
-                        Justify::Center|Justify::Justified => (layout_computed.size.x-text_computed.bounds.x)*0.5,
-                        Justify::Right => layout_computed.size.x-text_computed.bounds.x,
+                        // Justify::Center|Justify::Justified => (layout_computed.size.x-text_computed.bounds.x)*0.5,
+                        Justify::Center|Justify::Justified => (layout_computed.size.x-layout_computed.custom_size.x)*0.5,
+                        // Justify::Right => layout_computed.size.x-text_computed.bounds.x,
+                        Justify::Right => layout_computed.size.x-layout_computed.custom_size.x,
                     };
-
-
-
                 }
 
 

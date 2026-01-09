@@ -5,7 +5,7 @@ use bevy::asset::prelude::*;
 use bevy::image::Image;
 
 
-use super::super::super::layout::components::{UiLayoutComputed, UiInnerSize,UiRoot};
+use super::super::super::layout::components::{UiLayoutComputed, UiRoot};
 
 use super::super::components::*;
 // use super::super::resources::*;
@@ -16,17 +16,18 @@ pub fn update_image(
     textures: Res<Assets<Image>>,
 
     mut ui_query: Query<(Entity,
-        &UiLayoutComputed,
-        &mut UiInnerSize,
+        &mut UiLayoutComputed,
+        // &mut UiInnerSize,
         Option<&UiImage>,
     )>,
     root_query: Query<&UiRoot,With<UiLayoutComputed>>,
 ) {
-    for (_entity,
-        &layout_computed,
-        mut inner_size,
-        image) in ui_query.iter_mut()
-    {
+    for (
+        _entity,
+        mut layout_computed,
+        // mut inner_size,
+        image,
+    ) in ui_query.iter_mut() {
         if !layout_computed.enabled {
             continue;
         }
@@ -42,8 +43,9 @@ pub fn update_image(
         let root_entity=root_query.get(layout_computed.root_entity).unwrap();
         let scale_factor=root_entity.scaling.max(0.0);
 
-        inner_size.width = 0.0;
-        inner_size.height = 0.0;
+
+        // inner_size.width = 0.0;
+        // inner_size.height = 0.0;
 
 
         // let mut custom_size.width : f32 = 0.0;
@@ -56,17 +58,23 @@ pub fn update_image(
 
                 //todo keep aspect ratio
                 let scale_factor=if image.use_scaling {scale_factor}else{1.0};
-                // if image.width_scale>0.0 {
-                    inner_size.width = inner_size.width.max(image.width_scale.max(0.0)*image_size.x*scale_factor);
-                // } else if inner_size.width == 0.0 {
-                //     inner_size.width = inner_size.width.max(image_size.x*scale_factor);
-                // }
+                let w=image.width_scale.max(0.0)*image_size.x*scale_factor;
+                let h=image.height_scale.max(0.0)*image_size.y*scale_factor;
 
-                // if image.height_scale>0.0 {
-                    inner_size.height = inner_size.height.max(image.height_scale.max(0.0)*image_size.y*scale_factor);
-                // } else if inner_size.height == 0.0 {
-                //     inner_size.height = inner_size.height.max(image_size.y*scale_factor);
-                // }
+                layout_computed.custom_size.x=layout_computed.custom_size.x.max(w);
+                layout_computed.custom_size.y=layout_computed.custom_size.y.max(h);
+
+                // // if image.width_scale>0.0 {
+                //     inner_size.width = inner_size.width.max(w);
+                // // } else if inner_size.width == 0.0 {
+                // //     inner_size.width = inner_size.width.max(image_size.x*scale_factor);
+                // // }
+
+                // // if image.height_scale>0.0 {
+                //     inner_size.height = inner_size.height.max(h);
+                // // } else if inner_size.height == 0.0 {
+                // //     inner_size.height = inner_size.height.max(image_size.y*scale_factor);
+                // // }
             }
         }
 

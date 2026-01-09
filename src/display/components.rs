@@ -2,8 +2,9 @@ use bevy::{asset::Handle, color::Color, ecs::prelude::*, math::Vec2, prelude::Im
 
 
 
-use super::super::layout::components::{UiInnerSize,UiLayoutComputed};
-use super::super::layout::values::*;
+// use super::super::layout::components::{UiInnerSize};
+use super::super::layout::components::UiLayoutComputed;
+// use super::super::layout::values::*;
 // use bevy::prelude::*;
 // use super::values::*;
 
@@ -23,6 +24,18 @@ impl UiColor {
     pub fn back(&self,back:Color) -> Self {
         Self { back, ..*self }
     }
+    pub fn padding(&self,padding:Color) -> Self {
+        Self { padding, ..*self }
+    }
+    pub fn border(&self,border:Color) -> Self {
+        Self { border, ..*self }
+    }
+    pub fn margin(&self,margin:Color) -> Self {
+        Self { margin, ..*self }
+    }
+    pub fn cell(&self,cell:Color) -> Self {
+        Self { cell, ..*self }
+    }
 }
 
 impl Default for UiColor {
@@ -36,7 +49,7 @@ impl Default for UiColor {
 //     AlphaTest(Color),
 // }
 #[derive(Reflect,Component,  Debug, Clone)]
-#[require(UiInnerSize,UiLayoutComputed)]
+#[require(UiLayoutComputed)]
 
 
 pub struct UiImage {
@@ -69,10 +82,19 @@ impl Default for UiImage {
     }
 }
 
+
+#[derive(Component,Reflect,Debug, Default, Clone,Copy,PartialEq,Eq)]
+pub enum UiTextVAlign {
+    #[default]
+    Center,
+    Top,
+    Bottom,
+}
+
 #[derive(Component, Clone, Default, Debug)]
 #[require(UiLayoutComputed)]
 pub struct UiTextComputed{
-    pub max_size: Vec2, //what is this for?
+    // pub max_size: Vec2, //what is this for?
 
     //TextBounds{ width: todo!(), height: todo!() },
     pub bounds: Vec2, //box size that text sits in including empty space, unlike text_layout.logical_size which is only for text itself
@@ -81,10 +103,10 @@ pub struct UiTextComputed{
     pub scaling:f32,
 
 
-    //prob don't need
-    //from ui_size, to check if they have changed
-    pub width_used:UiVal,
-    pub height_used:UiVal,
+    // //prob don't need
+    // //from ui_size, to check if they have changed
+    // pub width_used:UiVal,
+    // pub height_used:UiVal,
 }
 
 // #[derive(Debug,  Clone, Default)]
@@ -115,7 +137,7 @@ pub struct UiTextComputed{
 #[derive(Component, Clone, Debug, Default, bevy::prelude::Deref, bevy::prelude::DerefMut, Reflect)]
 #[reflect(Component,  Debug, Clone)]
 
-#[require(UiLayoutComputed,UiInnerSize,UiTextComputed,TextLayoutInfo,ComputedTextBlock)]
+#[require(UiLayoutComputed,UiTextComputed,TextLayoutInfo,ComputedTextBlock)]
 pub struct UiText(pub String);
 
 pub type UiTextReader<'w, 's> = bevy::text::TextReader<'w, 's, UiText>;
@@ -151,75 +173,3 @@ impl From<String> for UiText {
     }
 }
 
-// #[derive(Component, Debug,  Clone,  )]
-// #[require(UiLayoutComputed,UiInnerSize,UiTextComputed,TextLayoutInfo,ComputedTextBlock)]
-
-// pub struct UiText {
-//     // text:String,
-//     // pre:String,
-//     // pub sections: Vec<UiTextSection>,
-//     // pub section : TextSection,
-
-//     //TextFont
-//     // pub font: Handle<Font>,
-//     // pub font_size: f32,
-
-//     //TextLayout
-//     // pub halign : UiTextHAlign,
-
-//     //TextColor
-//     // pub color: Color,
-
-//     //TextSpan
-//     // pub value: String,
-
-
-//     pub hlen : u32, //calcs boundary
-//     pub vlen : u32, //calcs boundary
-//     pub valign : UiTextVAlign, //only used in display code
-
-//     //
-
-
-//     // pub alignment: TextAlignment,
-
-//     pub update : bool,
-// }
-
-// impl Default for UiText {
-//     fn default() -> Self {
-//         // let sections = vec![TextSection {
-//         //     value : String::new(),
-//         //     style : TextStyle {
-//         //         font : Font::,
-//         //         font_size:16.0,
-//         //         color : Color::GRAY,
-//         //     }
-//         // }];
-
-//         Self {
-//             // sections : vec![Default::default()],
-//             // value:String::new(),
-
-//             // font: Default::default(),
-//             // font_size: 12.0,
-//             // color: Color::WHITE,
-
-//             hlen : 0,
-//             vlen : 0,
-
-//             // halign : Default::default(),
-//             valign : Default::default(),
-
-//             update : true,
-//         }
-//     }
-// }
-
-#[derive(Component,Reflect,Debug, Default, Clone,Copy,PartialEq,Eq)]
-pub enum UiTextVAlign {
-    #[default]
-    Center,
-    Top,
-    Bottom,
-}

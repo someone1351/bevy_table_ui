@@ -466,7 +466,7 @@ pub fn ui_calc_computeds2(
     gap_query: Query<&UiGap>,
 
     size_query: Query<&UiSize,>,
-    inner_size_query: Query<&UiInnerSize,>,
+    // inner_size_query: Query<&UiInnerSize,>,
     float_query: Query<&UiFloat,>,
     edge_query: Query<&UiEdge,>,
     congruent_query: Query<&UiCongruent,>,
@@ -574,6 +574,15 @@ pub fn ui_calc_computeds2(
         let mut max_space_w : f32 = 0.0;
         let mut max_space_h : f32 = 0.0;
 
+        //
+
+        let computed=if parent_of_root {
+            let root=root_query.get(entity).unwrap().1;
+            UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(root.width,root.height),..default()}
+        } else {
+            computed_query.get(entity).cloned().unwrap()
+        };
+
         // if let Some(children)=&children //children_query.get(entity)
         // if children.is_some()
         {
@@ -594,12 +603,12 @@ pub fn ui_calc_computeds2(
             // // let computed = *computed_query.get(entity).unwrap();
             // let computed = entity.map(|entity|*computed_query.get(entity).unwrap()).unwrap_or(top_computed);
 
-            let computed=if parent_of_root {
-                let root=root_query.get(entity).unwrap().1;
-                &UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(root.width,root.height),..default()}
-            } else {
-                computed_query.get(entity).unwrap()
-            };
+            // let computed=if parent_of_root {
+            //     let root=root_query.get(entity).unwrap().1;
+            //     &UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(root.width,root.height),..default()}
+            // } else {
+            //     computed_query.get(entity).unwrap()
+            // };
 
             let cols_num = computed.cols as usize;
             let rows_num = computed.rows as usize;
@@ -860,13 +869,16 @@ pub fn ui_calc_computeds2(
         //
         // // if let Ok(inner_size) = inner_size_query.get(entity)
         // if let Some(inner_size) = entity.and_then(|entity|inner_size_query.get(entity).ok())
-        if !parent_of_root
-        {
-            if let Ok(inner_size) = inner_size_query.get(entity) {
-                max_space_w = max_space_w.max(inner_size.width);
-                max_space_h = max_space_h.max(inner_size.height);
-            }
-        }
+        // if !parent_of_root
+        // {
+        //     // if let Ok(inner_size) = inner_size_query.get(entity) {
+        //     //     max_space_w = max_space_w.max(inner_size.width);
+        //     //     max_space_h = max_space_h.max(inner_size.height);
+        //     // }
+        //     // let layout_computed=computed_query.get(entity)
+        // }
+        max_space_w = max_space_w.max(computed.custom_size.x);
+        max_space_h = max_space_h.max(computed.custom_size.y);
 
         // // if parent_query.get(entity).is_ok() //has parent
         // if let Some(entity)=entity

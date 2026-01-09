@@ -243,99 +243,18 @@ fn setup_fps(
 
 fn show_fps(
     diagnostics: Res<DiagnosticsStore>,
-    // mut marker_query: Query< (Entity,&mut MyText),With<FpsText>>,
-    mut text_query: Query< &mut UiText,
-        // With<FpsText>
-    >,
-    mut marker_query2: Query< Entity,With<TextAtlasMarker>>,
+    mut marker_query: Query< &mut UiText,With<FpsText>>,
 
-    mut commands: Commands,
-    mut b:Local<usize>,
-
-    uinode_query: Query<&TextLayoutInfo>,
-    asset_server: Res<AssetServer>,
-    mut images: ResMut<Assets<Image>>,
 
 ) {
-    for mut text in text_query.iter_mut() {
-        if *b==55 {
-            text.0="aba".into();
-            println!("done0");
-        }
-        // else if *b==1 {
-        //     text.0="aca".into();
-        //     println!("done1");
-        // }
 
+    if let Ok(mut text)=marker_query.single_mut() {
+        let v=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS);
+        let fps = v.and_then(|x|x.value()).map(|x|x.round()).unwrap_or_default();
+        let avg = v.and_then(|x|x.average()).unwrap_or_default();
+        text.0 =format!("{fps:.0} {avg:.0}");
     }
 
-    if *b<100 {
-        *b+=1;
-    }
-
-    if let Ok(root_entity)=marker_query2.single_mut() {
-        let mut handles=BTreeSet::new();
-        for text_layout_info in uinode_query.iter() {
-
-            for text_glyph in text_layout_info.glyphs.iter() {
-
-                let id=text_glyph.atlas_info.texture.clone();
-                // if let Some(handle)=asset_server.get_id_handle(id)
-                if let Some(handle) = images.get_strong_handle(id)
-                {
-                    // println!("handle {handle:?}");
-                    handles.insert(handle);
-                }
-
-            }
-        }
-
-        commands.entity(root_entity).despawn_children();
-
-        for handle in handles {
-            commands.entity(root_entity).with_child((
-                UiImage{handle,width_scale:0.75,height_scale:0.75, ..Default::default()},
-                UiColor::default().back(Color::linear_rgb(0.4, 0.4, 0.4,),),
-
-            ));
-        }
-    }
-    // if let Ok((e,mut text))=marker_query.single_mut() {
-    //     let v=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS);
-    //     let fps = v.and_then(|x|x.value()).map(|x|x.round()).unwrap_or_default();
-    //     let avg = v.and_then(|x|x.average()).unwrap_or_default();
-    //     // text.0 =format!("{fps:.0} {avg:.0}");
-
-
-    //     // if !*b {
-    //     // text.0="aza".into();
-    //     // *b=true;
-    //     // } else {
-
-    //     // text.0="aza".into();
-    //     // }
-
-    //     // if !*b {
-
-    //     // commands.entity(e).entry::<MyText2d>().or_default().and_modify(|mut c|{
-    //     //     c.0="aza".into();
-    //     // });
-    //     // commands.queue(move|world: &mut bevy::ecs::world::World|{
-
-    //     //     let mut e=world.entity_mut(e);
-
-    //     //     // let mut c=e.entry::<MyText2d>().or_default();
-
-    //     //     // c.
-    //     //     // c.get_mut().0="aza".into();
-    //     //     e.get_mut::<MyText2d>().unwrap().0="aza".into();
-    //     // });
-    //     // *b=true;
-    //     // }
-    //     // let q=commands.entity(e).entry::<MyText2d>().or_default();
-    //     // q.
-
-    // }
 }
 
 

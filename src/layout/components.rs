@@ -212,13 +212,12 @@ impl UiSize {
     }
 }
 
-#[derive(Reflect,Component, Default, Debug, Copy, Clone)]
-#[require(UiLayoutComputed)]
-pub struct UiInnerSize { //used for external things like text and images
-    pub width : f32,
-    pub height : f32,
-
-}
+// #[derive(Reflect,Component, Default, Debug, Copy, Clone)]
+// #[require(UiLayoutComputed)]
+// pub struct UiInnerSize { //used for external things like text and images
+//     pub width : f32,
+//     pub height : f32,
+// }
 
 //should UiRoot be empty and camera provide its fields?
 
@@ -249,6 +248,7 @@ pub struct UiLayoutComputed {
 
     pub pos : Vec2,
     pub size : Vec2,
+    pub custom_size : Vec2,
     //last_size?
     pub clamped_rect : UiRect,
     pub clamped_cell_rect : UiRect,
@@ -312,6 +312,7 @@ impl Default for UiLayoutComputed {
             // x: 0.0, y: 0.0, w: 0.0, h: 0.0,
             pos:Vec2::ZERO,
             size:Vec2::NEG_ONE,
+            custom_size:Vec2::ZERO,
 
             clamped_rect:UiRect::default(),
             clamped_cell_rect:UiRect::default(),

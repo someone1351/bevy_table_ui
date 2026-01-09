@@ -173,15 +173,6 @@ fn update_input(
         if ev.state==bevy::input::ButtonState::Pressed && !last_pressed.contains(&ev.key_code) {
             if ev.key_code==KeyCode::Escape || ev.key_code==KeyCode::F4 {
                 exit.write(AppExit::Success);
-            } else if ev.key_code==KeyCode::F12 {
-                if let Some(path) = generate_screenshot_path("./screenshots","screenshot_","png") {
-                    // if screenshot_manager.save_screenshot_to_disk(window_entity, &path).is_err() {
-                    //     eprintln!("Failed to take screenshot at {path:?}.");
-                    // }
-                    commands
-                        .spawn(bevy::render::view::screenshot::Screenshot::primary_window())
-                        .observe(bevy::render::view::screenshot::save_to_disk(path));
-                }
             }
         }
 
@@ -228,49 +219,3 @@ fn show_fps(
 
 
 
-
-fn generate_screenshot_path<P>(dir : P, prefix : &str, ext : &str) -> Option<std::path::PathBuf>
-where
-    P: AsRef<std::path::Path>,
-{
-    let dir=dir.as_ref();
-    let name_start=prefix.to_string();
-    let name_end=".".to_string()+ext;
-
-    //
-    let mut last_num=0;
-
-    //
-    if !std::fs::create_dir_all(dir).is_ok() {
-        eprintln!("Failed to create screenshot directory {dir:?}.");
-        return None;
-    }
-
-    let Ok(existing) = std::fs::read_dir(dir) else {
-        eprintln!("Failed to read screenshot directory {dir:?}.");
-        return None;
-    };
-
-    for x in existing.into_iter() {
-        let Ok(x)=x else {
-            continue;
-        };
-
-        let Some(x)=x.file_name().to_str().map(|x|x.to_string()) else {
-            continue;
-        };
-
-        if !x.starts_with(name_start.as_str()) || !x.ends_with(name_end.as_str()) {
-            continue;
-        }
-
-        let Ok(x)=x[name_start.len() .. x.len()-name_end.len()].to_string().parse::<u32>() else {
-            continue;
-        };
-
-        last_num=last_num.max(x);
-    }
-
-    //
-    Some(dir.join(format!("{name_start}{:04}{name_end}", last_num+1)))
-}

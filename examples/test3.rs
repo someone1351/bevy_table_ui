@@ -65,8 +65,11 @@ fn setup(
         TextMarker,
         UiText::new("aaa"),
         TextFont {font: asset_server.load("fonts/FiraMono-Medium.ttf"),font_size: 42.0, ..Default::default()},
+        UiTextVAlign::Bottom,
+        UiSize::px(-100.0, -50.0),
+        TextLayout{ justify: Justify::Center, linebreak: LineBreak::NoWrap },
         TextColor(Color::linear_rgb(1.0, 0.2, 0.2)),
-        UiSize::px(90.0, 55.0),
+        // UiSize::px(90.0, 55.0),
         UiColor::default().back(Color::linear_rgba(0.4,0.4,0.4,0.5)),
         UiFill::max(),
     ));

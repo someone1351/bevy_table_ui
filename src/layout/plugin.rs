@@ -41,7 +41,7 @@ impl bevy::app::Plugin for UiLayoutPlugin {
             .register_type::<UiSpan>()
             .register_type::<UiAlign>()
             .register_type::<UiSize>()
-            .register_type::<UiInnerSize>()
+            // .register_type::<UiInnerSize>()
             .register_type::<UiLayoutComputed>()
 
             .add_systems(

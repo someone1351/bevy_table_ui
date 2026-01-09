@@ -13,10 +13,8 @@ use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 // use bevy::ecs::prelude::*;
 
 use bevy::ecs::component::Component;
-use bevy::ecs::entity::Entity;
 use bevy::ecs::query::With;
-use bevy::ecs::system::{Commands, Local, Query, Res, ResMut};
-use bevy::image::Image;
+use bevy::ecs::system::{Commands, Query, Res};
 
 use bevy::text::*;
 // use bevy::ui::{AlignSelf, JustifySelf, Node};

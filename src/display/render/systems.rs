@@ -40,7 +40,7 @@ use super::resources::*;
 use super::super::render_core::core_my::TransparentMy;
 // use super::super::TestRenderComponent;
 
-use super::super::components::{UiColor,UiTextComputed,UiImage,UiTextVAlign};
+use super::super::components::{UiColor,UiImage,UiTextVAlign};
 use super::super::super::layout::{components::*,values::UiRect};
 //systems
 
@@ -361,7 +361,7 @@ pub fn extract_uinodes2(
         Option<&UiImage>,
         Option<&UiText>,
         Option<&UiTextVAlign>,
-        Option<&UiTextComputed>,
+        // Option<&UiTextComputed>,
 
         Option<&TextColor>,
         Option<&TextLayout>,
@@ -376,7 +376,7 @@ pub fn extract_uinodes2(
     )> >,
 
     text_colors: Extract<Query<&TextColor>>,
-    _text_background_colors_query: Extract<Query<&TextBackgroundColor>>,
+    text_background_colors_query: Extract<Query<&TextBackgroundColor>>,
     mut extracted_elements : ResMut<MyUiExtractedElements>,
 
     // camera_query: Extract<Query<(Entity, &Camera)>>,
@@ -411,7 +411,7 @@ pub fn extract_uinodes2(
         image,
         text,
         text_valign,
-        text_computed,
+        // text_computed,
         _text_color,
         text_layout,
         text_layout_info,
@@ -443,7 +443,8 @@ pub fn extract_uinodes2(
 
         let depth = layout_computed.order*3;
         let image_depth=depth+1;
-        let text_depth=depth+2;
+        let text_back_depth=depth+2;
+        let text_depth=depth+3;
 
         let clamped_inner_rect = layout_computed.clamped_rect;
         let clamped_padding_rect = layout_computed.clamped_padding_rect();
@@ -646,13 +647,66 @@ pub fn extract_uinodes2(
         if let (
             Some(_text),
             Some(text_layout_info),
-            Some(text_computed),
+            // Some(text_computed),
             Some(computed_text_block),
         ) = (
-            text, text_layout_info,text_computed,computed_text_block
+            text, text_layout_info,
+            // text_computed,
+            computed_text_block
         ) {
-            let text_layout=text_layout.cloned().unwrap_or_default();
+            let text_layout=text_layout.cloned().unwrap_or(TextLayout { justify: Justify::Center, linebreak: bevy::text::LineBreak::NoWrap });
 
+            let offset = layout_computed.pos + {
+                let x=if layout_computed.custom_size.x<=layout_computed.size.x {
+                    match text_layout.justify{
+                        Justify::Left => 0.0,
+                        Justify::Center|Justify::Justified => (layout_computed.size.x-layout_computed.custom_size.x)*0.5,
+                        Justify::Right => layout_computed.size.x-layout_computed.custom_size.x,
+                    }
+                } else {
+                    0.0
+                };
+
+                let y=if text_layout_info.size.y<=layout_computed.size.y {
+                    match text_valign.cloned().unwrap_or_default() {
+                        UiTextVAlign::Top => 0.0,
+                        UiTextVAlign::Center => (layout_computed.size.y-text_layout_info.size.y)*0.5,
+                        UiTextVAlign::Bottom => layout_computed.size.y-text_layout_info.size.y,
+                    } //ydir
+                } else {
+                    0.0
+                };
+
+                Vec2::new(x,y)
+            };
+
+
+            for &(section_entity, rect) in text_layout_info.section_rects.iter() {
+                let Ok(text_background_color) = text_background_colors_query.get(section_entity) else {
+                    continue;
+                };
+
+                //min/max even needed? use size instead?
+                let tl=rect.min+offset;
+                let bl=Vec2::new(rect.min.x,rect.max.y)+offset;
+                let br=rect.max+offset;
+                let tr=Vec2::new(rect.max.x,rect.min.y)+offset;
+
+                //
+                extracted_elements.elements.push(MyUiExtractedElement{
+                    render_layers: node_render_layers.clone(),
+                    bl,br,tl,tr,
+                    tl_uv:Vec2::ZERO,
+                    bl_uv:Vec2::ZERO,
+                    tr_uv:Vec2::ZERO,
+                    br_uv:Vec2::ZERO,
+                    color : text_background_color.0.clone(),
+                    depth:text_back_depth,
+                    image:None,
+                    entity:commands.spawn((TemporaryRenderEntity,)).id(),
+                    main_entity: entity.into(),
+                });
+            }
             // let glyph_offset=text_computed.bounds-text_layout_info.size; //only needed for x, since because bevy now handles halign positioning
             // println!("hmm comp={:?} text={:?}, dif={:?},tcomp={:?}",
             //     layout_computed.size,
@@ -704,39 +758,12 @@ pub fn extract_uinodes2(
                 let atlas_glyph_rect = atlas.textures[glyph_index].as_rect();
                 let glyph_size=atlas_glyph_rect.size();
 
-                let mut glyph_pos=layout_computed.pos + text_glyph.position - glyph_size*0.5;//  - glyph_offset;
+                let glyph_pos= text_glyph.position - glyph_size*0.5 + offset;//  - glyph_offset;
 
                 let atlas_size=atlas.size.as_vec2();
 
-                // if text_computed.bounds.x<=layout_computed.size.x
-                if layout_computed.custom_size.x<=layout_computed.size.x
-                {
-                    glyph_pos.x+=match text_layout.justify{
-                        Justify::Left => 0.0,
-                        // Justify::Center|Justify::Justified => (layout_computed.size.x-text_computed.bounds.x)*0.5,
-                        Justify::Center|Justify::Justified => (layout_computed.size.x-layout_computed.custom_size.x)*0.5,
-                        // Justify::Right => layout_computed.size.x-text_computed.bounds.x,
-                        Justify::Right => layout_computed.size.x-layout_computed.custom_size.x,
-                    };
-                }
 
 
-                // if text_computed.bounds.y<=layout_computed.size.y {
-                //     glyph_pos.y+=match text.valign {
-                //         UiTextVAlign::Top => 0.0,
-                //         UiTextVAlign::Center => (layout_computed.size.y-text_computed.bounds.y)*0.5,
-                //         UiTextVAlign::Bottom => layout_computed.size.y-text_computed.bounds.y,
-                //     }; //ydir
-                // }
-
-                if text_layout_info.size.y<=layout_computed.size.y {
-                    let text_valign=text_valign.cloned().unwrap_or_default();
-                    glyph_pos.y+=match text_valign {
-                        UiTextVAlign::Top => 0.0,
-                        UiTextVAlign::Center => (layout_computed.size.y-text_layout_info.size.y)*0.5,
-                        UiTextVAlign::Bottom => layout_computed.size.y-text_layout_info.size.y,
-                    }; //ydir
-                }
 
                 //
                 let glyph_pos2=glyph_pos+glyph_size;

@@ -109,7 +109,7 @@ pub fn update_text_bounds(
 
         //
         let ui_size=ui_size.cloned().unwrap_or_default();
-        let text_layout=text_layout.cloned().unwrap_or_default();
+        let text_layout=text_layout.cloned().unwrap_or(TextLayout { justify: Justify::Center, linebreak: LineBreak::NoWrap });
         let mut text_bounds=text_bounds.cloned().unwrap_or_default();
 
         //scale bounds

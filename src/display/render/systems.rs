@@ -606,9 +606,10 @@ pub fn extract_uinodes2(
             let text_layout=text_layout.cloned().unwrap_or(TextLayout { justify: Justify::Center, linebreak: bevy::text::LineBreak::NoWrap });
 
 
-            //undo bevy text's halign calculations
+            //undo bevy text's weird halign calculations
             let hfix=(true).then(||{
-                let w=(layout_computed.custom_size.x!=text_layout_info.size.x).then_some(layout_computed.size.x).unwrap_or(0.0);
+                let w=(layout_computed.custom_size.x!=text_layout_info.size.x) // or gt
+                    .then_some(layout_computed.size.x).unwrap_or(0.0);
 
                 match text_layout.justify{
                     Justify::Left => 0.0,
@@ -619,30 +620,6 @@ pub fn extract_uinodes2(
                 }
             }).unwrap_or(0.0);
 
-            //
-            // let hfix=(true).then(||match text_layout.justify{
-            //     Justify::Left => 0.0,
-            //     Justify::Center|Justify::Justified => text_layout_info.size.x*0.5,
-            //     Justify::Right => text_layout_info.size.x,
-            // }).unwrap_or(0.0);
-
-            // let hfix=(true).then(||match text_layout.justify{
-            //     Justify::Left => 0.0,
-            //     Justify::Center|Justify::Justified => (text_layout_info.size.x-layout_computed.size.x)*0.5,
-            //     Justify::Right => text_layout_info.size.x-layout_computed.size.x,
-            // }).unwrap_or(0.0);
-
-            // let hfix=(true).then(||match text_layout.justify{
-            //     Justify::Left => 0.0,
-            //     Justify::Center|Justify::Justified => -(layout_computed.size.x-text_layout_info.size.x)*0.5,
-            //     Justify::Right => -(layout_computed.size.x-text_layout_info.size.x),
-            // }).unwrap_or(0.0);
-
-            // let hfix=0.0;
-
-            // let ww=layout_computed.custom_size.x-text_layout_info.size.x;
-            // let ww=0.0;
-            // let ww=text_layout_info.size.x;
 
             let halign_offset=(text_layout_info.size.x<=layout_computed.size.x).then(||match text_layout.justify{
                 Justify::Left => 0.0,
@@ -650,30 +627,13 @@ pub fn extract_uinodes2(
                 Justify::Right => layout_computed.size.x-text_layout_info.size.x,
             }).unwrap_or(0.0);
 
-            // let halign_offset=0.0;
-
-
             let valign_offset=(text_layout_info.size.y<=layout_computed.size.y).then(||match text_valign.cloned().unwrap_or_default() {
                 UiTextVAlign::Top => 0.0,
                 UiTextVAlign::Center => (layout_computed.size.y-text_layout_info.size.y)*0.5,
                 UiTextVAlign::Bottom => layout_computed.size.y-text_layout_info.size.y,
             }).unwrap_or(0.0); //ydir
 
-            println!("hmm (cs{} t{} ) s{} = {} : {} : {}",
-                layout_computed.custom_size.x,
-                text_layout_info.size.x,
-
-                layout_computed.size.x,
-                halign_offset,
-                layout_computed.pos.x+halign_offset,
-                layout_computed.pos.x-halign_offset,
-            );
             let offset=layout_computed.pos+Vec2::new(halign_offset+hfix,valign_offset);
-            // let offset=Vec2::new(
-            //     layout_computed.pos.x+offset.x,
-            //     // layout_computed.pos.x,
-            //     layout_computed.pos.y+offset.y,
-            // );
 
             for &(section_entity, rect) in text_layout_info.section_rects.iter() {
                 let Ok(text_background_color) = text_background_colors_query.get(section_entity) else {
@@ -695,9 +655,13 @@ pub fn extract_uinodes2(
                 // let p1=Vec2::new(rect.min.x.max(clamped_inner_rect.left),rect.min.y.max(clamped_inner_rect.top));
                 // let p2=Vec2::new(rect.max.x.min(clamped_inner_rect.right),rect.max.y.min(clamped_inner_rect.bottom));
 
+                // //clamped
+                let p1=rect.min.max(clamped_inner_rect.min());
+                let p2=rect.max.min(clamped_inner_rect.max());
+
                 // //unclamped
-                let p1=rect.min;
-                let p2=rect.max;
+                // let p1=rect.min;
+                // let p2=rect.max;
 
 
                 // //
@@ -794,12 +758,21 @@ pub fn extract_uinodes2(
                     // let p1=Vec2::new(rect.min.x.max(clamped_inner_rect.left),rect.min.y.max(clamped_inner_rect.top));
                     // let p2=Vec2::new(rect.max.x.min(clamped_inner_rect.right),rect.max.y.min(clamped_inner_rect.bottom));
 
-                    //unclamped
-                    let d1=Vec2::ZERO;
-                    let d2=Vec2::ZERO;
-                    let p1=Vec2::new(rect.min.x,rect.min.y);
-                    let p2=Vec2::new(rect.max.x,rect.max.y);
+                    //clamped
+                    let d1=Vec2::ZERO.max(clamped_inner_rect.min()-rect.min);
+                    let d2=Vec2::ZERO.max(rect.max-clamped_inner_rect.max());
 
+                    let p1=rect.min.max(clamped_inner_rect.min());
+                    let p2=rect.max.min(clamped_inner_rect.max());
+
+                    //unclamped
+                    // let d1=Vec2::ZERO;
+                    // let d2=Vec2::ZERO;
+                    // // let p1=Vec2::new(rect.min.x,rect.min.y);
+                    // // let p2=Vec2::new(rect.max.x,rect.max.y);
+
+                    // let p1=rect.min;
+                    // let p2=rect.max;
                     //
                     let t1=(atlas_glyph_rect.min+d1)/atlas_size;
                     let t2=(atlas_glyph_rect.max-d2)/atlas_size;

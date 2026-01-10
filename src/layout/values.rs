@@ -18,6 +18,15 @@ impl UiRect {
             left:x,right:x,top:x,bottom:x,
         }
     }
+
+    pub fn min(&self) -> Vec2 {
+        Vec2::new(self.left,self.top)
+    }
+
+    pub fn max(&self) -> Vec2 {
+        Vec2::new(self.right,self.bottom)
+    }
+
     pub fn clamp(&self,other:UiRect) -> UiRect {
         UiRect {
             left:self.left.clamp(other.left, other.right),

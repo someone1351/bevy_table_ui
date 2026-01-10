@@ -105,7 +105,7 @@ pub fn update_text_bounds(
         text_bounds.height=None; //don't use ...
 
         //if text_bounds is user set, limit it to layout_computed size
-        // text_bounds.width=text_bounds.width.map(|x|x.min(ui_layout_computed.size.x));
+        text_bounds.width=text_bounds.width.map(|x|x.min(ui_layout_computed.size.x));
         // // text_bounds.width=text_bounds.height.map(|x|x.min(ui_layout_computed.size.y));
 
         //
@@ -118,6 +118,7 @@ pub fn update_text_bounds(
             text_bounds.width=None;
         } else {
             text_bounds.width=Some(text_bounds.width.unwrap_or_default().max(ui_layout_computed.size.x));
+            println!("aaa");
         }
 
         //
@@ -128,9 +129,17 @@ pub fn update_text_bounds(
         if
             computed_text_block.needs_rerender()
             || ui_text_computed.scaling!=scale_factor
-            // true
+            || (text_bounds.width.is_some() && text_bounds.width.unwrap()!=ui_text_computed.bounds.x)
+
+            // || true
 
         {
+            println!("is {} {} {}: {:?} {}",
+                computed_text_block.needs_rerender(),
+                ui_text_computed.scaling!=scale_factor,
+                text_bounds.width!= Some(ui_text_computed.bounds.x),
+                text_bounds.width,ui_text_computed.bounds.x,
+            );
             //
             ui_text_computed.scaling=scale_factor;
 
@@ -170,7 +179,7 @@ pub fn update_text_bounds(
                     //  so text width text_layout_info.size.x is <= text_bounds.width
                     let text_bounds=Vec2::new(text_bounds.width.unwrap_or_default(),text_bounds.height.unwrap_or_default());
 
-                    ui_text_computed.bounds=text_bounds.max(text_layout_info.size);
+                    ui_text_computed.bounds=text_bounds.max(text_layout_info.size); //only stored to be used below and above
                     // ui_text_computed.bounds=ui_layout_computed.size.max(text_layout_info.size);
                     // ui_layout_computed.custom_size=ui_layout_computed.custom_size.max(text_layout_info.size);
                     //println!("hm");

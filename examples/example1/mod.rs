@@ -70,7 +70,7 @@ fn main() {
 
 
         .add_systems(Startup, (
-            // setup_fps,
+            setup_fps,
             setup_camera,
             setup_ui,
         ).chain())
@@ -80,7 +80,7 @@ fn main() {
             // update_ui,
             // on_affects,
             update_input,
-            // show_fps, //.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(100))),
+            show_fps, //.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(100))),
             // on_affects2,
         ).chain())
         // .add_systems(Update, (

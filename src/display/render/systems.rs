@@ -10,7 +10,7 @@ use bevy::color::Color;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::query::With;
 use bevy::image::{Image, TextureAtlasLayout};
-use bevy::math::{FloatOrd, Vec2};
+use bevy::math::{FloatOrd, Rect, Vec2};
 // use bevy::platform::collections::HashSet;
 // use bevy::platform::collections::HashSet;
 use bevy::prelude::{ MessageReader, Msaa};
@@ -29,10 +29,11 @@ use bevy::text::{ComputedTextBlock, Justify, TextBackgroundColor, TextColor, Tex
 
 // use crate::UiText;
 
+use crate::display::render::utils::{create_dummy_image, create_image_bind_group};
 use crate::display::UiText;
 
 use super::draws::DrawMesh;
-use super::dummy_image::create_dummy_image;
+// use super::dummy_image::create_dummy_image;
 use super::pipelines::*;
 use super::components::*;
 use super::resources::*;
@@ -41,60 +42,8 @@ use super::super::render_core::core_my::TransparentMy;
 // use super::super::TestRenderComponent;
 
 use super::super::components::{UiColor,UiImage,UiTextVAlign};
-use super::super::super::layout::{components::*,values::UiRect};
+use super::super::super::layout::components::*;
 //systems
-
-fn create_image_bind_group(
-    render_device: &RenderDevice,
-    mesh2d_pipeline: &MyUiPipeline,
-    // image_bind_groups: &mut MyUiImageBindGroups,
-    // handle:Option<AssetId<Image>>,
-    gpu_image:&GpuImage,
-) -> BindGroup {
-
-    // let bind_group=
-    render_device.create_bind_group(
-        "my_ui_material_bind_group",
-        &mesh2d_pipeline.image_layout, &[
-            BindGroupEntry {binding: 0, resource: BindingResource::TextureView(&gpu_image.texture_view),},
-            BindGroupEntry {binding: 1, resource: BindingResource::Sampler(&gpu_image.sampler),},
-        ]
-    )
-    // ;
-
-    // let image_id=handle.clone();//.map(|x|x.id());
-    // image_bind_groups.values.insert(image_id, bind_group);
-
-    // bind_group
-}
-// fn create_image_bind_group2(
-//     render_device: &RenderDevice,
-//     mesh2d_pipeline: &MyUiPipeline,
-//     gpu_images: &RenderAssets<GpuImage>,
-//     // image_bind_groups: &mut MyUiImageBindGroups,
-//     // handle:Option<AssetId<Image>>,
-//     // handle:Option<AssetId<Image>>,
-// ) {
-
-
-//     //
-//     // let image_id=handle.clone();//.map(|x|x.id());
-//     // // let image_id=test.handle.id();
-//     // //
-//     // if image_bind_groups.values.contains_key(&image_id) {
-//     //     return;
-//     // }
-
-//     // let Some(image_id)=image_id else {
-//     //     return;
-//     // };
-
-//     let Some(gpu_image)=gpu_images.get(image_id) else {
-//         return;
-//     };
-
-//     create_image_bind_group(render_device,mesh2d_pipeline,image_bind_groups,handle,gpu_image);
-// }
 
 pub fn dummy_image_setup(
     render_device: Res<RenderDevice>,
@@ -656,41 +605,106 @@ pub fn extract_uinodes2(
         ) {
             let text_layout=text_layout.cloned().unwrap_or(TextLayout { justify: Justify::Center, linebreak: bevy::text::LineBreak::NoWrap });
 
-            let offset = layout_computed.pos + {
-                let x=if layout_computed.custom_size.x<=layout_computed.size.x {
-                    match text_layout.justify{
-                        Justify::Left => 0.0,
-                        Justify::Center|Justify::Justified => (layout_computed.size.x-layout_computed.custom_size.x)*0.5,
-                        Justify::Right => layout_computed.size.x-layout_computed.custom_size.x,
-                    }
-                } else {
-                    0.0
-                };
 
-                let y=if text_layout_info.size.y<=layout_computed.size.y {
-                    match text_valign.cloned().unwrap_or_default() {
-                        UiTextVAlign::Top => 0.0,
-                        UiTextVAlign::Center => (layout_computed.size.y-text_layout_info.size.y)*0.5,
-                        UiTextVAlign::Bottom => layout_computed.size.y-text_layout_info.size.y,
-                    } //ydir
-                } else {
-                    0.0
-                };
+            //undo bevy text's halign calculations
+            let hfix=(true).then(||{
+                let w=(layout_computed.custom_size.x!=text_layout_info.size.x).then_some(layout_computed.size.x).unwrap_or(0.0);
 
-                Vec2::new(x,y)
-            };
+                match text_layout.justify{
+                    Justify::Left => 0.0,
+                    Justify::Center|Justify::Justified => (text_layout_info.size.x-w)*0.5,
+                    // Justify::Center|Justify::Justified => -(w-text_layout_info.size.x)*0.5,
+                    Justify::Right => text_layout_info.size.x-w,
+                    // Justify::Right => -(w-text_layout_info.size.x),
+                }
+            }).unwrap_or(0.0);
 
+            //
+            // let hfix=(true).then(||match text_layout.justify{
+            //     Justify::Left => 0.0,
+            //     Justify::Center|Justify::Justified => text_layout_info.size.x*0.5,
+            //     Justify::Right => text_layout_info.size.x,
+            // }).unwrap_or(0.0);
+
+            // let hfix=(true).then(||match text_layout.justify{
+            //     Justify::Left => 0.0,
+            //     Justify::Center|Justify::Justified => (text_layout_info.size.x-layout_computed.size.x)*0.5,
+            //     Justify::Right => text_layout_info.size.x-layout_computed.size.x,
+            // }).unwrap_or(0.0);
+
+            // let hfix=(true).then(||match text_layout.justify{
+            //     Justify::Left => 0.0,
+            //     Justify::Center|Justify::Justified => -(layout_computed.size.x-text_layout_info.size.x)*0.5,
+            //     Justify::Right => -(layout_computed.size.x-text_layout_info.size.x),
+            // }).unwrap_or(0.0);
+
+            // let hfix=0.0;
+
+            // let ww=layout_computed.custom_size.x-text_layout_info.size.x;
+            // let ww=0.0;
+            // let ww=text_layout_info.size.x;
+
+            let halign_offset=(text_layout_info.size.x<=layout_computed.size.x).then(||match text_layout.justify{
+                Justify::Left => 0.0,
+                Justify::Center|Justify::Justified => (layout_computed.size.x-text_layout_info.size.x)*0.5,
+                Justify::Right => layout_computed.size.x-text_layout_info.size.x,
+            }).unwrap_or(0.0);
+
+            // let halign_offset=0.0;
+
+
+            let valign_offset=(text_layout_info.size.y<=layout_computed.size.y).then(||match text_valign.cloned().unwrap_or_default() {
+                UiTextVAlign::Top => 0.0,
+                UiTextVAlign::Center => (layout_computed.size.y-text_layout_info.size.y)*0.5,
+                UiTextVAlign::Bottom => layout_computed.size.y-text_layout_info.size.y,
+            }).unwrap_or(0.0); //ydir
+
+            println!("hmm (cs{} t{} ) s{} = {} : {} : {}",
+                layout_computed.custom_size.x,
+                text_layout_info.size.x,
+
+                layout_computed.size.x,
+                halign_offset,
+                layout_computed.pos.x+halign_offset,
+                layout_computed.pos.x-halign_offset,
+            );
+            let offset=layout_computed.pos+Vec2::new(halign_offset+hfix,valign_offset);
+            // let offset=Vec2::new(
+            //     layout_computed.pos.x+offset.x,
+            //     // layout_computed.pos.x,
+            //     layout_computed.pos.y+offset.y,
+            // );
 
             for &(section_entity, rect) in text_layout_info.section_rects.iter() {
                 let Ok(text_background_color) = text_background_colors_query.get(section_entity) else {
                     continue;
                 };
 
-                //min/max even needed? use size instead?
-                let tl=rect.min+offset;
-                let bl=Vec2::new(rect.min.x,rect.max.y)+offset;
-                let br=rect.max+offset;
-                let tr=Vec2::new(rect.max.x,rect.min.y)+offset;
+                let rect=Rect::from_corners(rect.min+offset, rect.max+offset);
+
+                // //min/max even needed? use size instead?
+                // let tl=rect.min;
+                // let br=rect.max;
+                // let bl=Vec2::new(rect.min.x,rect.max.y);
+                // let tr=Vec2::new(rect.max.x,rect.min.y);
+
+                // //
+
+
+                // //clamped
+                // let p1=Vec2::new(rect.min.x.max(clamped_inner_rect.left),rect.min.y.max(clamped_inner_rect.top));
+                // let p2=Vec2::new(rect.max.x.min(clamped_inner_rect.right),rect.max.y.min(clamped_inner_rect.bottom));
+
+                // //unclamped
+                let p1=rect.min;
+                let p2=rect.max;
+
+
+                // //
+                let tl=p1;
+                let br=p2;
+                let tr=Vec2::new(p2.x,p1.y);
+                let bl=Vec2::new(p1.x,p2.y);
 
                 //
                 extracted_elements.elements.push(MyUiExtractedElement{
@@ -766,38 +780,39 @@ pub fn extract_uinodes2(
 
 
                 //
-                let glyph_pos2=glyph_pos+glyph_size;
+                // let glyph_pos2=glyph_pos+glyph_size;
 
-                let glyph_rect=UiRect { left: glyph_pos.x, right: glyph_pos2.x, top: glyph_pos.y, bottom: glyph_pos2.y };
+                // let glyph_rect=UiRect { left: glyph_pos.x, right: glyph_pos2.x, top: glyph_pos.y, bottom: glyph_pos2.y };
+                let rect=Rect::from_corners(glyph_pos, glyph_pos+glyph_size);
 
                 //something wrong with vertical tex coords
                 // if clamped_inner_rect.intersects(&glyph_rect)
                 {
                     //clamped
-                    let d1=Vec2::new(clamped_inner_rect.left-glyph_rect.left,clamped_inner_rect.top-glyph_rect.top).max(Vec2::ZERO);
-                    let d2=Vec2::new(glyph_rect.right-clamped_inner_rect.right,glyph_rect.bottom-clamped_inner_rect.bottom).max(Vec2::ZERO);
-                    let p1=Vec2::new(glyph_rect.left.max(clamped_inner_rect.left),glyph_rect.top.max(clamped_inner_rect.top));
-                    let p2=Vec2::new(glyph_rect.right.min(clamped_inner_rect.right),glyph_rect.bottom.min(clamped_inner_rect.bottom));
+                    // let d1=Vec2::new(clamped_inner_rect.left-rect.min.x,clamped_inner_rect.top-rect.min.y).max(Vec2::ZERO);
+                    // let d2=Vec2::new(rect.max.x-clamped_inner_rect.right,rect.max.y-clamped_inner_rect.bottom).max(Vec2::ZERO);
+                    // let p1=Vec2::new(rect.min.x.max(clamped_inner_rect.left),rect.min.y.max(clamped_inner_rect.top));
+                    // let p2=Vec2::new(rect.max.x.min(clamped_inner_rect.right),rect.max.y.min(clamped_inner_rect.bottom));
 
                     //unclamped
-                    // let d1=Vec2::ZERO;
-                    // let d2=Vec2::ZERO;
-                    // let p1=Vec2::new(glyph_rect.left,glyph_rect.top);
-                    // let p2=Vec2::new(glyph_rect.right,glyph_rect.bottom);
+                    let d1=Vec2::ZERO;
+                    let d2=Vec2::ZERO;
+                    let p1=Vec2::new(rect.min.x,rect.min.y);
+                    let p2=Vec2::new(rect.max.x,rect.max.y);
 
                     //
                     let t1=(atlas_glyph_rect.min+d1)/atlas_size;
-                    let t2 = (atlas_glyph_rect.max-d2)/atlas_size;
+                    let t2=(atlas_glyph_rect.max-d2)/atlas_size;
 
                     let tl=p1;
+                    let br=p2;
                     let tr=Vec2::new(p2.x,p1.y);
                     let bl=Vec2::new(p1.x,p2.y);
-                    let br=p2;
 
                     let tl_uv=t1;
-                    let tr_uv=Vec2::new(t2.x,t1.y);
-                    let bl_uv=Vec2::new(t1.x, t2.y);
                     let br_uv=t2;
+                    let tr_uv=Vec2::new(t2.x,t1.y);
+                    let bl_uv=Vec2::new(t1.x,t2.y);
 
                     let texture=text_glyph.atlas_info.texture.clone();
 

@@ -3,7 +3,6 @@
 // #![allow(unused_variables)]
 // #![allow(unreachable_code)]
 
-use std::collections::BTreeSet;
 // use std::sync::Arc;
 
 use bevy::app::*;
@@ -57,11 +56,10 @@ fn main() {
                     ..Default::default()
             }),
             FrameTimeDiagnosticsPlugin::default(),
-            table_ui::UiLayoutPlugin,
-            table_ui::UiInteractPlugin,
-            table_ui::UiDisplayPlugin,
-            // table_ui::UiAffectPlugin,
-            affect::UiAffectPlugin,
+            UiLayoutPlugin,
+            UiInteractPlugin,
+            UiDisplayPlugin,
+            UiAffectPlugin,
         ))
 
 
@@ -72,7 +70,7 @@ fn main() {
 
 
         .add_systems(Startup, (
-            setup_fps,
+            // setup_fps,
             setup_camera,
             setup_ui,
         ).chain())
@@ -82,7 +80,7 @@ fn main() {
             // update_ui,
             // on_affects,
             update_input,
-            show_fps, //.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(100))),
+            // show_fps, //.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(100))),
             // on_affects2,
         ).chain())
         // .add_systems(Update, (
@@ -154,24 +152,24 @@ pub fn setup_ui(
     commands.entity(root_entity).add_children(&[left_container_entity,right_container_entity]);
 
     commands.entity(left_container_entity).with_children(|parent|{
-        for _ in 0..2 {
+        // for _ in 0..2 {
             let entity=parent.spawn(()).id();
             create_ui_box(&mut parent.commands(), &mut rng, font.clone(),entity);
 
-            parent.commands().entity(entity).with_children(|parent|{
-                for _ in 0..2 {
-                    let entity=parent.spawn(()).id();
-                    create_ui_box(&mut parent.commands(), &mut rng, font.clone(),entity);
-                }
-            });
-        }
+        //     parent.commands().entity(entity).with_children(|parent|{
+        //         for _ in 0..2 {
+        //             let entity=parent.spawn(()).id();
+        //             create_ui_box(&mut parent.commands(), &mut rng, font.clone(),entity);
+        //         }
+        //     });
+        // }
     });
-    commands.entity(right_container_entity).with_children(|parent|{
-        for _ in 0..9 {
-            let entity=parent.spawn(()).id();
-            create_ui_box(&mut parent.commands(), &mut rng, font.clone(),entity);
-        }
-    });
+    // commands.entity(right_container_entity).with_children(|parent|{
+    //     for _ in 0..9 {
+    //         let entity=parent.spawn(()).id();
+    //         create_ui_box(&mut parent.commands(), &mut rng, font.clone(),entity);
+    //     }
+    // });
 
 }
 
@@ -190,9 +188,6 @@ fn setup_camera(mut commands: Commands) {
 struct FpsText;
 
 
-#[derive(Component)]
-struct TextAtlasMarker;
-
 fn setup_fps(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -202,57 +197,29 @@ fn setup_fps(
 
 
 
-    // commands.spawn((
-    //     FpsText,
-    //     UiRoot::default(),
-
-    //     TextFont{ font: font.clone(), font_size: 15.0, ..Default::default() },
-    //     TextColor(Color::WHITE),
-    //     UiAlign{ halign: UiVal::Scale(1.0), valign: UiVal::Scale(0.0) },
-    //     MyText2d("aaa".into()),
-    //     // TextSpan(format!("aaa")),
-    //     UiText{..Default::default()},
-
-    // ));
-
-
-
     commands.spawn((
-        TextAtlasMarker,
+        FpsText,
         UiRoot::default(),
-        UiSize::scale(1.0, 1.0),
-        UiColor{back:Color::linear_rgb(0.2, 0.2, 0.2),..Default::default()},
-        // UiSpan{ span: 1 },
+        TextFont{ font, font_size: 15.0, ..Default::default() },
+        TextColor(Color::WHITE),
+        UiAlign::top_right(),
+        UiText("aaa".into()),
 
     ));
-    // let font = asset_server.load("fonts/FiraMono-Medium.ttf");
 
-    // commands.spawn((
-    //     Text::default(),
-    //     TextLayout::new_with_justify(JustifyText::Center),
-    //     Node {align_self:AlignSelf::Start,justify_self:JustifySelf::End,..Default::default()},
-    // )).with_child((
-    //     TextSpan::new(""),
-    //     TextColor::from(bevy::color::palettes::css::WHITE),
-    //     TextFont {font:font.clone(),font_size: 15.0,..Default::default()},
-    //     FpsText
-    // ));
+
 }
 
 fn show_fps(
     diagnostics: Res<DiagnosticsStore>,
     mut marker_query: Query< &mut UiText,With<FpsText>>,
-
-
 ) {
-
     if let Ok(mut text)=marker_query.single_mut() {
         let v=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS);
         let fps = v.and_then(|x|x.value()).map(|x|x.round()).unwrap_or_default();
         let avg = v.and_then(|x|x.average()).unwrap_or_default();
         text.0 =format!("{fps:.0} {avg:.0}");
     }
-
 }
 
 

@@ -94,13 +94,14 @@ pub enum UiTextVAlign {
 #[derive(Component, Clone, Default, Debug)]
 #[require(UiLayoutComputed)]
 pub struct UiTextComputed{
+    pub bounds: Vec2, //box size that text sits in including empty space, unlike text_layout.logical_size which is only for text itself
+    pub scaling:f32,
+    pub needs_update:bool,
     // pub max_size: Vec2, //what is this for?
 
     //TextBounds{ width: todo!(), height: todo!() },
-    pub bounds: Vec2, //box size that text sits in including empty space, unlike text_layout.logical_size which is only for text itself
 
     //TextLayoutInfo{ scale_factor: todo!(), glyphs: todo!(), section_rects: todo!(), size: todo!() },
-    pub scaling:f32,
 
 
     // //prob don't need

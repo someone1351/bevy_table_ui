@@ -242,6 +242,7 @@ impl Default for UiRoot {
 }
 
 //have bool for calcd ?
+//todo swap ui_rect with rect
 #[derive(Reflect,Component, Debug, Copy, Clone)]
 
 pub struct UiLayoutComputed {

@@ -31,7 +31,8 @@ pub mod draws;
 pub mod components;
 pub mod resources;
 pub mod systems;
-pub mod dummy_image;
+// pub mod dummy_image;
+mod utils;
 
 use resources::*;
 // use components::*;

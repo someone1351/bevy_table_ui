@@ -2,6 +2,8 @@ use std::ops::Mul;
 
 use bevy::{reflect::Reflect, prelude::Vec2};
 
+
+//todo remove and use Rect
 #[derive(Reflect,Copy, Clone, PartialEq, Debug, Default)]
 pub struct UiRect {
     pub left : f32,
@@ -140,6 +142,16 @@ pub enum UiVal {
     None,
     Px(f32),
     Scale(f32),
+}
+
+impl UiVal {
+    pub fn is_none(&self) -> bool {
+        if let Self::None = self {
+            true
+        } else {
+            false
+        }
+    }
 }
 
 // impl Default for Val {

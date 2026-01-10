@@ -3,7 +3,7 @@
 
 use std::collections::HashSet;
 
-use bevy::{app::AppExit, asset::Handle, color::Color, ecs::prelude::*, input::{keyboard::{KeyCode, KeyboardInput}, mouse::{MouseButton, MouseButtonInput, MouseScrollUnit, MouseWheel}, ButtonState}, math::Vec2, text::{Font, Justify, LineBreak, TextColor, TextFont, TextLayout, TextSpan}, window::Window};
+use bevy::{app::AppExit, asset::Handle, color::Color, ecs::prelude::*, input::{keyboard::{KeyCode, KeyboardInput}, mouse::{MouseButton, MouseButtonInput, MouseScrollUnit, MouseWheel}, ButtonState}, math::Vec2, text::{Font, Justify, LineBreak, TextBackgroundColor, TextColor, TextFont, TextLayout, }, window::Window};
 
 use bevy_table_ui::*;
 // {affect::{components::UixAffect, utils::create_affect_attrib, values::UixAffectState}, UiColor, UiCursorable, UiEdge, UiFocusable, UiInteractInputMessage, UiRectVal, UiRoot, UiSize, UiText, UiTextVAlign, UiVal};
@@ -398,7 +398,6 @@ pub fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<
             text,
             // // width,
         ]),
-        UiSize{ width:UiVal::Px(-20.0), height:UiVal::Px(-30.0), },
         UiFocusable{
             enable: true,
             hexit:false,vexit:true,
@@ -424,10 +423,17 @@ pub fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<
             margin: UiRectVal::new_scalar(UiVal::Px(5.0)),
             ..Default::default() },
 
+        UiSize::px(-40.0, -30.0),
+        // UiSize::px(100.0, 50.0),
         TextFont{ font: font.clone(), font_size: 15.0, ..Default::default() },
         TextColor(Color::linear_rgb(1.0,0.0,0.0)),
         // TextColor(Color::linear_rgb(1.0,0.0,0.0)),
-        TextLayout{ justify: Justify::Right, linebreak: LineBreak::WordBoundary },
+        TextLayout{
+            // justify: Justify::Left,
+            justify: Justify::Right,
+            // justify: Justify::Center,
+            linebreak: LineBreak::WordBoundary,
+        },
         // TextLayoutInfo{ scale_factor: todo!(), glyphs: todo!(), section_rects: todo!(), size: todo!() },
         // TextBounds{ width: todo!(), height: todo!() },
         // MyText2d(format!("{entity}")),
@@ -442,10 +448,11 @@ pub fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<
         //     // font: font.clone(),
         //     // color: Color::linear_rgb(1.0,1.0,1.0),
         //     ..Default::default()
+        TextBackgroundColor(Color::srgb_from_array(c)),
         // },
     ))
     .with_child((
-        TextSpan(format!("{entity}")),
+        // TextSpan(format!("{entity}")),
 
         TextFont{ font: font.clone(), font_size: 15.0, ..Default::default() },
         TextColor(Color::linear_rgb(0.0,0.0,1.0)),

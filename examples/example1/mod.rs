@@ -201,10 +201,18 @@ fn setup_fps(
         // UiAlign::px(600.0, 0.0),
         // UiAlign::scale(1.0, 1.0),
         UiAlign::scale(1.0, 0.9),
-        UiSize::px(200.0, 50.0),
+        UiSize::px(50.0, 50.0),
         UiColor::default().back(Color::linear_rgb(1.0,0.3, 0.1)),
     ));
 
+    commands.spawn(( UiRoot::default(), UiSize::max())).with_child((
+
+        // UiAlign::px(600.0, 0.0),
+        // UiAlign::scale(1.0, 1.0),
+        UiAlign::scale(0.0, 0.3),
+        UiSize::px(50.0, 50.0),
+        UiColor::default().back(Color::linear_rgb(1.0,0.3, 0.1)),
+    ));
 
     commands.spawn(( UiRoot::default(), UiSize::max(),UiGap::px(20.0, 20.0))).with_child((
         FpsText,

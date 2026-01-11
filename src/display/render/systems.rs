@@ -608,20 +608,8 @@ pub fn extract_uinodes2(
 
 
             //undo bevy text's weird halign calculations
-            //layout_computed.custom_size.x<layout_computed.size.x
-            //text_layout_info.size.x<layout_computed.size.x
-            //(text_layout_info.size.x <= layout_computed.custom_size.x)
-            //
-            let hfix=
-                // (layout_computed.size.x!=text_layout_info.size.x)
-                (text_layout_info.size.x<layout_computed.size.x)
-                .then(||
-            {
-                let w=
-                    // (text_layout_info.size.x <= layout_computed.custom_size.x)
-                    (layout_computed.custom_size.x>text_layout_info.size.x)
-                    // (layout_computed.custom_size.x!=text_layout_info.size.x)
-                    .then_some(layout_computed.size.x).unwrap_or(0.0);
+            let hfix=(text_layout_info.size.x<layout_computed.size.x).then(||{
+                let w=(layout_computed.custom_size.x>text_layout_info.size.x).then_some(layout_computed.size.x).unwrap_or(0.0);
 
                 match text_layout.justify{
                     Justify::Left => 0.0,

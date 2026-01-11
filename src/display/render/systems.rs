@@ -31,6 +31,7 @@ use bevy::text::{ComputedTextBlock, Justify, TextBackgroundColor, TextColor, Tex
 
 use crate::display::render::utils::{create_dummy_image, create_image_bind_group};
 use crate::display::UiText;
+use crate::utils::rect_to_ui_rect;
 
 use super::draws::DrawMesh;
 // use super::dummy_image::create_dummy_image;
@@ -607,8 +608,19 @@ pub fn extract_uinodes2(
 
 
             //undo bevy text's weird halign calculations
-            let hfix=(true).then(||{
-                let w=(layout_computed.custom_size.x!=text_layout_info.size.x) // or gt
+            //layout_computed.custom_size.x<layout_computed.size.x
+            //text_layout_info.size.x<layout_computed.size.x
+            //(text_layout_info.size.x <= layout_computed.custom_size.x)
+            //
+            let hfix=
+                // (layout_computed.size.x!=text_layout_info.size.x)
+                (text_layout_info.size.x<layout_computed.size.x)
+                .then(||
+            {
+                let w=
+                    // (text_layout_info.size.x <= layout_computed.custom_size.x)
+                    (layout_computed.custom_size.x>text_layout_info.size.x)
+                    // (layout_computed.custom_size.x!=text_layout_info.size.x)
                     .then_some(layout_computed.size.x).unwrap_or(0.0);
 
                 match text_layout.justify{
@@ -620,6 +632,15 @@ pub fn extract_uinodes2(
                 }
             }).unwrap_or(0.0);
 
+            //
+            println!("hmm hfix={hfix} lc={:?} t={:?}, dif={:?}, lcs={:?}",
+                layout_computed.size.x,
+                text_layout_info.size.x,
+                layout_computed.size.x-text_layout_info.size.x,
+                layout_computed.custom_size.x,
+            );
+
+            //
 
             let halign_offset=(text_layout_info.size.x<=layout_computed.size.x).then(||match text_layout.justify{
                 Justify::Left => 0.0,
@@ -750,29 +771,30 @@ pub fn extract_uinodes2(
                 let rect=Rect::from_corners(glyph_pos, glyph_pos+glyph_size);
 
                 //something wrong with vertical tex coords
-                // if clamped_inner_rect.intersects(&glyph_rect)
+                // if clamped_inner_rect.intersects(&rect_to_ui_rect(rect))
                 {
                     //clamped
-                    // let d1=Vec2::new(clamped_inner_rect.left-rect.min.x,clamped_inner_rect.top-rect.min.y).max(Vec2::ZERO);
-                    // let d2=Vec2::new(rect.max.x-clamped_inner_rect.right,rect.max.y-clamped_inner_rect.bottom).max(Vec2::ZERO);
-                    // let p1=Vec2::new(rect.min.x.max(clamped_inner_rect.left),rect.min.y.max(clamped_inner_rect.top));
-                    // let p2=Vec2::new(rect.max.x.min(clamped_inner_rect.right),rect.max.y.min(clamped_inner_rect.bottom));
+                    let d1=Vec2::new(clamped_inner_rect.left-rect.min.x,clamped_inner_rect.top-rect.min.y).max(Vec2::ZERO);
+                    let d2=Vec2::new(rect.max.x-clamped_inner_rect.right,rect.max.y-clamped_inner_rect.bottom).max(Vec2::ZERO);
+                    let p1=Vec2::new(rect.min.x.max(clamped_inner_rect.left),rect.min.y.max(clamped_inner_rect.top));
+                    let p2=Vec2::new(rect.max.x.min(clamped_inner_rect.right),rect.max.y.min(clamped_inner_rect.bottom));
 
                     //clamped
-                    let d1=Vec2::ZERO.max(clamped_inner_rect.min()-rect.min);
-                    let d2=Vec2::ZERO.max(rect.max-clamped_inner_rect.max());
+                    // let d1=Vec2::ZERO.max(clamped_inner_rect.min()-rect.min);
+                    // let d2=Vec2::ZERO.max(rect.max-clamped_inner_rect.max());
 
-                    let p1=rect.min.max(clamped_inner_rect.min());
-                    let p2=rect.max.min(clamped_inner_rect.max());
+                    // let p1=rect.min.max(clamped_inner_rect.min());
+                    // let p2=rect.max.min(clamped_inner_rect.max());
 
-                    //unclamped
+                    // //unclamped
                     // let d1=Vec2::ZERO;
                     // let d2=Vec2::ZERO;
-                    // // let p1=Vec2::new(rect.min.x,rect.min.y);
-                    // // let p2=Vec2::new(rect.max.x,rect.max.y);
 
                     // let p1=rect.min;
                     // let p2=rect.max;
+
+                    // // let p1=Vec2::new(rect.min.x,rect.min.y);
+                    // // let p2=Vec2::new(rect.max.x,rect.max.y);
                     //
                     let t1=(atlas_glyph_rect.min+d1)/atlas_size;
                     let t2=(atlas_glyph_rect.max-d2)/atlas_size;

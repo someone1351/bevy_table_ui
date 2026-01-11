@@ -156,6 +156,13 @@ pub struct UiAlign {
 }
 
 impl UiAlign {
+
+    pub fn scale(halign:f32,valign:f32) -> Self {
+        Self { halign: UiVal::Scale(halign), valign: UiVal::Scale(valign) }
+    }
+    pub fn px(halign:f32,valign:f32) -> Self {
+        Self { halign: UiVal::Px(halign), valign: UiVal::Px(valign) }
+    }
     pub fn top_left() -> Self {
         Self { halign: UiVal::Scale(0.0), valign: UiVal::Scale(0.0) }
     }

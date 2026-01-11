@@ -72,7 +72,7 @@ fn main() {
         .add_systems(Startup, (
             setup_fps,
             setup_camera,
-            setup_ui,
+            // setup_ui,
         ).chain())
         .add_systems(Update, (
             update_ui_roots,
@@ -80,7 +80,7 @@ fn main() {
             // update_ui,
             // on_affects,
             update_input,
-            show_fps, //.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(100))),
+            // show_fps, //.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(100))),
             // on_affects2,
         ).chain())
         // .add_systems(Update, (
@@ -152,24 +152,24 @@ pub fn setup_ui(
     commands.entity(root_entity).add_children(&[left_container_entity,right_container_entity]);
 
     commands.entity(left_container_entity).with_children(|parent|{
-        // for _ in 0..2 {
+        for _ in 0..2 {
             let entity=parent.spawn(()).id();
             create_ui_box(&mut parent.commands(), &mut rng, font.clone(),entity);
 
-        //     parent.commands().entity(entity).with_children(|parent|{
-        //         for _ in 0..2 {
-        //             let entity=parent.spawn(()).id();
-        //             create_ui_box(&mut parent.commands(), &mut rng, font.clone(),entity);
-        //         }
-        //     });
-        // }
+            parent.commands().entity(entity).with_children(|parent|{
+                for _ in 0..2 {
+                    let entity=parent.spawn(()).id();
+                    create_ui_box(&mut parent.commands(), &mut rng, font.clone(),entity);
+                }
+            });
+        }
     });
-    // commands.entity(right_container_entity).with_children(|parent|{
-    //     for _ in 0..9 {
-    //         let entity=parent.spawn(()).id();
-    //         create_ui_box(&mut parent.commands(), &mut rng, font.clone(),entity);
-    //     }
-    // });
+    commands.entity(right_container_entity).with_children(|parent|{
+        for _ in 0..9 {
+            let entity=parent.spawn(()).id();
+            create_ui_box(&mut parent.commands(), &mut rng, font.clone(),entity);
+        }
+    });
 
 }
 
@@ -196,18 +196,50 @@ fn setup_fps(
     let font: Handle<Font>=asset_server.load("fonts/FiraMono-Medium.ttf");
 
 
+    commands.spawn(( UiRoot::default(), UiSize::max())).with_child((
 
-    commands.spawn((
-        FpsText,
-        UiRoot::default(),
-        TextFont{ font, font_size: 15.0, ..Default::default() },
-        TextColor(Color::WHITE),
-        UiAlign::top_right(),
-        UiText("aaa".into()),
-
+        // UiAlign::px(600.0, 0.0),
+        // UiAlign::scale(1.0, 1.0),
+        UiAlign::scale(1.0, 0.9),
+        UiSize::px(200.0, 50.0),
+        UiColor::default().back(Color::linear_rgb(1.0,0.3, 0.1)),
     ));
 
 
+    commands.spawn(( UiRoot::default(), UiSize::max(),UiGap::px(20.0, 20.0))).with_child((
+        FpsText,
+        TextFont{ font:font.clone(), font_size: 15.0, ..Default::default() },
+        TextColor(Color::WHITE),
+        UiText("aaa123".into()),
+        TextBackgroundColor(Color::linear_rgb(1.0,0.3, 0.1)),
+        TextLayout::new_with_justify(Justify::Right),
+        // UiAlign::top_right(),
+        // UiSize::px(-20.0, -20.0),
+        // UiSize::px(200.0, 50.0),
+        UiColor::default().back(Color::linear_rgb(0.5,0.1, 0.1)),
+    )).with_child((
+        FpsText,
+        TextFont{ font:font.clone(), font_size: 15.0, ..Default::default() },
+        TextColor(Color::WHITE),
+        UiText("aaa123".into()),
+        TextBackgroundColor(Color::linear_rgb(1.0,0.3, 0.1)),
+        TextLayout::new_with_justify(Justify::Right),
+        // UiAlign::top_right(),
+        UiSize::px(-20.0, -20.0),
+        // UiSize::px(200.0, 50.0),
+        UiColor::default().back(Color::linear_rgb(0.5,0.1, 0.1)),
+    )).with_child((
+        FpsText,
+        TextFont{ font:font.clone(), font_size: 15.0, ..Default::default() },
+        TextColor(Color::WHITE),
+        UiText("aaa123".into()),
+        TextBackgroundColor(Color::linear_rgb(1.0,0.3, 0.1)),
+        TextLayout::new_with_justify(Justify::Right),
+        // UiAlign::top_right(),
+        // UiSize::px(-20.0, -20.0),
+        UiSize::px(200.0, 50.0),
+        UiColor::default().back(Color::linear_rgb(0.5,0.1, 0.1)),
+    ));
 }
 
 fn show_fps(

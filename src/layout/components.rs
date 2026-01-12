@@ -285,12 +285,13 @@ pub struct UiLayoutComputed {
 
 impl UiLayoutComputed {
     pub fn inner_rect(&self) -> UiRect {
-        UiRect {
-            left: self.pos.x,
-            top: self.pos.y,
-            right: self.pos.x+self.size.x,
-            bottom: self.pos.y+self.size.y,
-        }
+        // UiRect {
+        //     left: self.pos.x,
+        //     top: self.pos.y,
+        //     right: self.pos.x+self.size.x,
+        //     bottom: self.pos.y+self.size.y,
+        // }
+        UiRect { min: self.pos, max: self.pos+self.size }
     }
     pub fn padding_rect(&self) -> UiRect {
         self.inner_rect().expand_by(self.padding_size)

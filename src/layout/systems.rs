@@ -1544,14 +1544,14 @@ pub fn ui_calc_computeds3(
                             // let vouter = child_computed.edge_t+child_computed.edge_b + child_computed.nedge_t+child_computed.nedge_b;
 
                             let houter =
-                                child_computed.border_size.left+child_computed.border_size.right+
-                                child_computed.padding_size.left+child_computed.padding_size.right+
-                                child_computed.margin_size.left+child_computed.margin_size.right;
+                                child_computed.border_size.min.x+child_computed.border_size.max.x+
+                                child_computed.padding_size.min.x+child_computed.padding_size.max.x+
+                                child_computed.margin_size.min.x+child_computed.margin_size.max.x;
 
                             let vouter =
-                                child_computed.border_size.top+child_computed.border_size.bottom+
-                                child_computed.padding_size.top+child_computed.padding_size.bottom+
-                                child_computed.margin_size.top+child_computed.margin_size.bottom;
+                                child_computed.border_size.min.y+child_computed.border_size.max.y+
+                                child_computed.padding_size.min.y+child_computed.padding_size.max.y+
+                                child_computed.margin_size.min.y+child_computed.margin_size.max.y;
 
                             if child_float || parent_of_root {
                                 let hspace=(computed.size.x-child_computed.size.x - houter).max(0.0);
@@ -1575,8 +1575,8 @@ pub fn ui_calc_computeds3(
                                     _=>{vspace*0.5},
                                 }; //ydir2
 
-                                child_computed.cell_size.left=left_space;
-                                child_computed.cell_size.right=(hspace-left_space).max(0.0); //incase of floating point errors?
+                                child_computed.cell_size.min.x=left_space;
+                                child_computed.cell_size.max.x=(hspace-left_space).max(0.0); //incase of floating point errors?
 
                                 // child_computed.spc_b=vbottom_space; //ydir
                                 // child_computed.spc_t=(vspace-vbottom_space).max(0.0); //ydir
@@ -1584,8 +1584,8 @@ pub fn ui_calc_computeds3(
                                 // child_computed.cell.top=top_space; //ydir2
                                 // child_computed.cell.bottom=(vspace-top_space).max(0.0); //ydir2
 
-                                child_computed.cell_size.top=top_space; //ydir2
-                                child_computed.cell_size.bottom=(vspace-top_space).max(0.0); //ydir2
+                                child_computed.cell_size.min.y=top_space; //ydir2
+                                child_computed.cell_size.max.y=(vspace-top_space).max(0.0); //ydir2
                             } else {
                                 // let col = child_ind % cols_num;
                                 // let row = child_ind / cols_num;
@@ -1625,8 +1625,8 @@ pub fn ui_calc_computeds3(
                                     _=>{vspace*0.5},
                                 }; //ydir2
 
-                                child_computed.cell_size.left=left_space;
-                                child_computed.cell_size.right=(hspace-left_space).max(0.0); //incase of floating point errors?
+                                child_computed.cell_size.min.x=left_space;
+                                child_computed.cell_size.max.x=(hspace-left_space).max(0.0); //incase of floating point errors?
 
                                 // child_computed.spc_b=vbottom_space; //ydir
                                 // child_computed.spc_t=(vspace-vbottom_space).max(0.0); //ydir
@@ -1634,8 +1634,8 @@ pub fn ui_calc_computeds3(
                                 // child_computed.cell.top=top_space; //ydir2
                                 // child_computed.cell.bottom=(vspace-top_space).max(0.0); //ydir2
 
-                                child_computed.cell_size.top=top_space;
-                                child_computed.cell_size.bottom=(vspace-top_space).max(0.0);
+                                child_computed.cell_size.min.y=top_space;
+                                child_computed.cell_size.max.y=(vspace-top_space).max(0.0);
 
                                 // child_ind+=1;
                             }
@@ -1824,16 +1824,16 @@ pub fn ui_calc_computed_pos(
                         //     child_computed.spc_t+child_computed.spc_b;
 
                         let w=child_computed.size.x+
-                            child_computed.border_size.left+child_computed.border_size.right+
-                            child_computed.padding_size.left+child_computed.padding_size.right+
-                            child_computed.margin_size.left+child_computed.margin_size.right+
-                            child_computed.cell_size.left+child_computed.cell_size.right;
+                            child_computed.border_size.min.x+child_computed.border_size.max.x+
+                            child_computed.padding_size.min.x+child_computed.padding_size.max.x+
+                            child_computed.margin_size.min.x+child_computed.margin_size.max.x+
+                            child_computed.cell_size.min.x+child_computed.cell_size.max.x;
 
                         let h=child_computed.size.y+
-                            child_computed.border_size.top+child_computed.border_size.bottom+
-                            child_computed.padding_size.top+child_computed.padding_size.bottom+
-                            child_computed.margin_size.top+child_computed.margin_size.bottom+
-                            child_computed.cell_size.top+child_computed.cell_size.bottom;
+                            child_computed.border_size.min.y+child_computed.border_size.max.y+
+                            child_computed.padding_size.min.y+child_computed.padding_size.max.y+
+                            child_computed.margin_size.min.y+child_computed.margin_size.max.y+
+                            child_computed.cell_size.min.y+child_computed.cell_size.max.y;
 
                         col_widths[col]=col_widths[col].max(w);
                         row_heights[row]=row_heights[row].max(h);
@@ -1872,16 +1872,16 @@ pub fn ui_calc_computed_pos(
 
 
                                 child_computed.pos.x=computed.pos.x+
-                                    child_computed.cell_size.left+
-                                    child_computed.border_size.left+
-                                    child_computed.padding_size.left+
-                                    child_computed.margin_size.left;
+                                    child_computed.cell_size.min.x+
+                                    child_computed.border_size.min.x+
+                                    child_computed.padding_size.min.x+
+                                    child_computed.margin_size.min.x;
 
                                 child_computed.pos.y=computed.pos.y+
-                                    child_computed.cell_size.top+
-                                    child_computed.border_size.top+
-                                    child_computed.padding_size.top+
-                                    child_computed.margin_size.top; //ydir2
+                                    child_computed.cell_size.min.y+
+                                    child_computed.border_size.min.y+
+                                    child_computed.padding_size.min.y+
+                                    child_computed.margin_size.min.y; //ydir2
                             } else {
                                 // let col = child_ind % cols_num;
                                 // let row = child_ind / cols_num;
@@ -1910,16 +1910,16 @@ pub fn ui_calc_computed_pos(
 
 
                                 child_computed.pos.x=x+
-                                    child_computed.cell_size.left+
-                                    child_computed.border_size.left+
-                                    child_computed.padding_size.left+
-                                    child_computed.margin_size.left;
+                                    child_computed.cell_size.min.x+
+                                    child_computed.border_size.min.x+
+                                    child_computed.padding_size.min.x+
+                                    child_computed.margin_size.min.x;
 
                                 child_computed.pos.y=y+
-                                    child_computed.cell_size.top+
-                                    child_computed.border_size.top+
-                                    child_computed.padding_size.top+
-                                    child_computed.margin_size.top; //ydir2
+                                    child_computed.cell_size.min.y+
+                                    child_computed.border_size.min.y+
+                                    child_computed.padding_size.min.y+
+                                    child_computed.margin_size.min.y; //ydir2
 
                                 x+= col_widths[col];
 
@@ -2111,10 +2111,12 @@ pub fn ui_calc_computed_clamp(
             UiLayoutComputed{
                 // unlocked:true,visible:true,enabled:true,size:Vec2::new(root.width,root.height),
                 clamped_rect:UiRect{
-                    left:root.x,
-                    top:root.y,
-                    right:root.x+root.width,
-                    bottom:root.y+root.height,
+                    min:Vec2::new(root.x,root.y),
+                    max:Vec2::new(root.x,root.y)+Vec2::new(root.width,root.height),
+                    // left:root.x,
+                    // top:root.y,
+                    // right:root.x+root.width,
+                    // bottom:root.y+root.height,
                 }, //y is down
                 ..Default::default()
             }

@@ -424,10 +424,10 @@ pub fn extract_uinodes2(
 
         //color
         if back_color.to_srgba().alpha!=0.0 && clamped_inner_rect2.width()>0.0 && clamped_inner_rect2.height()>0.0 {
-            let bl=Vec2::new(clamped_inner_rect2.left, clamped_inner_rect2.bottom);
-            let br=Vec2::new(clamped_inner_rect2.right,  clamped_inner_rect2.bottom);
-            let tl=Vec2::new(clamped_inner_rect2.left, clamped_inner_rect2.top);
-            let tr=Vec2::new(clamped_inner_rect2.right, clamped_inner_rect2.top);
+            let bl=Vec2::new(clamped_inner_rect2.min.x, clamped_inner_rect2.max.y);
+            let br=Vec2::new(clamped_inner_rect2.max.x,  clamped_inner_rect2.max.y);
+            let tl=Vec2::new(clamped_inner_rect2.min.x, clamped_inner_rect2.min.y);
+            let tr=Vec2::new(clamped_inner_rect2.max.x, clamped_inner_rect2.min.y);
 
             extracted_elements.elements.push(MyUiExtractedElement{
                 render_layers: node_render_layers.clone(),
@@ -465,17 +465,17 @@ pub fn extract_uinodes2(
                     let outer_rect=rects2[i];
 
                     let sizes=[
-                        outer_rect.bottom-outer_rect.top,
-                        outer_rect.bottom-outer_rect.top,
-                        outer_rect.right-outer_rect.left,
-                        outer_rect.right-outer_rect.left,
+                        outer_rect.max.y-outer_rect.min.y,
+                        outer_rect.max.y-outer_rect.min.y,
+                        outer_rect.max.x-outer_rect.min.x,
+                        outer_rect.max.x-outer_rect.min.x,
                     ];
 
                     let thicknesses = [
-                        inner_rect.left-outer_rect.left,
-                        outer_rect.right-inner_rect.right,
-                        inner_rect.top-outer_rect.top,
-                        outer_rect.bottom-inner_rect.bottom,
+                        inner_rect.min.x-outer_rect.min.x,
+                        outer_rect.max.x-inner_rect.max.x,
+                        inner_rect.min.y-outer_rect.min.y,
+                        outer_rect.max.y-inner_rect.max.y,
                     ];
 
                     let bls=[outer_rect.left_bottom(),inner_rect.right_bottom(),inner_rect.left_top(),outer_rect.left_bottom()];
@@ -547,10 +547,10 @@ pub fn extract_uinodes2(
                 // let dx=clamped_inner_width/w;
                 // let dy=clamped_inner_height/h;
 
-                let bl=Vec2::new(clamped_inner_rect.left, clamped_inner_rect.bottom);
-                let br=Vec2::new(clamped_inner_rect.right, clamped_inner_rect.bottom);
-                let tl=Vec2::new(clamped_inner_rect.left, clamped_inner_rect.top);
-                let tr=Vec2::new(clamped_inner_rect.right, clamped_inner_rect.top);
+                let bl=Vec2::new(clamped_inner_rect.min.x, clamped_inner_rect.max.y);
+                let br=Vec2::new(clamped_inner_rect.max.x, clamped_inner_rect.max.y);
+                let tl=Vec2::new(clamped_inner_rect.min.x, clamped_inner_rect.min.y);
+                let tr=Vec2::new(clamped_inner_rect.max.x, clamped_inner_rect.min.y);
 
                 let inner_width=inner_rect.width();
                 let inner_height=inner_rect.height();
@@ -559,11 +559,11 @@ pub fn extract_uinodes2(
 
                 // let tex_y=clamped_inner_rect.top-inner_rect.top;
                 // let tex_y2=inner_rect.bottom-clamped_inner_rect.bottom;
-                let tex_x=(clamped_inner_rect.left-inner_rect.left)/inner_width;
-                let tex_x2=(clamped_inner_rect.right-inner_rect.left)/inner_width;
+                let tex_x=(clamped_inner_rect.min.x-inner_rect.min.x)/inner_width;
+                let tex_x2=(clamped_inner_rect.max.x-inner_rect.min.x)/inner_width;
 
-                let tex_y=(clamped_inner_rect.top-inner_rect.top)/inner_height;
-                let tex_y2=(clamped_inner_rect.bottom-inner_rect.top)/inner_height;
+                let tex_y=(clamped_inner_rect.min.y-inner_rect.min.y)/inner_height;
+                let tex_y2=(clamped_inner_rect.max.y-inner_rect.min.y)/inner_height;
 
 
 
@@ -621,12 +621,12 @@ pub fn extract_uinodes2(
             }).unwrap_or(0.0);
 
             //
-            println!("hmm hfix={hfix} lc={:?} t={:?}, dif={:?}, lcs={:?}",
-                layout_computed.size.x,
-                text_layout_info.size.x,
-                layout_computed.size.x-text_layout_info.size.x,
-                layout_computed.custom_size.x,
-            );
+            // println!("hmm hfix={hfix} lc={:?} t={:?}, dif={:?}, lcs={:?}",
+            //     layout_computed.size.x,
+            //     text_layout_info.size.x,
+            //     layout_computed.size.x-text_layout_info.size.x,
+            //     layout_computed.custom_size.x,
+            // );
 
             //
 
@@ -665,8 +665,8 @@ pub fn extract_uinodes2(
                 // let p2=Vec2::new(rect.max.x.min(clamped_inner_rect.right),rect.max.y.min(clamped_inner_rect.bottom));
 
                 // //clamped
-                let p1=rect.min.max(clamped_inner_rect.min());
-                let p2=rect.max.min(clamped_inner_rect.max());
+                let p1=rect.min.max(clamped_inner_rect.min);
+                let p2=rect.max.min(clamped_inner_rect.max);
 
                 // //unclamped
                 // let p1=rect.min;
@@ -762,10 +762,10 @@ pub fn extract_uinodes2(
                 // if clamped_inner_rect.intersects(&rect_to_ui_rect(rect))
                 {
                     //clamped
-                    let d1=Vec2::new(clamped_inner_rect.left-rect.min.x,clamped_inner_rect.top-rect.min.y).max(Vec2::ZERO);
-                    let d2=Vec2::new(rect.max.x-clamped_inner_rect.right,rect.max.y-clamped_inner_rect.bottom).max(Vec2::ZERO);
-                    let p1=Vec2::new(rect.min.x.max(clamped_inner_rect.left),rect.min.y.max(clamped_inner_rect.top));
-                    let p2=Vec2::new(rect.max.x.min(clamped_inner_rect.right),rect.max.y.min(clamped_inner_rect.bottom));
+                    let d1=Vec2::new(clamped_inner_rect.min.x-rect.min.x,clamped_inner_rect.min.y-rect.min.y).max(Vec2::ZERO);
+                    let d2=Vec2::new(rect.max.x-clamped_inner_rect.max.x,rect.max.y-clamped_inner_rect.max.y).max(Vec2::ZERO);
+                    let p1=Vec2::new(rect.min.x.max(clamped_inner_rect.min.x),rect.min.y.max(clamped_inner_rect.min.y));
+                    let p2=Vec2::new(rect.max.x.min(clamped_inner_rect.max.x),rect.max.y.min(clamped_inner_rect.max.y));
 
                     //clamped
                     // let d1=Vec2::ZERO.max(clamped_inner_rect.min()-rect.min);

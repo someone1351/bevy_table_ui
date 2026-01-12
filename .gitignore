@@ -2,6 +2,14 @@
 /.vscode
 /target
 /screenshots
+/src1
+/src2
+/src3
+/src4
+/src - Copy
+/src - Copy - Copy
+/src - Copy - Copy - Copy
+/src - Copy - Copy - Copy - Copy
 .gitignore
 Cargo.lock
 git_run.bat

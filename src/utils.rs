@@ -3,10 +3,12 @@ use bevy::{math::{Rect, Vec2}};
 use crate::UiRect;
 
 pub fn rect_to_ui_rect(r:Rect)-> UiRect {
-    UiRect { left: r.min.x, right: r.max.x, top: r.min.y, bottom: r.max.y }
+    // UiRect { left: r.min.x, right: r.max.x, top: r.min.y, bottom: r.max.y }
+    UiRect{min:r.min,max:r.max}
 }
 pub fn ui_rect_to_rect(r:UiRect)-> Rect {
-    Rect::new(r.left,r.top, r.right, r.bottom)
+    Rect {min:r.min,max:r.max}
+    // Rect::new(r.left,r.top, r.right, r.bottom)
 }
 pub fn rect_right_top(r:Rect) -> Vec2 {
     Vec2::new(r.max.x, r.min.y)

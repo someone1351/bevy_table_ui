@@ -51,7 +51,7 @@ pub fn hover_cleanup(
     cur_hover_entities.0.retain(|&(root_entity,device),&mut (entity,cursor)|{
         let root_alive = root_query.get(root_entity).map(|(_,computed)|computed.unlocked).unwrap_or_default();
         let hoverable_alive = hoverable_query.get(entity).map(|(_,layout_computed,hoverable)|{
-            hoverable.hoverable && layout_computed.unlocked && layout_computed.clamped_border_rect().contains_point(cursor)
+            hoverable.hoverable && layout_computed.unlocked && layout_computed.clamped_border_rect().contains(cursor)
         }).unwrap_or_default();
 
         // if let Ok((_,layout_computed,hoverable)) = hoverable_query.get(*entity) {
@@ -140,7 +140,7 @@ fn do_hover(
         let layout_computed=layout_computed_query.get(entity).unwrap(); //cleanup makes sure it has layoutcomputed
         let rect=layout_computed.clamped_border_rect();
 
-        if cursor.is_none() || rect.is_zero() || !rect.contains_point(cursor.unwrap()) {
+        if cursor.is_none() || rect.is_zero() || !rect.contains(cursor.unwrap()) {
             cur_hover_entities.0.remove(&(root_entity,device)).unwrap();
             ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::CursorHoverEnd{device}});
         }
@@ -165,7 +165,7 @@ fn do_hover(
         let pressable=pressable_query.get(entity).map(|x|x.1).unwrap();
         let layout_computed=layout_computed_query.get(entity).unwrap();
         let rect=layout_computed.clamped_border_rect();
-        pressable.hoverable && !rect.is_zero() && rect.contains_point(cursor)
+        pressable.hoverable && !rect.is_zero() && rect.contains(cursor)
     }).cloned();
 
     //
@@ -261,7 +261,7 @@ fn do_drag_press_begin(
         let pressable=pressable_query.get(entity).map(|x|x.1).unwrap();
         let layout_computed=layout_computed_query.get(entity).unwrap();
         let rect=layout_computed.border_rect();
-        pressable.draggable && rect.contains_point(cursor)
+        pressable.draggable && rect.contains(cursor)
     }).cloned() else {
         return;
     };
@@ -401,7 +401,7 @@ fn do_press_move(
         let cursor_inside= cursor.map(|cursor|{
             let layout_computed = layout_computed_query.get(pressed_entity).unwrap(); //can use unwrap otherwise won't be in device_presseds
             let outer_rect=layout_computed.clamped_border_rect();//.clamped_padding_rect();
-            let cursor_inside= !outer_rect.is_zero() && outer_rect.contains_point(cursor);
+            let cursor_inside= !outer_rect.is_zero() && outer_rect.contains(cursor);
             cursor_inside
         }).unwrap_or_default();
 
@@ -454,7 +454,7 @@ fn do_press_begin(
                 }
 
                 let outer_rect=computed.clamped_border_rect();//.clamped_padding_rect();
-                let cursor_inside= !outer_rect.is_zero() && outer_rect.contains_point(cursor);
+                let cursor_inside= !outer_rect.is_zero() && outer_rect.contains(cursor);
                 cursor_inside
             })
         })
@@ -729,7 +729,7 @@ pub fn update_press_events(
                     }
 
                     let outer_rect=computed.clamped_border_rect();//.clamped_padding_rect();
-                    let cursor_inside= !outer_rect.is_zero() && outer_rect.contains_point(cursor);
+                    let cursor_inside= !outer_rect.is_zero() && outer_rect.contains(cursor);
                     cursor_inside
                 }).cloned();
 

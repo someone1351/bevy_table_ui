@@ -1,31 +1,35 @@
+use bevy::math::Vec2;
+
 use super::values::{UiVal, UiRectVal, UiRect};
 
 pub fn calc_edge(edge:UiRectVal,w:f32,h:f32) -> UiRect {
+    let left = match edge.left {
+        UiVal::Px(v)=>v.max(0.0),
+        UiVal::Scale(v) if v<0.0=>v.abs()*h,
+        UiVal::Scale(v)=>v*w,
+        UiVal::None => 0.0
+    };
+    let right = match edge.right {
+        UiVal::Px(v)=>v.max(0.0),
+        UiVal::Scale(v) if v<0.0=>v.abs()*h,
+        UiVal::Scale(v)=>v*w,
+        UiVal::None => 0.0
+    };
+    let top = match edge.top {
+        UiVal::Px(v)=>v.max(0.0),
+        UiVal::Scale(v) if v<0.0=>v.abs()*w,
+        UiVal::Scale(v)=>v*h,
+        UiVal::None => 0.0
+    };
+    let bottom = match edge.bottom {
+        UiVal::Px(v)=>v.max(0.0),
+        UiVal::Scale(v) if v<0.0=>v.abs()*w,
+        UiVal::Scale(v)=>v*h,
+        UiVal::None => 0.0
+    };
     UiRect {
-        left : match edge.left {
-            UiVal::Px(v)=>v.max(0.0),
-            UiVal::Scale(v) if v<0.0=>v.abs()*h,
-            UiVal::Scale(v)=>v*w,
-            UiVal::None => 0.0
-        },
-        right : match edge.right {
-            UiVal::Px(v)=>v.max(0.0),
-            UiVal::Scale(v) if v<0.0=>v.abs()*h,
-            UiVal::Scale(v)=>v*w,
-            UiVal::None => 0.0
-        },
-        top : match edge.top {
-            UiVal::Px(v)=>v.max(0.0),
-            UiVal::Scale(v) if v<0.0=>v.abs()*w,
-            UiVal::Scale(v)=>v*h,
-            UiVal::None => 0.0
-        },
-        bottom : match edge.bottom {
-            UiVal::Px(v)=>v.max(0.0),
-            UiVal::Scale(v) if v<0.0=>v.abs()*w,
-            UiVal::Scale(v)=>v*h,
-            UiVal::None => 0.0
-        },
+        min:Vec2::new(left,top),
+        max:Vec2::new(right,bottom),
     }
 }
 

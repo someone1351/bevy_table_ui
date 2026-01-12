@@ -31,7 +31,7 @@ use bevy::text::{ComputedTextBlock, Justify, TextBackgroundColor, TextColor, Tex
 
 use crate::display::render::utils::{create_dummy_image, create_image_bind_group};
 use crate::display::UiText;
-use crate::utils::rect_to_ui_rect;
+use crate::utils::{rect_to_ui_rect, ui_rect_is_zero};
 
 use super::draws::DrawMesh;
 // use super::dummy_image::create_dummy_image;
@@ -459,7 +459,7 @@ pub fn extract_uinodes2(
             let rects2 = [clamped_padding_rect,clamped_border_rect,clamped_margin_rect,clamped_cell_rect];
 
             for i in 0..4 {
-                if cols[i].to_srgba().alpha!=0.0 && !sizes[i].is_zero() {
+                if cols[i].to_srgba().alpha!=0.0 && !ui_rect_is_zero(sizes[i]) {
 
                     let inner_rect=rects1[i];
                     let outer_rect=rects2[i];
@@ -478,10 +478,16 @@ pub fn extract_uinodes2(
                         outer_rect.max.y-inner_rect.max.y,
                     ];
 
-                    let bls=[outer_rect.left_bottom(),inner_rect.right_bottom(),inner_rect.left_top(),outer_rect.left_bottom()];
-                    let tls=[outer_rect.left_top(),inner_rect.right_top(),outer_rect.left_top(),inner_rect.left_bottom()];
-                    let brs=[inner_rect.left_bottom(),outer_rect.right_bottom(),inner_rect.right_top(),outer_rect.right_bottom()];
-                    let trs=[inner_rect.left_top(),outer_rect.right_top(),outer_rect.right_top(),inner_rect.right_bottom()];
+                    let outer_lb=Vec2::new(outer_rect.min.x,outer_rect.max.y);
+                    let inner_lb=Vec2::new(inner_rect.min.x,inner_rect.max.y);
+
+                    let outer_rt=Vec2::new(outer_rect.max.x,outer_rect.min.y);
+                    let inner_rt=Vec2::new(inner_rect.max.x,inner_rect.min.y);
+
+                    let bls=[outer_lb,inner_rect.max,inner_rect.min,outer_lb];
+                    let tls=[outer_rect.min,inner_rt,outer_rect.min,inner_lb];
+                    let brs=[inner_lb,outer_rect.max,inner_rt,outer_rect.max];
+                    let trs=[inner_rect.min,outer_rt,outer_rt,inner_rect.max];
 
                     for j in 0..4 {
                         if sizes[j]>0.0 && thicknesses[j]>0.0 {

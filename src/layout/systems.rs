@@ -100,6 +100,8 @@ use bevy::{
 };
 
 
+use crate::utils::{ui_rect_clamp, ui_rect_expand};
+
 use super::values::*;
 use super::components::*;
 use super::utils::*;
@@ -2146,11 +2148,17 @@ pub fn ui_calc_computed_clamp(
             // };
 
             let inner_rect = computed.inner_rect();
-            let cell_rect = inner_rect.expand_by(computed.padding_size + computed.border_size + computed.margin_size + computed.cell_size);
+            let cell_rect = ui_rect_expand(inner_rect,
+                // computed.padding_size + computed.border_size + computed.margin_size + computed.cell_size
+                UiRect {
+                    min: computed.padding_size.min + computed.border_size.min + computed.margin_size.min + computed.cell_size.min,
+                    max: computed.padding_size.max + computed.border_size.max + computed.margin_size.max + computed.cell_size.max,
+                }
+            );
 
             //
-            computed.clamped_rect = inner_rect.clamp(parent_computed.clamped_rect);
-            computed.clamped_cell_rect = cell_rect.clamp(parent_computed.clamped_rect);
+            computed.clamped_rect = ui_rect_clamp(inner_rect,parent_computed.clamped_rect);
+            computed.clamped_cell_rect = ui_rect_clamp(cell_rect,parent_computed.clamped_rect);
 
             // println!("hmm {entity} {:#?}",computed);
         }

@@ -3,6 +3,8 @@ use bevy::ecs::component::Component;
 use bevy::prelude::{Entity, Vec2};
 use bevy::reflect::Reflect;
 
+use crate::utils::{ui_rect_clamp, ui_rect_expand};
+
 use super::values::*;
 
 // #[derive(Component, Default, Debug, Clone, Copy)]
@@ -294,25 +296,43 @@ impl UiLayoutComputed {
         UiRect { min: self.pos, max: self.pos+self.size }
     }
     pub fn padding_rect(&self) -> UiRect {
-        self.inner_rect().expand_by(self.padding_size)
+        // self.inner_rect().expand_by(self.padding_size)
+        ui_rect_expand(self.inner_rect(),self.padding_size)
     }
     pub fn border_rect(&self) -> UiRect {
-        self.padding_rect().expand_by(self.border_size)
+        // self.padding_rect().expand_by(self.border_size)
+        ui_rect_expand(self.padding_rect(),self.border_size)
     }
     pub fn margin_rect(&self) -> UiRect {
-        self.border_rect().expand_by(self.margin_size)
+        // self.border_rect().expand_by(self.margin_size)
+        ui_rect_expand(self.border_rect(),self.margin_size)
     }
     pub fn cell_rect(&self) -> UiRect {
-        self.margin_rect().expand_by(self.cell_size)
+        // self.margin_rect().expand_by(self.cell_size)
+        ui_rect_expand(self.margin_rect(),self.cell_size)
     }
     pub fn clamped_padding_rect(&self) -> UiRect {
-        self.padding_rect().clamp(self.clamped_cell_rect)
+        // self.padding_rect().clamp(self.clamped_cell_rect)
+
+        let a=self.padding_rect();
+        let b=self.clamped_cell_rect;
+
+        ui_rect_clamp(a,b)
     }
     pub fn clamped_border_rect(&self) -> UiRect {
-        self.border_rect().clamp(self.clamped_cell_rect)
+        // self.border_rect().clamp(self.clamped_cell_rect)
+
+        let a=self.border_rect();
+        let b=self.clamped_cell_rect;
+        ui_rect_clamp(a,b)
+
     }
     pub fn clamped_margin_rect(&self) -> UiRect {
-        self.margin_rect().clamp(self.clamped_cell_rect)
+        // self.margin_rect().clamp(self.clamped_cell_rect)
+
+        let a=self.margin_rect();
+        let b=self.clamped_cell_rect;
+        ui_rect_clamp(a,b)
     }
 }
 impl Default for UiLayoutComputed {

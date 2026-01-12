@@ -2,6 +2,18 @@ use bevy::{math::{Rect, Vec2}};
 
 use crate::UiRect;
 
+pub fn ui_rect_clamp(a:UiRect,b:UiRect) -> UiRect {
+    UiRect { min:a.min.clamp(b.min, b.max), max:a.max.clamp(b.min, b.max)}
+}
+pub fn ui_rect_expand(a:UiRect,b:UiRect)->UiRect {
+    UiRect {
+        min:a.min - b.min,
+        max :a.max + b.max,
+    }
+}
+pub fn ui_rect_is_zero(a:UiRect) -> bool {
+    a==UiRect::default()
+}
 pub fn rect_to_ui_rect(r:Rect)-> UiRect {
     // UiRect { left: r.min.x, right: r.max.x, top: r.min.y, bottom: r.max.y }
     UiRect{min:r.min,max:r.max}

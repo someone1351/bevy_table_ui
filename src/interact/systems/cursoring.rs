@@ -28,6 +28,8 @@ use bevy::math::Vec2;
 
 // use crate::UiRect;
 
+use crate::utils::ui_rect_is_zero;
+
 use super::super::components::*;
 use super::super::resources::*;
 use super::super::messages::*;
@@ -140,7 +142,7 @@ fn do_hover(
         let layout_computed=layout_computed_query.get(entity).unwrap(); //cleanup makes sure it has layoutcomputed
         let rect=layout_computed.clamped_border_rect();
 
-        if cursor.is_none() || rect.is_zero() || !rect.contains(cursor.unwrap()) {
+        if cursor.is_none() || ui_rect_is_zero(rect) || !rect.contains(cursor.unwrap()) {
             cur_hover_entities.0.remove(&(root_entity,device)).unwrap();
             ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::CursorHoverEnd{device}});
         }
@@ -165,7 +167,7 @@ fn do_hover(
         let pressable=pressable_query.get(entity).map(|x|x.1).unwrap();
         let layout_computed=layout_computed_query.get(entity).unwrap();
         let rect=layout_computed.clamped_border_rect();
-        pressable.hoverable && !rect.is_zero() && rect.contains(cursor)
+        pressable.hoverable && !ui_rect_is_zero(rect) && rect.contains(cursor)
     }).cloned();
 
     //
@@ -401,7 +403,7 @@ fn do_press_move(
         let cursor_inside= cursor.map(|cursor|{
             let layout_computed = layout_computed_query.get(pressed_entity).unwrap(); //can use unwrap otherwise won't be in device_presseds
             let outer_rect=layout_computed.clamped_border_rect();//.clamped_padding_rect();
-            let cursor_inside= !outer_rect.is_zero() && outer_rect.contains(cursor);
+            let cursor_inside= !ui_rect_is_zero(outer_rect) && outer_rect.contains(cursor);
             cursor_inside
         }).unwrap_or_default();
 
@@ -454,7 +456,7 @@ fn do_press_begin(
                 }
 
                 let outer_rect=computed.clamped_border_rect();//.clamped_padding_rect();
-                let cursor_inside= !outer_rect.is_zero() && outer_rect.contains(cursor);
+                let cursor_inside= !ui_rect_is_zero(outer_rect) && outer_rect.contains(cursor);
                 cursor_inside
             })
         })
@@ -729,7 +731,7 @@ pub fn update_press_events(
                     }
 
                     let outer_rect=computed.clamped_border_rect();//.clamped_padding_rect();
-                    let cursor_inside= !outer_rect.is_zero() && outer_rect.contains(cursor);
+                    let cursor_inside= !ui_rect_is_zero(outer_rect) && outer_rect.contains(cursor);
                     cursor_inside
                 }).cloned();
 

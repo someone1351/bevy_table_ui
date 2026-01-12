@@ -1,4 +1,4 @@
-use bevy::{asset::Handle, color::Color, ecs::prelude::*, math::Vec2, prelude::Image, reflect::Reflect, text::{ComputedTextBlock, TextLayoutInfo}};
+use bevy::{asset::Handle, color::Color, ecs::prelude::*, math::Vec2, prelude::Image, reflect::Reflect, text::{ComputedTextBlock, Font, TextLayoutInfo}};
 
 
 
@@ -94,9 +94,17 @@ pub enum UiTextVAlign {
 #[derive(Component, Clone, Default, Debug)]
 #[require(UiLayoutComputed)]
 pub struct UiTextComputed{
-    pub bounds: Vec2, //box size that text sits in including empty space, unlike text_layout.logical_size which is only for text itself
+    pub calc_size: Vec2, //box size that text sits in including empty space, unlike text_layout.logical_size which is only for text itself
     pub scaling:f32,
     pub needs_update:bool,
+    // pub bounds_none:(bool,bool),
+
+    pub layout_computed_size : Vec2,
+    pub font_errs:bevy::platform::collections::HashSet<Handle<Font>>,
+    //pub text_bound:TextBound,
+
+
+    //
     // pub max_size: Vec2, //what is this for?
 
     //TextBounds{ width: todo!(), height: todo!() },

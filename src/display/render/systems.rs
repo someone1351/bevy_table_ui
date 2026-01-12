@@ -24,7 +24,7 @@ use bevy::ecs::system::*;
 
 
 use bevy::render::render_resource::*;
-use bevy::text::{ComputedTextBlock, Justify, TextBackgroundColor, TextColor, TextLayout, TextLayoutInfo};
+use bevy::text::{ComputedTextBlock, Justify, TextBackgroundColor, TextBounds, TextColor, TextLayout, TextLayoutInfo};
 
 
 // use crate::UiText;
@@ -312,8 +312,12 @@ pub fn extract_uinodes2(
         Option<&UiText>,
         Option<&UiTextVAlign>,
         // Option<&UiTextComputed>,
+        // Option<&UiTextComputed>,
 
-        Option<&TextColor>,
+        Option<&UiSize>,
+        Option<&TextBounds>,
+
+        // Option<&TextColor>,
         Option<&TextLayout>,
         Option<&TextLayoutInfo>,
         Option<&ComputedTextBlock>,
@@ -362,7 +366,8 @@ pub fn extract_uinodes2(
         text,
         text_valign,
         // text_computed,
-        _text_color,
+        ui_size,text_bounds,
+        // _text_color,
         text_layout,
         text_layout_info,
         computed_text_block,
@@ -612,17 +617,22 @@ pub fn extract_uinodes2(
         ) {
             let text_layout=text_layout.cloned().unwrap_or(TextLayout { justify: Justify::Center, linebreak: bevy::text::LineBreak::NoWrap });
 
-
             //undo bevy text's weird halign calculations
-            let hfix=(text_layout_info.size.x<layout_computed.size.x).then(||{
-                let w=(layout_computed.custom_size.x>text_layout_info.size.x).then_some(layout_computed.size.x).unwrap_or(0.0);
-
+            let hfix=(
+                ui_size.map(|x|x.width.is_pos()).unwrap_or(false) &&
+                text_bounds.map(|x|x.width.is_none()).unwrap_or(true)
+            ).then(||{
+                // let w=(layout_computed.custom_size.x>text_layout_info.size.x).then_some(layout_computed.size.x).unwrap_or(0.0);
+                let w=0.0;
+                // let w=layout_computed.size.x;
                 match text_layout.justify{
                     Justify::Left => 0.0,
                     Justify::Center|Justify::Justified => (text_layout_info.size.x-w)*0.5,
                     // Justify::Center|Justify::Justified => -(w-text_layout_info.size.x)*0.5,
+                    // Justify::Center|Justify::Justified => text_layout_info.size.x*0.5,
                     Justify::Right => text_layout_info.size.x-w,
                     // Justify::Right => -(w-text_layout_info.size.x),
+                    // Justify::Right => text_layout_info.size.x,
                 }
             }).unwrap_or(0.0);
 
@@ -633,6 +643,8 @@ pub fn extract_uinodes2(
             //     layout_computed.size.x-text_layout_info.size.x,
             //     layout_computed.custom_size.x,
             // );
+
+            // let hfix=0.0;
 
             //
 

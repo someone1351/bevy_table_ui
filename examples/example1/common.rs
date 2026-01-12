@@ -138,21 +138,6 @@ pub fn update_input(
     }
 }
 
-pub fn update_ui_roots(
-    windows: Query<&Window>,
-    mut root_query: Query<&mut UiRoot,>,
-) {
-
-    let window_size=windows.single()
-        .and_then(|window|Ok((window.width(),window.height())))
-        .unwrap_or_default();
-
-    for mut x in root_query.iter_mut() {
-        x.width=window_size.0;
-        x.height=window_size.1;
-    }
-}
-
 
 pub fn update_ui_input(
     mut windows: Query<&mut Window>,

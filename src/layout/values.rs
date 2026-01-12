@@ -197,6 +197,20 @@ impl UiVal {
             false
         }
     }
+    pub fn is_neg(&self) -> bool {
+        if let Self::Px(x)|Self::Scale(x)=self {
+            x.is_sign_negative()
+        } else {
+            false
+        }
+    }
+    pub fn is_pos(&self) -> bool {
+        if let Self::Px(x)|Self::Scale(x)=self {
+            x.is_sign_positive()
+        } else {
+            false
+        }
+    }
 }
 
 // impl Default for Val {

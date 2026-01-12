@@ -71,7 +71,7 @@ fn main() {
 
         .add_systems(Startup, (
             setup_fps,
-            // setup_test,
+            setup_test,
             setup_camera,
             setup_ui,
         ).chain())
@@ -83,6 +83,7 @@ fn main() {
             update_input,
             show_fps, //.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(100))),
             // on_affects2,
+            // test_exit,
         ).chain())
         // .add_systems(Update, (
         // ))
@@ -223,37 +224,82 @@ fn setup_test(
         UiRoot::default(),
         // UiSize::max(),
         UiGap::px(20.0, 20.0),
-    )).with_child((
+        UiAlign::top(),
+    ))
+    .with_child((
         TextFont{ font:font.clone(), font_size: 15.0, ..Default::default() },
         TextColor(Color::WHITE),
-        UiText("aaa123".into()),
+        UiText("non11111".into()),
         TextBackgroundColor(Color::linear_rgb(1.0,0.3, 0.1)),
         TextLayout::new_with_justify(Justify::Right),
         // UiAlign::top_right(),
         // UiSize::px(-20.0, -20.0),
         // UiSize::px(200.0, 50.0),
         UiColor::default().back(Color::linear_rgb(0.5,0.1, 0.1)),
-    )).with_child((
+    ))
+    .with_child((
         TextFont{ font:font.clone(), font_size: 15.0, ..Default::default() },
         TextColor(Color::WHITE),
-        UiText("aaa123".into()),
+        UiText("neg11111".into()),
         TextBackgroundColor(Color::linear_rgb(1.0,0.3, 0.1)),
         TextLayout::new_with_justify(Justify::Right),
         // UiAlign::top_right(),
         UiSize::px(-20.0, -20.0),
         // UiSize::px(200.0, 50.0),
-        UiColor::default().back(Color::linear_rgb(0.5,0.1, 0.1)),
-    )).with_child((
+        UiColor::default().back(Color::linear_rgb(0.3, 0.2, 0.1)),
+    ))
+    .with_child((
         TextFont{ font:font.clone(), font_size: 15.0, ..Default::default() },
         TextColor(Color::WHITE),
-        UiText("aaa123".into()),
+        UiText("pos11111".into()),
         TextBackgroundColor(Color::linear_rgb(1.0,0.3, 0.1)),
         TextLayout::new_with_justify(Justify::Right),
         // UiAlign::top_right(),
         // UiSize::px(-20.0, -20.0),
         UiSize::px(200.0, 50.0),
         UiColor::default().back(Color::linear_rgb(0.5,0.1, 0.1)),
-    ));
+    ))
+    .with_child((
+        TextFont{ font:font.clone(), font_size: 15.0, ..Default::default() },
+        TextColor(Color::WHITE),
+        UiText("pos23456".into()),
+        TextBackgroundColor(Color::linear_rgb(1.0,0.3, 0.1)),
+        TextLayout::new_with_justify(Justify::Right),
+        UiSize::px(100.0, 50.0),
+        UiColor::default().back(Color::linear_rgb(0.5,0.1, 0.1)),
+    ))
+    .with_child((
+        TextFont{ font:font.clone(), font_size: 15.0, ..Default::default() },
+        TextColor(Color::WHITE),
+        UiText("posb23456".into()),
+        TextBackgroundColor(Color::linear_rgb(1.0,0.3, 0.1)),
+        // TextLayout::new_with_justify(Justify::Right),
+        TextLayout::new(Justify::Right, LineBreak::AnyCharacter),
+        TextBounds::new_horizontal(30.0),
+        UiSize::px(150.0, 50.0),
+        UiColor::default().back(Color::linear_rgb(0.5,0.1, 0.1)),
+    ))
+    // .with_child((
+
+    //     UiSize::px(-40.0, -30.0),
+    //     TextFont{ font: font.clone(), font_size: 15.0, ..Default::default() },
+    //     TextColor(Color::linear_rgb(1.0,0.0,0.0)),
+    //     TextLayout{
+    //         // justify: Justify::Left,
+    //         // justify: Justify::Right,
+    //         justify: Justify::Center,
+    //         linebreak: LineBreak::WordBoundary,
+    //     },
+
+    //     UiText::new("caaaaaaaaaaaaaaaac"),
+
+    //     TextBackgroundColor(Color::linear_rgb(0.2,0.5,0.7)),
+    //     UiColor::default().back(Color::linear_rgb(0.3, 0.2, 0.1)),
+
+
+    // ))
+    ;
+
 }
 
 #[derive(Component)]
@@ -285,17 +331,41 @@ fn setup_fps(
 
 }
 
+// fn test_exit(
+//     mut exit: bevy::ecs::message::MessageWriter<AppExit>,
+//     mut b:bevy::ecs::system::Local<bool>,
+// ) {
+//     if !*b {
+//         *b=true;
+//     } else {
+//         exit.write(AppExit::Success);
+//     }
+// }
+
 fn show_fps(
     diagnostics: Res<DiagnosticsStore>,
     mut marker_query: Query< &mut UiText,With<FpsText>>,
 ) {
     if let Ok(mut text)=marker_query.single_mut() {
-        let v=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS);
-        // let fps = v.and_then(|x|x.value()).map(|x|x.round()).unwrap_or_default();
-        let avg = v.and_then(|x|x.average()).unwrap_or_default();
-        text.0 =format!("{avg:.0}");
+        if let Some(v)=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS).and_then(|v|v.smoothed()) {
+            text.0 =format!("{:.0}",v.round());
+        } else {
+            text.0="".into();
+        }
     }
 }
 
 
 
+
+fn update_ui_roots(
+    windows: Query<&Window>,
+    mut root_query: Query<&mut UiRoot,>,
+) {
+    if let Ok(window)=windows.single() {
+        for mut ui_root in root_query.iter_mut() {
+            ui_root.width=window.width();
+            ui_root.height=window.height();
+        }
+    }
+}

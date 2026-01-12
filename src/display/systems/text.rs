@@ -14,7 +14,6 @@ use bevy::asset::prelude::*;
 // use bevy::hierarchy::prelude::*;
 
 use bevy::image::{Image, TextureAtlasLayout};
-use bevy::math::Vec2;
 // use bevy::render::texture::Image;
 // use bevy::sprite::TextureAtlasLayout;
 use bevy::text::{ComputedTextBlock, CosmicFontSystem, Font, FontAtlasSets, Justify, LineBreak, SwashCache, TextBounds, TextError, TextLayout, TextLayoutInfo, TextPipeline, };
@@ -49,6 +48,10 @@ pub fn update_text_bounds(
     ),(
         With<UiText>,
     )>,
+
+    text_bounds_changed_query:Query<(),(Changed<TextBounds>,With<UiText>)>,
+    text_layout_changed_query:Query<(),(Changed<TextLayout>,With<UiText>)>,
+    ui_size_changed_query:Query<(),(Changed<UiSize>,With<UiText>)>,
 
     fonts: Res<Assets<Font>>,
     mut textures: ResMut<Assets<Image>>,
@@ -91,6 +94,12 @@ pub fn update_text_bounds(
         )=ui_query.get_mut(entity).unwrap();
 
         //
+        // text_bounds_query
+        // text_layout_query
+        // ui_size_queryQuery
+
+
+        //
         let ui_root=root_query.get(ui_layout_computed.root_entity).unwrap();
         let scale_factor=ui_root.scaling.max(0.0)*ui_root.text_scaling.max(0.0);
 
@@ -109,27 +118,49 @@ pub fn update_text_bounds(
         // // text_bounds.width=text_bounds.height.map(|x|x.min(ui_layout_computed.size.y));
 
         //
-        if ui_size.width.is_none() {
+        // if // !ui_size.width.is_none() && !ui_size.width.is_neg()
+        //
+
+        if ui_size.width.is_pos() {
+            text_bounds.width=Some(text_bounds.width.unwrap_or_default().min(ui_layout_computed.size.x));
+        } else {
             text_layout.linebreak=LineBreak::NoWrap;
         }
 
-        //
-        if text_layout.linebreak==LineBreak::NoWrap {
-            text_bounds.width=None;
-        } else {
-            text_bounds.width=Some(text_bounds.width.unwrap_or_default().max(ui_layout_computed.size.x));
-            // println!("aaa");
-        }
+        // //
+        // if ui_size.width.is_none() {
+        //     text_layout.linebreak=LineBreak::NoWrap;
+        // } else if text_layout.linebreak==LineBreak::NoWrap {
+
+        // }
+
+        // //
+        // if text_layout.linebreak==LineBreak::NoWrap {
+        //     text_bounds.width=None;
+        // } else {
+        //     text_bounds.width=Some(text_bounds.width.unwrap_or_default().max(ui_layout_computed.size.x));
+        //     // println!("aaa");
+        // }
 
         //
         // if !ui_layout_computed.visible { }
 
+        //what if bounds go from some to none, with wrap
+        //  store wrap in text computed? what about justify?
         //
 
         if
             computed_text_block.needs_rerender()
+            || ui_size_changed_query.contains(entity)
+            || text_bounds_changed_query.contains(entity)
+            || text_layout_changed_query.contains(entity)
+
             || ui_text_computed.scaling!=scale_factor
-            || (text_bounds.width.is_some() && text_bounds.width.unwrap()>0.0 && text_bounds.width.unwrap()!=ui_text_computed.bounds.x)
+            || ui_text_computed.layout_computed_size!=ui_layout_computed.size
+
+            // || (text_bounds.width.is_some()
+            //     && text_bounds.width.unwrap()>0.0
+            //     && text_bounds.width.unwrap()!=ui_text_computed.size.x)
 
             // || true
 
@@ -141,7 +172,13 @@ pub fn update_text_bounds(
             //     text_bounds.width,ui_text_computed.bounds.x,
             // );
             //
+
+            // println!("T");
             ui_text_computed.scaling=scale_factor;
+            ui_text_computed.layout_computed_size=ui_layout_computed.size;
+
+            // ui_text_computed.bounds_none=(text_bounds.width.is_none(),text_bounds.height.is_none());
+
 
 
             //
@@ -177,12 +214,23 @@ pub fn update_text_bounds(
 
                     //only needed for width, since bevy handles horizontal text alignment
                     //  so text width text_layout_info.size.x is <= text_bounds.width
-                    let text_bounds=Vec2::new(text_bounds.width.unwrap_or_default(),text_bounds.height.unwrap_or_default());
+                    // let text_bounds=Vec2::new(text_bounds.width.unwrap_or_default(),text_bounds.height.unwrap_or_default());
 
-                    ui_text_computed.bounds=text_bounds.max(text_layout_info.size); //only stored to be used below and above
-                    // ui_text_computed.bounds=ui_layout_computed.size.max(text_layout_info.size);
-                    // ui_layout_computed.custom_size=ui_layout_computed.custom_size.max(text_layout_info.size);
-                    //println!("hm");
+                    if let Some(text_bounds_width)=text_bounds.width {
+                        ui_text_computed.calc_size.x=text_bounds_width.max(text_layout_info.size.x);
+                    } else {
+                        ui_text_computed.calc_size.x=text_layout_info.size.x;
+                    }
+
+                    if let Some(text_bounds_height)=text_bounds.height {
+                        ui_text_computed.calc_size.y=text_bounds_height.max(text_layout_info.size.y);
+                    } else {
+                        ui_text_computed.calc_size.y=text_layout_info.size.y;
+                    }
+                    // ui_text_computed.bounds=text_bounds.max(text_layout_info.size); //only stored to be used below and above
+                    // // ui_text_computed.bounds=ui_layout_computed.size.max(text_layout_info.size);
+                    // // ui_layout_computed.custom_size=ui_layout_computed.custom_size.max(text_layout_info.size);
+                    // //println!("hm");
                 }
             };
 
@@ -193,7 +241,7 @@ pub fn update_text_bounds(
 
         // .unwrap_or(ui_text_computed.bounds.x).max(ui_text_computed.bounds.x);
         // .max(text_bounds.unwrap_or_default())
-        ui_layout_computed.custom_size=ui_layout_computed.custom_size.max(ui_text_computed.bounds);
+        ui_layout_computed.custom_size=ui_layout_computed.custom_size.max(ui_text_computed.calc_size);
     }
 
     //

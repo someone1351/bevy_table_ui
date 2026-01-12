@@ -1,8 +1,8 @@
-use bevy::math::Vec2;
+use bevy::math::{Rect, Vec2};
 
-use super::values::{UiVal, UiRectVal, UiRect};
+use super::values::{UiVal, UiRectVal, };
 
-pub fn calc_edge(edge:UiRectVal,w:f32,h:f32) -> UiRect {
+pub fn calc_edge(edge:UiRectVal,w:f32,h:f32) -> Rect {
     let left = match edge.left {
         UiVal::Px(v)=>v.max(0.0),
         UiVal::Scale(v) if v<0.0=>v.abs()*h,
@@ -27,7 +27,7 @@ pub fn calc_edge(edge:UiRectVal,w:f32,h:f32) -> UiRect {
         UiVal::Scale(v)=>v*h,
         UiVal::None => 0.0
     };
-    UiRect {
+    Rect {
         min:Vec2::new(left,top),
         max:Vec2::new(right,bottom),
     }

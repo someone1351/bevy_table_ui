@@ -3,126 +3,126 @@ use std::ops::Mul;
 use bevy::{reflect::Reflect, prelude::Vec2};
 
 
-//todo remove and use Rect
-#[derive(Reflect,Copy, Clone, PartialEq, Debug, Default)]
-pub struct UiRect {
-    // pub left : f32,
-    // pub right : f32,
-    // pub top : f32,
-    // pub bottom : f32,
+// //todo remove and use Rect
+// #[derive(Reflect,Copy, Clone, PartialEq, Debug, Default)]
+// pub struct UiRect {
+//     // pub left : f32,
+//     // pub right : f32,
+//     // pub top : f32,
+//     // pub bottom : f32,
 
-    pub min:Vec2,
-    pub max:Vec2,
+//     pub min:Vec2,
+//     pub max:Vec2,
 
-}
+// }
 
 
-impl UiRect {
-    pub fn init(x:f32) -> Self {
-        Self {
-            min: Vec2::new(x, x),
-            max: Vec2::new(x, x),
-            // left:x,right:x,top:x,bottom:x,
+// impl UiRect {
+//     pub fn init(x:f32) -> Self {
+//         Self {
+//             min: Vec2::new(x, x),
+//             max: Vec2::new(x, x),
+//             // left:x,right:x,top:x,bottom:x,
 
-        }
-    }
+//         }
+//     }
 
-    // pub fn min(&self) -> Vec2 {
-    //     Vec2::new(self.min.x,self.min.y)
-    // }
+//     // pub fn min(&self) -> Vec2 {
+//     //     Vec2::new(self.min.x,self.min.y)
+//     // }
 
-    // pub fn max(&self) -> Vec2 {
-    //     Vec2::new(self.max.x,self.max.y)
-    // }
+//     // pub fn max(&self) -> Vec2 {
+//     //     Vec2::new(self.max.x,self.max.y)
+//     // }
 
-    // pub fn clamp(&self,other:UiRect) -> UiRect {
-    //     // UiRect {
-    //     //     left:self.min.x.clamp(other.min.x, other.max.x),
-    //     //     top:self.min.y.clamp(other.min.y, other.max.y), //y is down
+//     // pub fn clamp(&self,other:UiRect) -> UiRect {
+//     //     // UiRect {
+//     //     //     left:self.min.x.clamp(other.min.x, other.max.x),
+//     //     //     top:self.min.y.clamp(other.min.y, other.max.y), //y is down
 
-    //     //     right:self.max.x.clamp(other.min.x, other.max.x),
-    //     //     bottom:self.max.y.clamp(other.min.y, other.max.y), //y is down
-    //     // }
+//     //     //     right:self.max.x.clamp(other.min.x, other.max.x),
+//     //     //     bottom:self.max.y.clamp(other.min.y, other.max.y), //y is down
+//     //     // }
 
-    //     UiRect {
-    //         min:self.min.clamp(other.min, other.max),
-    //         max:self.max.clamp(other.min, other.max),
-    //     }
-    // }
-    pub fn contains(&self, point:Vec2) -> bool {
-        point.x >= self.min.x && point.x <=self.max.x &&
-            point.y >= self.min.y && point.y <=self.max.y //y is down
-    }
+//     //     UiRect {
+//     //         min:self.min.clamp(other.min, other.max),
+//     //         max:self.max.clamp(other.min, other.max),
+//     //     }
+//     // }
+//     pub fn contains(&self, point:Vec2) -> bool {
+//         point.x >= self.min.x && point.x <=self.max.x &&
+//             point.y >= self.min.y && point.y <=self.max.y //y is down
+//     }
 
-    pub fn width(&self) -> f32 {
-        self.max.x-self.min.x //y is down
-    }
+//     pub fn width(&self) -> f32 {
+//         self.max.x-self.min.x //y is down
+//     }
 
-    pub fn height(&self) -> f32 {
-        self.max.y-self.min.y //y is down
-    }
+//     pub fn height(&self) -> f32 {
+//         self.max.y-self.min.y //y is down
+//     }
 
-    // pub fn expand_by(&self,other: UiRect) -> UiRect {
-    //     // UiRect {
-    //     //     left : self.min.x - other.min.x,
-    //     //     top : self.min.y - other.min.y, //y is down
-    //     //     right :self.max.x + other.max.x,
-    //     //     bottom : self.max.y + other.max.y, //y is down
-    //     // }
+//     // pub fn expand_by(&self,other: UiRect) -> UiRect {
+//     //     // UiRect {
+//     //     //     left : self.min.x - other.min.x,
+//     //     //     top : self.min.y - other.min.y, //y is down
+//     //     //     right :self.max.x + other.max.x,
+//     //     //     bottom : self.max.y + other.max.y, //y is down
+//     //     // }
 
-    //     UiRect {
-    //         min:self.min - other.min,
-    //         max :self.max + other.max,
-    //     }
-    // }
+//     //     UiRect {
+//     //         min:self.min - other.min,
+//     //         max :self.max + other.max,
+//     //     }
+//     // }
 
-    // pub fn is_zero(&self) -> bool {
-    //     self.min.x==0.0 && self.max.x==0.0 && self.min.y==0.0 && self.max.y==0.0
-    // }
-    // pub fn left_top(&self) -> Vec2 {
-    //     // Vec2::new(self.min.x,self.min.y)
-    //     self.min
-    // }
-    // pub fn left_bottom(&self) -> Vec2 {
-    //     Vec2::new(self.min.x,self.max.y)
-    // }
-    // pub fn right_bottom(&self) -> Vec2 {
-    //     // Vec2::new(self.max.x,self.max.y)
-    //     self.max
-    // }
-    // pub fn right_top(&self) -> Vec2 {
-    //     Vec2::new(self.max.x,self.min.y)
-    // }
-    // pub fn left(&self) -> f32 {
-    //     self.min.x
-    // }
-    // pub fn top(&self) -> f32 {
-    //     self.min.y
-    // }
-    // pub fn right(&self) -> f32 {
-    //     self.max.x
-    // }
-    // pub fn bottom(&self) -> f32 {
-    //     self.max.y
-    // }
-    // pub fn hsum(&self) -> f32 {
-    //     self.min.x+self.max.x
-    // }
-    // pub fn vsum(&self) -> f32 {
-    //     self.min.y+self.max.y
-    // }
+//     // pub fn is_zero(&self) -> bool {
+//     //     self.min.x==0.0 && self.max.x==0.0 && self.min.y==0.0 && self.max.y==0.0
+//     // }
+//     // pub fn left_top(&self) -> Vec2 {
+//     //     // Vec2::new(self.min.x,self.min.y)
+//     //     self.min
+//     // }
+//     // pub fn left_bottom(&self) -> Vec2 {
+//     //     Vec2::new(self.min.x,self.max.y)
+//     // }
+//     // pub fn right_bottom(&self) -> Vec2 {
+//     //     // Vec2::new(self.max.x,self.max.y)
+//     //     self.max
+//     // }
+//     // pub fn right_top(&self) -> Vec2 {
+//     //     Vec2::new(self.max.x,self.min.y)
+//     // }
+//     // pub fn left(&self) -> f32 {
+//     //     self.min.x
+//     // }
+//     // pub fn top(&self) -> f32 {
+//     //     self.min.y
+//     // }
+//     // pub fn right(&self) -> f32 {
+//     //     self.max.x
+//     // }
+//     // pub fn bottom(&self) -> f32 {
+//     //     self.max.y
+//     // }
+//     // pub fn hsum(&self) -> f32 {
+//     //     self.min.x+self.max.x
+//     // }
+//     // pub fn vsum(&self) -> f32 {
+//     //     self.min.y+self.max.y
+//     // }
 
-    // pub fn sum(&self) -> Vec2 {
-    //     Vec2::new(self.hsum(),self.vsum())
-    // }
-    pub fn size(&self) -> Vec2 {
-        Vec2::new(self.width(),self.height())
-    }
+//     // pub fn sum(&self) -> Vec2 {
+//     //     Vec2::new(self.hsum(),self.vsum())
+//     // }
+//     pub fn size(&self) -> Vec2 {
+//         Vec2::new(self.width(),self.height())
+//     }
 
-    // pub fn intersects(&self,other:&Self) -> bool {
-    //     !(other.min.x > self.max.x || other.max.x < self.min.x || other.max.y < self.min.y || other.min.y > self.max.y)
-    // }
-}
+//     // pub fn intersects(&self,other:&Self) -> bool {
+//     //     !(other.min.x > self.max.x || other.max.x < self.min.x || other.max.y < self.min.y || other.min.y > self.max.y)
+//     // }
+// }
 
 // impl std::ops::Add<UiRect> for UiRect {
 //     type Output = UiRect;

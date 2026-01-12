@@ -89,7 +89,7 @@ TODO
 // use std::collections::HashSet;
 // use std::f32::consts::E;
 
-use bevy::math::Vec2;
+use bevy::math::{Rect, Vec2};
 // use bevy::render::view::window;
 use bevy::utils::default;
 use bevy::{
@@ -2112,7 +2112,7 @@ pub fn ui_calc_computed_clamp(
         let parent_computed=if let Ok((_,root))=root_query.get(entity){
             UiLayoutComputed{
                 // unlocked:true,visible:true,enabled:true,size:Vec2::new(root.width,root.height),
-                clamped_rect:UiRect{
+                clamped_rect:Rect{
                     min:Vec2::new(root.x,root.y),
                     max:Vec2::new(root.x,root.y)+Vec2::new(root.width,root.height),
                     // left:root.x,
@@ -2150,7 +2150,7 @@ pub fn ui_calc_computed_clamp(
             let inner_rect = computed.inner_rect();
             let cell_rect = ui_rect_expand(inner_rect,
                 // computed.padding_size + computed.border_size + computed.margin_size + computed.cell_size
-                UiRect {
+                Rect {
                     min: computed.padding_size.min + computed.border_size.min + computed.margin_size.min + computed.cell_size.min,
                     max: computed.padding_size.max + computed.border_size.max + computed.margin_size.max + computed.cell_size.max,
                 }

@@ -31,7 +31,7 @@ use bevy::text::{ComputedTextBlock, Justify, TextBackgroundColor, TextColor, Tex
 
 use crate::display::render::utils::{create_dummy_image, create_image_bind_group};
 use crate::display::UiText;
-use crate::utils::{rect_to_ui_rect, ui_rect_is_zero};
+use crate::utils::ui_rect_is_zero;
 
 use super::draws::DrawMesh;
 // use super::dummy_image::create_dummy_image;

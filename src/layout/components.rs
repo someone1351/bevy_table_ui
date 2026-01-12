@@ -1,5 +1,6 @@
 
 use bevy::ecs::component::Component;
+use bevy::math::Rect;
 use bevy::prelude::{Entity, Vec2};
 use bevy::reflect::Reflect;
 
@@ -260,13 +261,13 @@ pub struct UiLayoutComputed {
     pub size : Vec2,
     pub custom_size : Vec2,
     //last_size?
-    pub clamped_rect : UiRect,
-    pub clamped_cell_rect : UiRect,
+    pub clamped_rect : Rect,
+    pub clamped_cell_rect : Rect,
 
-    pub border_size : UiRect,
-    pub padding_size : UiRect,
-    pub margin_size : UiRect,
-    pub cell_size : UiRect,
+    pub border_size : Rect,
+    pub padding_size : Rect,
+    pub margin_size : Rect,
+    pub cell_size : Rect,
 
     pub gap_size:Vec2,
     pub scroll_pos:Vec2,
@@ -286,32 +287,32 @@ pub struct UiLayoutComputed {
 }
 
 impl UiLayoutComputed {
-    pub fn inner_rect(&self) -> UiRect {
-        // UiRect {
+    pub fn inner_rect(&self) -> Rect {
+        // Rect {
         //     left: self.pos.x,
         //     top: self.pos.y,
         //     right: self.pos.x+self.size.x,
         //     bottom: self.pos.y+self.size.y,
         // }
-        UiRect { min: self.pos, max: self.pos+self.size }
+        Rect { min: self.pos, max: self.pos+self.size }
     }
-    pub fn padding_rect(&self) -> UiRect {
+    pub fn padding_rect(&self) -> Rect {
         // self.inner_rect().expand_by(self.padding_size)
         ui_rect_expand(self.inner_rect(),self.padding_size)
     }
-    pub fn border_rect(&self) -> UiRect {
+    pub fn border_rect(&self) -> Rect {
         // self.padding_rect().expand_by(self.border_size)
         ui_rect_expand(self.padding_rect(),self.border_size)
     }
-    pub fn margin_rect(&self) -> UiRect {
+    pub fn margin_rect(&self) -> Rect {
         // self.border_rect().expand_by(self.margin_size)
         ui_rect_expand(self.border_rect(),self.margin_size)
     }
-    pub fn cell_rect(&self) -> UiRect {
+    pub fn cell_rect(&self) -> Rect {
         // self.margin_rect().expand_by(self.cell_size)
         ui_rect_expand(self.margin_rect(),self.cell_size)
     }
-    pub fn clamped_padding_rect(&self) -> UiRect {
+    pub fn clamped_padding_rect(&self) -> Rect {
         // self.padding_rect().clamp(self.clamped_cell_rect)
 
         let a=self.padding_rect();
@@ -319,7 +320,7 @@ impl UiLayoutComputed {
 
         ui_rect_clamp(a,b)
     }
-    pub fn clamped_border_rect(&self) -> UiRect {
+    pub fn clamped_border_rect(&self) -> Rect {
         // self.border_rect().clamp(self.clamped_cell_rect)
 
         let a=self.border_rect();
@@ -327,7 +328,7 @@ impl UiLayoutComputed {
         ui_rect_clamp(a,b)
 
     }
-    pub fn clamped_margin_rect(&self) -> UiRect {
+    pub fn clamped_margin_rect(&self) -> Rect {
         // self.margin_rect().clamp(self.clamped_cell_rect)
 
         let a=self.margin_rect();
@@ -343,13 +344,13 @@ impl Default for UiLayoutComputed {
             size:Vec2::NEG_ONE,
             custom_size:Vec2::ZERO,
 
-            clamped_rect:UiRect::default(),
-            clamped_cell_rect:UiRect::default(),
+            clamped_rect:Rect::default(),
+            clamped_cell_rect:Rect::default(),
 
-            border_size:UiRect::default(),
-            padding_size:UiRect::default(),
-            margin_size:UiRect::default(),
-            cell_size:UiRect::default(),
+            border_size:Rect::default(),
+            padding_size:Rect::default(),
+            margin_size:Rect::default(),
+            cell_size:Rect::default(),
 
             // gap_w:0.0,gap_h:0.0,
             // scroll_x:0.0,scroll_y:0.0,

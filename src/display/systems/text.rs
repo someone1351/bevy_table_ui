@@ -118,7 +118,7 @@ pub fn update_text_bounds(
             text_bounds.width=None;
         } else {
             text_bounds.width=Some(text_bounds.width.unwrap_or_default().max(ui_layout_computed.size.x));
-            println!("aaa");
+            // println!("aaa");
         }
 
         //
@@ -129,17 +129,17 @@ pub fn update_text_bounds(
         if
             computed_text_block.needs_rerender()
             || ui_text_computed.scaling!=scale_factor
-            || (text_bounds.width.is_some() && text_bounds.width.unwrap()!=ui_text_computed.bounds.x)
+            || (text_bounds.width.is_some() && text_bounds.width.unwrap()>0.0 && text_bounds.width.unwrap()!=ui_text_computed.bounds.x)
 
             // || true
 
         {
-            println!("is {} {} {}: {:?} {}",
-                computed_text_block.needs_rerender(),
-                ui_text_computed.scaling!=scale_factor,
-                text_bounds.width!= Some(ui_text_computed.bounds.x),
-                text_bounds.width,ui_text_computed.bounds.x,
-            );
+            // println!("is {} {} {}: {:?} {}",
+            //     computed_text_block.needs_rerender(),
+            //     ui_text_computed.scaling!=scale_factor,
+            //     text_bounds.width!= Some(ui_text_computed.bounds.x),
+            //     text_bounds.width,ui_text_computed.bounds.x,
+            // );
             //
             ui_text_computed.scaling=scale_factor;
 

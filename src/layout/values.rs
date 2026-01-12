@@ -1,6 +1,6 @@
 use std::ops::Mul;
 
-use bevy::{reflect::Reflect, prelude::Vec2};
+use bevy::reflect::Reflect;
 
 
 // //todo remove and use Rect

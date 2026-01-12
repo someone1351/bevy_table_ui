@@ -71,8 +71,9 @@ fn main() {
 
         .add_systems(Startup, (
             setup_fps,
+            // setup_test,
             setup_camera,
-            // setup_ui,
+            setup_ui,
         ).chain())
         .add_systems(Update, (
             update_ui_roots,
@@ -80,7 +81,7 @@ fn main() {
             // update_ui,
             // on_affects,
             update_input,
-            // show_fps, //.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(100))),
+            show_fps, //.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(100))),
             // on_affects2,
         ).chain())
         // .add_systems(Update, (
@@ -183,18 +184,14 @@ fn setup_camera(mut commands: Commands) {
 }
 
 
-
-#[derive(Component)]
-struct FpsText;
-
-
-fn setup_fps(
+fn setup_test(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
 
     let font: Handle<Font>=asset_server.load("fonts/FiraMono-Medium.ttf");
 
+    //
 
     commands.spawn(( UiRoot::default(), UiSize::max())).with_child((
 
@@ -227,7 +224,6 @@ fn setup_fps(
         // UiSize::max(),
         UiGap::px(20.0, 20.0),
     )).with_child((
-        FpsText,
         TextFont{ font:font.clone(), font_size: 15.0, ..Default::default() },
         TextColor(Color::WHITE),
         UiText("aaa123".into()),
@@ -238,7 +234,6 @@ fn setup_fps(
         // UiSize::px(200.0, 50.0),
         UiColor::default().back(Color::linear_rgb(0.5,0.1, 0.1)),
     )).with_child((
-        FpsText,
         TextFont{ font:font.clone(), font_size: 15.0, ..Default::default() },
         TextColor(Color::WHITE),
         UiText("aaa123".into()),
@@ -249,7 +244,6 @@ fn setup_fps(
         // UiSize::px(200.0, 50.0),
         UiColor::default().back(Color::linear_rgb(0.5,0.1, 0.1)),
     )).with_child((
-        FpsText,
         TextFont{ font:font.clone(), font_size: 15.0, ..Default::default() },
         TextColor(Color::WHITE),
         UiText("aaa123".into()),
@@ -262,15 +256,44 @@ fn setup_fps(
     ));
 }
 
+#[derive(Component)]
+struct FpsText;
+
+
+fn setup_fps(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+) {
+
+    let font: Handle<Font>=asset_server.load("fonts/FiraMono-Medium.ttf");
+
+
+    commands.spawn((
+        UiRoot::default(),
+        FpsText,
+        TextFont{ font:font.clone(), font_size: 15.0, ..Default::default() },
+        TextColor(Color::WHITE),
+        UiText("aaa".into()),
+        TextBackgroundColor(Color::linear_rgb(1.0,0.3, 0.1)),
+        TextLayout::new_with_justify(Justify::Right),
+        // UiAlign::top_right(),
+        // UiSize::px(-20.0, -20.0),
+        // UiSize::px(200.0, 50.0),
+        // UiColor::default().back(Color::linear_rgb(0.5,0.1, 0.1)),
+        UiAlign::top_right(),
+    ));
+
+}
+
 fn show_fps(
     diagnostics: Res<DiagnosticsStore>,
     mut marker_query: Query< &mut UiText,With<FpsText>>,
 ) {
     if let Ok(mut text)=marker_query.single_mut() {
         let v=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS);
-        let fps = v.and_then(|x|x.value()).map(|x|x.round()).unwrap_or_default();
+        // let fps = v.and_then(|x|x.value()).map(|x|x.round()).unwrap_or_default();
         let avg = v.and_then(|x|x.average()).unwrap_or_default();
-        text.0 =format!("{fps:.0} {avg:.0}");
+        text.0 =format!("{avg:.0}");
     }
 }
 

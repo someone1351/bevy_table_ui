@@ -68,18 +68,32 @@ pub fn update_text_bounds(
     //     ui_layout_computed.enabled.then_some(entity)
     // }).collect::<Vec<_>>();
 
-    let mut entities=ui_query.iter().map(|(entity,..)|entity).collect::<Vec<_>>();
+    // let mut entities=ui_query.iter().map(|(entity,..)|entity).collect::<Vec<_>>();
 
-    entities.sort_by(|&a_entity,&b_entity|{
-        let (_,UiLayoutComputed{  order:a_order,..},..)=ui_query.get(a_entity).unwrap();
-        let (_,UiLayoutComputed{  order:b_order,..},..)=ui_query.get(b_entity).unwrap();
-        a_order.cmp(b_order)
-    });
+    // entities.sort_by(|&a_entity,&b_entity|{
+    //     let (_,UiLayoutComputed{  order:a_order,..},..)=ui_query.get(a_entity).unwrap();
+    //     let (_,UiLayoutComputed{  order:b_order,..},..)=ui_query.get(b_entity).unwrap();
+    //     a_order.cmp(b_order)
+    // });
 
     //
-    for entity in entities {
-        let (
-            _,
+    // for entity in entities {
+    //     let (
+    //         _,
+    //         mut ui_layout_computed,
+    //         ui_size,
+
+    //         // mut ui_inner_size,
+    //         mut ui_text_computed,
+
+    //         text_layout,
+    //         text_bounds,
+
+    //         mut text_layout_info,
+    //         mut computed_text_block,
+    //     )=ui_query.get_mut(entity).unwrap();
+    for (
+            entity,
             mut ui_layout_computed,
             ui_size,
 
@@ -91,8 +105,7 @@ pub fn update_text_bounds(
 
             mut text_layout_info,
             mut computed_text_block,
-        )=ui_query.get_mut(entity).unwrap();
-
+        ) in ui_query.iter_mut() {
         //
         // text_bounds_query
         // text_layout_query

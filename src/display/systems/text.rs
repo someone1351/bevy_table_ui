@@ -4,11 +4,13 @@ TODO:
 
 * add option to set the text top_to_bottom or left_to_right
 
-
+BEVY
+* queue_text errors need to report the font
 */
 
 
 
+use bevy::ecs::entity::EntityHashSet;
 use bevy::ecs::prelude::*;
 use bevy::asset::prelude::*;
 // use bevy::hierarchy::prelude::*;
@@ -61,8 +63,12 @@ pub fn update_text_bounds(
     mut font_system: ResMut<CosmicFontSystem>,
     mut swash_cache: ResMut<SwashCache>,
     mut text_reader: UiTextReader,
-) {
 
+
+    mut queue: Local<EntityHashSet>,
+) {
+    let queue2=queue.clone();
+    queue.clear();
     //
     // let mut entities=ui_query.iter().filter_map(|(entity,ui_layout_computed,..)|{
     //     ui_layout_computed.enabled.then_some(entity)
@@ -162,8 +168,8 @@ pub fn update_text_bounds(
         //  store wrap in text computed? what about justify?
         //
 
-        if
-            computed_text_block.needs_rerender()
+        if queue2.contains(&entity)
+            || computed_text_block.needs_rerender()
             || ui_size_changed_query.contains(entity)
             || text_bounds_changed_query.contains(entity)
             || text_layout_changed_query.contains(entity)
@@ -178,6 +184,7 @@ pub fn update_text_bounds(
             // || true
 
         {
+
             // println!("is {} {} {}: {:?} {}",
             //     computed_text_block.needs_rerender(),
             //     ui_text_computed.scaling!=scale_factor,
@@ -215,9 +222,10 @@ pub fn update_text_bounds(
                 Err(e @ TextError::FailedToGetGlyphImage(_)) => {
                     panic!("Fatal error when processing font: {}.", e);
                 },
-                Err(e @ TextError::NoSuchFont) => {
+                Err(_e @ TextError::NoSuchFont) => {
                     // panic!("Fatal error when processing font: {}.", e);
-                    println!("Fatal error when processing font: {}.", e);
+                    // println!("Fatal error when processing font: {}.", e);
+                    queue.insert(entity);
                 },
                 Err(e @ TextError::FailedToAddGlyph(_)) => {
                     panic!("Fatal error when processing text: {}.", e);

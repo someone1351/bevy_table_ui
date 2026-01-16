@@ -4,7 +4,7 @@ use bevy::camera::CameraOutputMode;
 use bevy::ecs::prelude::*;
 use bevy::platform::collections::HashSet;
 use bevy::render::{
-    camera::ExtractedCamera,
+    camera::{ ExtractedCamera},
     render_resource::*,
     view::ViewTarget,
 };
@@ -52,7 +52,8 @@ pub fn prepare_view_upscaling_pipelines(
         };
 
         let key = BlitPipelineKey {
-            texture_format: view_target.out_texture_format(),
+            // texture_format: view_target.out_texture_format(),
+            texture_format: view_target.out_texture_view_format(),
             blend_state,
             samples: 1,
         };

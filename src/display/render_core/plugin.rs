@@ -1,21 +1,4 @@
 
-#![allow(unused_imports)]
-
-mod camera;
-mod passes;
-mod graph;
-mod systems;
-
-pub use camera::*;
-use systems::*;
-
-use graph::setup_graph;
-pub use passes::*;
-
-
-use bevy::render::render_resource::TextureFormat;
-
-
 use bevy::app::{App, Plugin};
 use bevy::ecs::prelude::*;
 use bevy::render::{
@@ -27,9 +10,15 @@ use bevy::render::{
     ExtractSchedule, Render, RenderApp, RenderSystems,
 };
 
-pub mod phases;
 
-pub use phases::*;
+use super::camera::*;
+use super::phases::*;
+
+use super::systems::*;
+use super::graph::setup_graph;
+
+use bevy::render::render_resource::TextureFormat;
+
 
 
 pub const CORE_2D_DEPTH_FORMAT: TextureFormat = TextureFormat::Depth32Float;

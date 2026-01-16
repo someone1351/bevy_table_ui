@@ -6,7 +6,7 @@ use bevy::render::render_graph::{EmptyNode,  ViewNodeRunner,RenderGraphExt,Rende
 
 use bevy::app::SubApp;
 
-use super::super::upscaling::UpscalingNode;
+use super::super::render_upscaling::UpscalingNode;
 
 use super::passes::*;
 

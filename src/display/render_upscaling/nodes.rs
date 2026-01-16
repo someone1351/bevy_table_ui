@@ -5,7 +5,7 @@ use bevy::render::{
     camera::ExtractedCamera,
     render_graph::{NodeRunError, RenderGraphContext, ViewNode},
     render_resource::{
-        BindGroup, BindGroupEntries, PipelineCache, RenderPassDescriptor, TextureViewId,
+        BindGroup, PipelineCache, RenderPassDescriptor, TextureViewId,
     },
     renderer::RenderContext,
     view::ViewTarget,
@@ -60,10 +60,16 @@ impl ViewNode for UpscalingNode {
         let bind_group = match &mut *cached_bind_group {
             Some((id, bind_group)) if upscaled_texture.id() == *id => bind_group,
             cached_bind_group => {
-                let bind_group = render_context.render_device().create_bind_group(
-                    None,
-                    &blit_pipeline.texture_bind_group,
-                    &BindGroupEntries::sequential((upscaled_texture, &blit_pipeline.sampler)),
+                // let bind_group = render_context.render_device().create_bind_group(
+                //     None,
+                //     &blit_pipeline.texture_bind_group,
+                //     &BindGroupEntries::sequential((upscaled_texture, &blit_pipeline.sampler)),
+                // );
+
+                let bind_group = blit_pipeline.create_bind_group(
+                    render_context.render_device(),
+                    upscaled_texture,
+                    pipeline_cache,
                 );
 
                 let (_, bind_group) = cached_bind_group.insert((upscaled_texture.id(), bind_group));

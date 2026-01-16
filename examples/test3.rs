@@ -2,7 +2,7 @@
 
 use std::collections::BTreeSet;
 
-use bevy::{prelude::*, text::TextLayoutInfo};
+use bevy::{prelude::*, text::{TextBackgroundColor, TextLayoutInfo}};
 
 
 use bevy_table_ui::*;

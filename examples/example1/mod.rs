@@ -195,7 +195,7 @@ fn setup_test(
     //
 
     commands.spawn(( UiRoot::default(), UiSize::max())).with_child((
-
+        UiImage{ handle: asset_server.load("bevy_logo_dark_big.png"), ..Default::default() },
         // UiAlign::px(600.0, 0.0),
         // UiAlign::scale(1.0, 1.0),
         UiAlign::scale(1.0, 0.9),
@@ -366,6 +366,7 @@ fn update_ui_roots(
         for mut ui_root in root_query.iter_mut() {
             ui_root.width=window.width();
             ui_root.height=window.height();
+            // ui_root.scaling=window.resolution.base_scale_factor();
         }
     }
 }

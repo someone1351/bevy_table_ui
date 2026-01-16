@@ -3,8 +3,10 @@
 use bevy::ecs::resource::Resource;
 use bevy::ecs::world::{FromWorld, World};
 use bevy::mesh::VertexBufferLayout;
+// use bevy::render::globals::GlobalsUniform;
+use bevy::render::render_resource::binding_types::{sampler, texture_2d, uniform_buffer};
 // use bevy::render::mesh::PrimitiveTopology;
-use bevy::render::renderer::RenderDevice;
+// use bevy::render::renderer::RenderDevice;
 use bevy::render::view::ViewUniform;
 
 
@@ -13,7 +15,7 @@ use bevy::render::render_resource::*;
 
 use bevy::image::BevyDefault;
 
-use super::super::render_core::core_my::CORE_2D_DEPTH_FORMAT;
+use super::super::render_core::CORE_2D_DEPTH_FORMAT;
 
 use super::shaders::MY_COLORED_MESH2D_SHADER_HANDLE;
 
@@ -23,15 +25,15 @@ use super::shaders::MY_COLORED_MESH2D_SHADER_HANDLE;
 
 #[derive(Resource,Clone)]
 pub struct MyUiPipeline {
-    pub view_layout: BindGroupLayout,
-    pub image_layout: BindGroupLayout, //added
+    pub view_layout: BindGroupLayoutDescriptor,
+    pub image_layout: BindGroupLayoutDescriptor, //added
 }
 
 impl FromWorld for MyUiPipeline {
-    fn from_world(world: &mut World) -> Self {
+    fn from_world(_world: &mut World) -> Self {
         MyUiPipeline {
-             view_layout : create_view_layout(world),
-             image_layout : create_image_layout(world), //added
+             view_layout : create_view_layout(),
+             image_layout : create_image_layout(), //added
         }
     }
 }
@@ -124,49 +126,76 @@ pub struct MyUiPipelineKey {
 
 
 
-fn create_view_layout(world: &mut World) -> BindGroupLayout {
-    let render_device = world.resource::<RenderDevice>();
+fn create_view_layout() -> BindGroupLayoutDescriptor { //BindGroupLayout //world: &mut World
 
-    render_device.create_bind_group_layout(
-        Some("my_mesh2d_view_layout"),
-        &[
-            BindGroupLayoutEntry { // View
-                binding: 0,
-                visibility: ShaderStages::VERTEX | ShaderStages::FRAGMENT,
-                ty: BindingType::Buffer {
-                    ty: BufferBindingType::Uniform,
-                    has_dynamic_offset: true,
-                    min_binding_size: Some(ViewUniform::min_size()),
-                },
-                count: None,
-            },
-        ]
+    // BindGroupLayoutDescriptor::new(
+    //     "my_mesh2d_view_layout",
+    //     &BindGroupLayoutEntries::sequential(
+    //         ShaderStages::VERTEX_FRAGMENT,
+    //         (
+    //             uniform_buffer::<ViewUniform>(true),
+    //             uniform_buffer::<GlobalsUniform>(false),
+    //         ),
+    //     ),
+    // )
+    BindGroupLayoutDescriptor::new(
+        "my_mesh2d_view_layout",
+        &BindGroupLayoutEntries::single(
+            ShaderStages::VERTEX_FRAGMENT,
+            uniform_buffer::<ViewUniform>(true),
+        ),
     )
+    // let render_device = world.resource::<RenderDevice>();
+    // render_device.create_bind_group_layout(
+    //     Some("my_mesh2d_view_layout"),
+    //     &[
+    //         BindGroupLayoutEntry { // View
+    //             binding: 0,
+    //             visibility: ShaderStages::VERTEX | ShaderStages::FRAGMENT,
+    //             ty: BindingType::Buffer {
+    //                 ty: BufferBindingType::Uniform,
+    //                 has_dynamic_offset: true,
+    //                 min_binding_size: Some(ViewUniform::min_size()),
+    //             },
+    //             count: None,
+    //         },
+    //     ]
+    // )
 }
 
 
-fn create_image_layout(world: &mut World) -> BindGroupLayout { //added
-    let render_device = world.resource::<RenderDevice>();
-
-    render_device.create_bind_group_layout(
-        Some("my_ui_image_layout"),
-        &[
-            BindGroupLayoutEntry {
-                binding: 0,
-                visibility: ShaderStages::FRAGMENT,
-                ty: BindingType::Texture {
-                    multisampled: false,
-                    sample_type: TextureSampleType::Float { filterable: true },
-                    view_dimension: TextureViewDimension::D2,
-                },
-                count: None,
-            },
-            BindGroupLayoutEntry {
-                binding: 1,
-                visibility: ShaderStages::FRAGMENT,
-                ty: BindingType::Sampler(SamplerBindingType::Filtering),
-                count: None,
-            },
-        ],
+fn create_image_layout() -> BindGroupLayoutDescriptor { //added //world: &mut World
+    BindGroupLayoutDescriptor::new(
+        "my_ui_image_layout",
+        &BindGroupLayoutEntries::sequential(
+            ShaderStages::FRAGMENT,
+            (
+                texture_2d(TextureSampleType::Float { filterable: true }),
+                sampler(SamplerBindingType::Filtering),
+            ),
+        ),
     )
+    // let render_device = world.resource::<RenderDevice>();
+
+    // render_device.create_bind_group_layout(
+    //     Some("my_ui_image_layout"),
+    //     &[
+    //         BindGroupLayoutEntry {
+    //             binding: 0,
+    //             visibility: ShaderStages::FRAGMENT,
+    //             ty: BindingType::Texture {
+    //                 multisampled: false,
+    //                 sample_type: TextureSampleType::Float { filterable: true },
+    //                 view_dimension: TextureViewDimension::D2,
+    //             },
+    //             count: None,
+    //         },
+    //         BindGroupLayoutEntry {
+    //             binding: 1,
+    //             visibility: ShaderStages::FRAGMENT,
+    //             ty: BindingType::Sampler(SamplerBindingType::Filtering),
+    //             count: None,
+    //         },
+    //     ],
+    // )
 }

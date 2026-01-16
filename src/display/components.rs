@@ -1,4 +1,4 @@
-use bevy::{asset::Handle, color::Color, ecs::prelude::*, math::Vec2, prelude::Image, reflect::Reflect, text::{ComputedTextBlock, Font, TextLayoutInfo}};
+use bevy::{asset::Handle, color::Color, ecs::prelude::*, math::Vec2, prelude::Image, reflect::Reflect, text::{ComputedTextBlock, FontHinting, LineHeight, TextLayoutInfo}};
 
 
 
@@ -96,11 +96,12 @@ pub enum UiTextVAlign {
 pub struct UiTextComputed{
     pub calc_size: Vec2, //box size that text sits in including empty space, unlike text_layout.logical_size which is only for text itself
     pub scaling:f32,
-    pub needs_update:bool,
+    // pub needs_update:bool,
     // pub bounds_none:(bool,bool),
 
     pub layout_computed_size : Vec2,
-    pub font_errs:bevy::platform::collections::HashSet<Handle<Font>>,
+    // pub font_errs:bevy::platform::collections::HashSet<Handle<Font>>,
+    pub err:bool,
     //pub text_bound:TextBound,
 
 
@@ -146,7 +147,7 @@ pub struct UiTextComputed{
 #[derive(Component, Clone, Debug, Default, bevy::prelude::Deref, bevy::prelude::DerefMut, Reflect)]
 #[reflect(Component,  Debug, Clone)]
 
-#[require(UiLayoutComputed,UiTextComputed,TextLayoutInfo,ComputedTextBlock)]
+#[require(UiLayoutComputed,UiTextComputed,TextLayoutInfo,ComputedTextBlock,FontHinting::Disabled,LineHeight)]
 pub struct UiText(pub String);
 
 pub type UiTextReader<'w, 's> = bevy::text::TextReader<'w, 's, UiText>;

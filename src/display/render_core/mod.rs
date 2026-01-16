@@ -1,24 +1,15 @@
 
-pub mod core_my;
-pub mod upscaling;
+#![allow(unused_imports)]
 
-use bevy::app::{App, Plugin};
+mod camera;
+mod passes;
+mod graph;
+mod systems;
+mod plugin;
+pub mod phases;
 
-use core_my::CoreMyPlugin;
-use upscaling::UpscalingPlugin;
+pub use camera::*;
+pub use passes::*;
+pub use phases::*;
+pub use plugin::*;
 
-#[derive(Default)]
-pub struct CorePipelinePlugin;
-
-impl Plugin for CorePipelinePlugin {
-    fn build(&self, app: &mut App) {
-
-
-        app
-            .add_plugins((
-                CoreMyPlugin,
-                UpscalingPlugin,
-            ))
-            ;
-    }
-}

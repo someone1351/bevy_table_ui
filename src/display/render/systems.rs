@@ -39,7 +39,7 @@ use super::pipelines::*;
 use super::components::*;
 use super::resources::*;
 
-use super::super::render_core::core_my::TransparentMy;
+use super::super::render_core::TransparentMy;
 // use super::super::TestRenderComponent;
 
 use super::super::components::{UiColor,UiImage,UiTextVAlign};
@@ -50,6 +50,7 @@ pub fn dummy_image_setup(
     render_device: Res<RenderDevice>,
     render_queue: Res<RenderQueue>,
     mesh2d_pipeline: Res<MyUiPipeline>,
+    pipeline_cache: Res<PipelineCache>,
     mut image_bind_groups: ResMut<MyUiImageBindGroups>,
     mut init:Local<bool>,
 ) {
@@ -62,7 +63,7 @@ pub fn dummy_image_setup(
 
 
     let gpu_image=create_dummy_image(&render_device,&render_queue);
-    let bind_group=create_image_bind_group(&render_device,&mesh2d_pipeline,&gpu_image);
+    let bind_group=create_image_bind_group(&render_device,&mesh2d_pipeline,&pipeline_cache,&gpu_image);
     image_bind_groups.values.insert(None,bind_group);
 
 }
@@ -128,6 +129,7 @@ pub fn extract_images2(
 
     render_device: Res<RenderDevice>,
     mesh2d_pipeline: Res<MyUiPipeline>,
+    pipeline_cache: Res<PipelineCache>,
     mut image_bind_groups: ResMut<MyUiImageBindGroups>,
     gpu_images: Res<RenderAssets<GpuImage>>,
     // mut gpu_images: ResMut<RenderAssets<GpuImage>>,
@@ -194,7 +196,7 @@ pub fn extract_images2(
 
             if let Some(gpu_image)=gpu_images.get(image_id) {
                 image_bind_groups.values.entry(Some(image_id.clone())).or_insert_with(||{
-                    create_image_bind_group(&render_device,&mesh2d_pipeline,&gpu_image)
+                    create_image_bind_group(&render_device,&mesh2d_pipeline,&pipeline_cache,&gpu_image)
                 });
             }
 
@@ -224,7 +226,7 @@ pub fn extract_images2(
                         // // }
                         // // // image_bind_groups.values.insert(Some(image_id),create_image_bind_group(&render_device,&mesh2d_pipeline,&gpu_image));
                         image_bind_groups.values.entry(Some(image_id.clone())).or_insert_with(||{
-                            create_image_bind_group(&render_device,&mesh2d_pipeline,&gpu_image)
+                            create_image_bind_group(&render_device,&mesh2d_pipeline,&pipeline_cache,&gpu_image)
                         });
                         // handles.insert(image_id);
                     }
@@ -662,7 +664,11 @@ pub fn extract_uinodes2(
 
             let offset=layout_computed.pos+Vec2::new(halign_offset+hfix,valign_offset);
 
-            for &(section_entity, rect) in text_layout_info.section_rects.iter() {
+
+            for run in text_layout_info.run_geometry.iter() {
+                let section_entity = computed_text_block.entities()[run.span_index].entity;
+                let rect=run.bounds;
+            // for &(section_entity, rect) in text_layout_info.section_rects.iter() {
                 let Ok(text_background_color) = text_background_colors_query.get(section_entity) else {
                     continue;
                 };
@@ -929,15 +935,23 @@ pub fn prepare_views(
     mesh2d_pipeline: Res<MyUiPipeline>,
     view_uniforms: Res<ViewUniforms>,
     extracted_views: Query<Entity, With<ExtractedView>>,
+    pipeline_cache: Res<PipelineCache>,
 ) {
     if let Some(view_binding) = view_uniforms.uniforms.binding() {
         for view_entity in extracted_views.iter() {
-            let view_bind_group = render_device.create_bind_group(
-                "my_mesh2d_view_bind_group",&mesh2d_pipeline.view_layout,&[BindGroupEntry {
-                    binding: 0,
-                    resource: view_binding.clone(),
-                }],);
-
+            // let view_bind_group = render_device.create_bind_group(
+            //     "my_mesh2d_view_bind_group",&mesh2d_pipeline.view_layout,&[BindGroupEntry {
+            //         binding: 0,
+            //         resource: view_binding.clone(),
+            //     }],);
+        let view_bind_group = render_device.create_bind_group(
+            "my_mesh2d_view_bind_group",
+            &pipeline_cache.get_bind_group_layout(&mesh2d_pipeline.view_layout),
+                // &BindGroupEntries::sequential((view_binding.clone(),
+                //     // lut_bindings.0, lut_bindings.1
+                // )),
+                &BindGroupEntries::single(view_binding.clone()),
+            );
             commands.entity(view_entity).insert(MyViewBindGroup { value: view_bind_group, });
         }
     }

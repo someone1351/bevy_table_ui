@@ -1,4 +1,4 @@
-use bevy::render::{render_resource::{BindGroup, BindGroupEntry, BindingResource}, renderer::RenderDevice, texture::GpuImage};
+use bevy::render::{render_resource::{BindGroup, BindGroupEntries, PipelineCache}, renderer::RenderDevice, texture::GpuImage};
 
 use crate::display::render::pipelines::MyUiPipeline;
 
@@ -6,18 +6,29 @@ use crate::display::render::pipelines::MyUiPipeline;
 pub fn create_image_bind_group(
     render_device: &RenderDevice,
     mesh2d_pipeline: &MyUiPipeline,
+
+    pipeline_cache: &PipelineCache,
     // image_bind_groups: &mut MyUiImageBindGroups,
     // handle:Option<AssetId<Image>>,
     gpu_image:&GpuImage,
 ) -> BindGroup {
 
     // let bind_group=
+    // render_device.create_bind_group(
+    //     "my_ui_material_bind_group",
+    //     &mesh2d_pipeline.image_layout, &[
+    //         BindGroupEntry {binding: 0, resource: BindingResource::TextureView(&gpu_image.texture_view),},
+    //         BindGroupEntry {binding: 1, resource: BindingResource::Sampler(&gpu_image.sampler),},
+    //     ]
+    // )
+
     render_device.create_bind_group(
         "my_ui_material_bind_group",
-        &mesh2d_pipeline.image_layout, &[
-            BindGroupEntry {binding: 0, resource: BindingResource::TextureView(&gpu_image.texture_view),},
-            BindGroupEntry {binding: 1, resource: BindingResource::Sampler(&gpu_image.sampler),},
-        ]
+        &pipeline_cache.get_bind_group_layout(&mesh2d_pipeline.image_layout),
+        &BindGroupEntries::sequential((
+            &gpu_image.texture_view,
+            &gpu_image.sampler,
+        )),
     )
     // ;
 
@@ -110,6 +121,8 @@ pub fn create_dummy_image(render_device: &RenderDevice, render_queue:&RenderQueu
         sampler,
         size: image.texture_descriptor.size,
         mip_level_count: image.texture_descriptor.mip_level_count,
+        texture_view_format: image.texture_view_descriptor.and_then(|v| v.format),
+        had_data: false,
     }
 }
 

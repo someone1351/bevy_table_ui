@@ -12,15 +12,42 @@ use super::shaders::{fullscreen_shader_vertex_state, BLIT_SHADER_HANDLE};
 
 #[derive(Resource)]
 pub struct BlitPipeline {
-    pub texture_bind_group: BindGroupLayout,
+    // pub texture_bind_group: BindGroupLayout,
+    pub texture_bind_group: BindGroupLayoutDescriptor,
     pub sampler: Sampler,
+}
+
+impl BlitPipeline {
+    pub fn create_bind_group(
+        &self,
+        render_device: &RenderDevice,
+        src_texture: &TextureView,
+        pipeline_cache: &PipelineCache,
+    ) -> BindGroup {
+        render_device.create_bind_group(
+            None,
+            &pipeline_cache.get_bind_group_layout(&self.texture_bind_group),
+            &BindGroupEntries::sequential((src_texture, &self.sampler)),
+        )
+    }
 }
 
 impl FromWorld for BlitPipeline {
     fn from_world(render_world: &mut World) -> Self {
         let render_device = render_world.resource::<RenderDevice>();
 
-        let texture_bind_group = render_device.create_bind_group_layout(
+        // let texture_bind_group = render_device.create_bind_group_layout(
+        //     "blit_bind_group_layout",
+        //     &BindGroupLayoutEntries::sequential(
+        //         ShaderStages::FRAGMENT,
+        //         (
+        //             texture_2d(TextureSampleType::Float { filterable: false }),
+        //             sampler(SamplerBindingType::NonFiltering),
+        //         ),
+        //     ),
+        // );
+
+        let texture_bind_group = BindGroupLayoutDescriptor::new(
             "blit_bind_group_layout",
             &BindGroupLayoutEntries::sequential(
                 ShaderStages::FRAGMENT,

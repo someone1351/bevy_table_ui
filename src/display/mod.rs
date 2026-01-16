@@ -8,12 +8,12 @@ pub mod plugin;
 
 pub mod render_core;
 pub mod render;
-// pub mod mesh;
+pub mod render_upscaling;
 
 pub use components::*;
 pub use plugin::*;
 
-pub use render_core::core_my::CameraUi;
+pub use render_core::CameraUi;
 
 
 // #[derive(Component, Debug, Clone,)]

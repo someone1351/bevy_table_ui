@@ -10,7 +10,7 @@ use crate::display::render_upscaling::UpscalingPlugin;
 use super::components::*;
 
 use super::super::layout;
-use super::render::render_setup;
+use super::render::setup::render_setup;
 // use super::TestRenderPlugin;
 use super::render_core::CoreMyPlugin;
 use super::systems::*;

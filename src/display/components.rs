@@ -1,4 +1,4 @@
-use bevy::{asset::Handle, color::Color, ecs::prelude::*, math::Vec2, prelude::Image, reflect::Reflect, text::{ComputedTextBlock, FontHinting, LineHeight, TextLayoutInfo}};
+use bevy::{asset::Handle, color::Color, ecs::prelude::*, math::Vec2, prelude::Image, reflect::Reflect, text::{ComputedTextBlock, FontHinting, LineHeight, TextColor, TextFont, TextLayoutInfo}};
 
 
 
@@ -147,7 +147,12 @@ pub struct UiTextComputed{
 #[derive(Component, Clone, Debug, Default, bevy::prelude::Deref, bevy::prelude::DerefMut, Reflect)]
 #[reflect(Component,  Debug, Clone)]
 
-#[require(UiLayoutComputed,UiTextComputed,TextLayoutInfo,ComputedTextBlock,FontHinting::Disabled,LineHeight)]
+#[require(
+    UiLayoutComputed,UiTextComputed,
+    TextLayoutInfo,ComputedTextBlock,
+    FontHinting::Disabled,LineHeight,
+    TextFont,TextColor,
+)]
 pub struct UiText(pub String);
 
 pub type UiTextReader<'w, 's> = bevy::text::TextReader<'w, 's, UiText>;

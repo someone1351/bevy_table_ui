@@ -23,6 +23,7 @@ bevy = { version = "0.18", default-features = false, features = [
     "multi_threaded",
     "debug",
     "trace",
+    "default_font",
 ]}
 
 rand = "0.8"

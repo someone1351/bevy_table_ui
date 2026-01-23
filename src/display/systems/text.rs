@@ -156,7 +156,7 @@ pub fn update_text_bounds(
             // || true
 
         {
-            println!("go");
+            // println!("go");
             // println!("is {} {} {}: {:?} {}",
             //     computed_text_block.needs_rerender(),
             //     ui_text_computed.scaling!=scale_factor,

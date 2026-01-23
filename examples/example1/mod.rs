@@ -12,9 +12,12 @@ use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 // use bevy::ecs::prelude::*;
 
 use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
 use bevy::ecs::query::With;
-use bevy::ecs::system::{Commands, Query, Res};
+use bevy::ecs::resource::Resource;
+use bevy::ecs::system::{Commands, Query, Res, ResMut};
 
+use bevy::ecs::world::World;
 use bevy::text::*;
 // use bevy::ui::{AlignSelf, JustifySelf, Node};
 use bevy::window::*;
@@ -66,6 +69,7 @@ fn main() {
         // .add_systems(Startup, ( setup_input, setup_camera, setup_menu, ))
         // .add_systems(PreUpdate, ( update_input, ))
         // .add_systems(Update, ( show_menu, ))
+        .init_resource::<FpsEntity>()
 
 
 
@@ -82,9 +86,13 @@ fn main() {
             // on_affects,
             update_input,
             show_fps, //.run_if(bevy::time::common_conditions::on_timer(std::time::Duration::from_millis(100))),
+            // show_fps3,
             // on_affects2,
             // test_exit,
         ).chain())
+        // .add_systems(Update, (
+        //     show_fps,
+        // ))
         // .add_systems(Update, (
         // ))
         ;
@@ -305,16 +313,24 @@ fn setup_test(
 #[derive(Component)]
 struct FpsText;
 
+#[derive(Resource,)]
+struct FpsEntity(pub Entity);
 
+impl Default for FpsEntity {
+    fn default() -> Self {
+        Self(Entity::PLACEHOLDER)
+    }
+}
 fn setup_fps(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    mut fps_entity:ResMut<FpsEntity>,
 ) {
 
     let font: Handle<Font>=asset_server.load("fonts/FiraMono-Medium.ttf");
 
 
-    commands.spawn((
+    let entity=commands.spawn((
         UiRoot::default(),
         FpsText,
         TextFont{ font:font.clone(), font_size: 15.0, ..Default::default() },
@@ -327,7 +343,9 @@ fn setup_fps(
         // UiSize::px(200.0, 50.0),
         // UiColor::default().back(Color::linear_rgb(0.5,0.1, 0.1)),
         UiAlign::top_right(),
-    ));
+    )).id();
+
+    fps_entity.0=entity;
 
 }
 
@@ -345,6 +363,9 @@ fn setup_fps(
 fn show_fps(
     diagnostics: Res<DiagnosticsStore>,
     mut marker_query: Query< &mut UiText,With<FpsText>>,
+    // mut marker_query2: Query<Entity,(With<FpsText>,With<UiText>)>,
+    // mut commands: Commands,
+    // world:&mut World,
 ) {
     if let Ok(mut text)=marker_query.single_mut() {
         if let Some(v)=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS).and_then(|v|v.smoothed()) {
@@ -353,9 +374,57 @@ fn show_fps(
             text.0="".into();
         }
     }
+
 }
 
 
+fn show_fps2(
+    world:&mut World,
+) {
+    let &FpsEntity(entity)= world.resource();
+    let diagnostics:&DiagnosticsStore=world.resource();
+    let v=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS).and_then(|v|v.smoothed()).clone();
+
+
+    let mut e=world.entity_mut(entity);
+    let mut c= e.entry::<UiText>().or_default();
+    let mut c=c.get_mut();
+
+
+    if let Some(v)=v {
+        c.0 =format!("{:.0}",v.round());
+    } else {
+        c.0 ="aaa".into();
+    }
+}
+fn show_fps3(
+    diagnostics: Res<DiagnosticsStore>,
+    marker_query: Query<Entity,(With<FpsText>,With<UiText>)>,
+    mut commands: Commands,
+    // world:&mut World,
+) {
+    let v=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS).and_then(|v|v.smoothed());
+    if let Ok(entity)=marker_query.single() {
+
+        commands.queue(move |world: &mut World|{
+            let mut e=world.entity_mut(entity);
+            let mut c= e.entry::<UiText>().or_default();
+            let mut c=c.get_mut();
+
+            if let Some(v)=v {
+                c.0 =format!("{:.0}",v.round());
+            } else {
+                c.0 ="aaa".into();
+            }
+        });
+        // if let Some(v)=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS).and_then(|v|v.smoothed()) {
+        //     text.0 =format!("{:.0}",v.round());
+        // } else {
+        //     text.0="".into();
+        // }
+    }
+
+}
 
 
 fn update_ui_roots(

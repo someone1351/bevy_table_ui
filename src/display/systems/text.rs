@@ -74,7 +74,15 @@ pub fn update_text_bounds(
 
 
     mut reprocess_queue: Local<EntityHashSet>,
+    // aaa:Query<Ref<UiText>>,
 ) {
+//    for x in aaa.iter() {
+//         if x.is_changed() {
+//             println!("b '{}'",x.0);
+//         }
+//     }
+
+    //
     let reprocess_queue_old=reprocess_queue.clone();
     reprocess_queue.clear();
 
@@ -148,7 +156,7 @@ pub fn update_text_bounds(
             // || true
 
         {
-
+            println!("go");
             // println!("is {} {} {}: {:?} {}",
             //     computed_text_block.needs_rerender(),
             //     ui_text_computed.scaling!=scale_factor,

@@ -11,13 +11,9 @@ use bevy::color::Color;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 // use bevy::ecs::prelude::*;
 
-use bevy::ecs::component::Component;
-use bevy::ecs::entity::Entity;
-use bevy::ecs::query::With;
-use bevy::ecs::resource::Resource;
-use bevy::ecs::system::{Commands, Query, Res, ResMut};
+use bevy::ecs::prelude::*;
 
-use bevy::ecs::world::World;
+// use bevy::ecs::world::World;
 use bevy::text::*;
 // use bevy::ui::{AlignSelf, JustifySelf, Node};
 use bevy::window::*;
@@ -25,13 +21,12 @@ use bevy::DefaultPlugins;
 use bevy::prelude::{Msaa, PluginGroup };
 
 
-use bevy_table_ui::CameraUi;
-use bevy_table_ui as table_ui;
+use bevy_table_ui::*;
 use rand::rngs::ThreadRng;
 // use rand::Rng;
 // use mesh::TestRenderComponent;
 // use render_core::core_my::CameraMy;
-use table_ui::*;
+
 
 
 // #[path = "affect/mod.rs"]
@@ -69,7 +64,7 @@ fn main() {
         // .add_systems(Startup, ( setup_input, setup_camera, setup_menu, ))
         // .add_systems(PreUpdate, ( update_input, ))
         // .add_systems(Update, ( show_menu, ))
-        .init_resource::<FpsEntity>()
+        // .init_resource::<FpsEntity>()
 
 
 
@@ -313,24 +308,25 @@ fn setup_test(
 #[derive(Component)]
 struct FpsText;
 
-#[derive(Resource,)]
-struct FpsEntity(pub Entity);
+// #[derive(Resource,)]
+// struct FpsEntity(pub Entity);
 
-impl Default for FpsEntity {
-    fn default() -> Self {
-        Self(Entity::PLACEHOLDER)
-    }
-}
+// impl Default for FpsEntity {
+//     fn default() -> Self {
+//         Self(Entity::PLACEHOLDER)
+//     }
+// }
 fn setup_fps(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut fps_entity:ResMut<FpsEntity>,
+    // mut fps_entity:ResMut<FpsEntity>,
 ) {
 
     let font: Handle<Font>=asset_server.load("fonts/FiraMono-Medium.ttf");
 
 
-    let entity=commands.spawn((
+    // let entity=
+    commands.spawn((
         UiRoot::default(),
         FpsText,
         TextFont{ font:font.clone(), font_size: 15.0, ..Default::default() },
@@ -343,9 +339,11 @@ fn setup_fps(
         // UiSize::px(200.0, 50.0),
         // UiColor::default().back(Color::linear_rgb(0.5,0.1, 0.1)),
         UiAlign::top_right(),
-    )).id();
+    ))
+    // .id()
+    ;
 
-    fps_entity.0=entity;
+    // fps_entity.0=entity;
 
 }
 
@@ -378,53 +376,53 @@ fn show_fps(
 }
 
 
-fn show_fps2(
-    world:&mut World,
-) {
-    let &FpsEntity(entity)= world.resource();
-    let diagnostics:&DiagnosticsStore=world.resource();
-    let v=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS).and_then(|v|v.smoothed()).clone();
+// fn show_fps2(
+//     world:&mut World,
+// ) {
+//     let &FpsEntity(entity)= world.resource();
+//     let diagnostics:&DiagnosticsStore=world.resource();
+//     let v=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS).and_then(|v|v.smoothed()).clone();
 
 
-    let mut e=world.entity_mut(entity);
-    let mut c= e.entry::<UiText>().or_default();
-    let mut c=c.get_mut();
+//     let mut e=world.entity_mut(entity);
+//     let mut c= e.entry::<UiText>().or_default();
+//     let mut c=c.get_mut();
 
 
-    if let Some(v)=v {
-        c.0 =format!("{:.0}",v.round());
-    } else {
-        c.0 ="aaa".into();
-    }
-}
-fn show_fps3(
-    diagnostics: Res<DiagnosticsStore>,
-    marker_query: Query<Entity,(With<FpsText>,With<UiText>)>,
-    mut commands: Commands,
-    // world:&mut World,
-) {
-    let v=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS).and_then(|v|v.smoothed());
-    if let Ok(entity)=marker_query.single() {
+//     if let Some(v)=v {
+//         c.0 =format!("{:.0}",v.round());
+//     } else {
+//         c.0 ="aaa".into();
+//     }
+// }
+// fn show_fps3(
+//     diagnostics: Res<DiagnosticsStore>,
+//     marker_query: Query<Entity,(With<FpsText>,With<UiText>)>,
+//     mut commands: Commands,
+//     // world:&mut World,
+// ) {
+//     let v=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS).and_then(|v|v.smoothed());
+//     if let Ok(entity)=marker_query.single() {
 
-        commands.queue(move |world: &mut World|{
-            let mut e=world.entity_mut(entity);
-            let mut c= e.entry::<UiText>().or_default();
-            let mut c=c.get_mut();
+//         commands.queue(move |world: &mut World|{
+//             let mut e=world.entity_mut(entity);
+//             let mut c= e.entry::<UiText>().or_default();
+//             let mut c=c.get_mut();
 
-            if let Some(v)=v {
-                c.0 =format!("{:.0}",v.round());
-            } else {
-                c.0 ="aaa".into();
-            }
-        });
-        // if let Some(v)=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS).and_then(|v|v.smoothed()) {
-        //     text.0 =format!("{:.0}",v.round());
-        // } else {
-        //     text.0="".into();
-        // }
-    }
+//             if let Some(v)=v {
+//                 c.0 =format!("{:.0}",v.round());
+//             } else {
+//                 c.0 ="aaa".into();
+//             }
+//         });
+//         // if let Some(v)=diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS).and_then(|v|v.smoothed()) {
+//         //     text.0 =format!("{:.0}",v.round());
+//         // } else {
+//         //     text.0="".into();
+//         // }
+//     }
 
-}
+// }
 
 
 fn update_ui_roots(

@@ -19,7 +19,7 @@ use bevy::asset::prelude::*;
 use bevy::image::{Image, TextureAtlasLayout};
 // use bevy::render::texture::Image;
 // use bevy::sprite::TextureAtlasLayout;
-use bevy::text::{ComputedTextBlock, CosmicFontSystem, Font, FontAtlasSet, FontHinting, Justify, LineBreak, SwashCache, TextBounds, TextError, TextFont, TextLayout, TextLayoutInfo, TextPipeline };
+use bevy::text::{ComputedTextBlock, CosmicFontSystem, Font, FontAtlasSet, FontHinting, LineBreak, SwashCache, TextBounds, TextError, TextFont, TextLayout, TextLayoutInfo, TextPipeline };
 // use bevy::window::Window;
 
 
@@ -45,7 +45,8 @@ pub fn update_text_bounds(
         &mut UiTextComputed,
 
         // Option<& TextLayout>,
-        Option<Ref<TextLayout>>,
+        // Option<Ref<TextLayout>>,
+        Ref<TextLayout>,
         // Option<& TextBounds>,
         Option<Ref<TextBounds>>,
 
@@ -117,7 +118,8 @@ pub fn update_text_bounds(
 
         //
         let ui_size2=ui_size.as_deref().cloned().unwrap_or_default();
-        let mut text_layout2=text_layout.as_deref().cloned().unwrap_or(TextLayout { justify: Justify::Center, linebreak: LineBreak::NoWrap });
+        // let mut text_layout2=text_layout.as_deref().cloned().unwrap_or(TextLayout { justify: Justify::Center, linebreak: LineBreak::NoWrap });
+        let mut text_layout2=text_layout.clone();
         let mut text_bounds2=text_bounds.as_deref().cloned().unwrap_or_default();
 
         //scale bounds
@@ -144,7 +146,8 @@ pub fn update_text_bounds(
             || computed_text_block.needs_rerender()
             || ui_size.map(|x|x.is_changed()).unwrap_or_default()
             || text_bounds.map(|x|x.is_changed()).unwrap_or_default()
-            || text_layout.map(|x|x.is_changed()).unwrap_or_default()
+            // || text_layout.map(|x|x.is_changed()).unwrap_or_default()
+            || text_layout.is_changed()
 
             || ui_text_computed.scaling!=scale_factor
             || ui_text_computed.layout_computed_size!=ui_layout_computed.size

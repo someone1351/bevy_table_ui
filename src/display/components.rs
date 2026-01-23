@@ -1,4 +1,4 @@
-use bevy::{asset::Handle, color::Color, ecs::prelude::*, math::Vec2, prelude::Image, reflect::Reflect, text::{ComputedTextBlock, FontHinting, LineHeight, TextColor, TextFont, TextLayout, TextLayoutInfo}};
+use bevy::{asset::Handle, color::Color, ecs::prelude::*, math::Vec2, prelude::Image, reflect::Reflect, text::{ComputedTextBlock, FontHinting, Justify, LineBreak, LineHeight, TextColor, TextFont, TextLayout, TextLayoutInfo}};
 
 
 
@@ -151,7 +151,8 @@ pub struct UiTextComputed{
     UiLayoutComputed,UiTextComputed,
     TextLayoutInfo,ComputedTextBlock,
     FontHinting::Disabled,LineHeight,
-    TextFont,TextColor,TextLayout,
+    TextFont,TextColor,
+    TextLayout{justify:Justify::Center,linebreak:LineBreak::NoWrap},
 )]
 pub struct UiText(pub String);
 

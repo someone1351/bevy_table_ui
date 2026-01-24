@@ -527,7 +527,7 @@ fn do_press_cancel(
 pub fn update_press_events(
     root_query: Query<&UiLayoutComputed, With<UiRoot>>,
     layout_computed_query: Query<&UiLayoutComputed>,
-    pressable_query: Query<(Entity,& UiCursorable)>,
+    cursorable_query: Query<(Entity,& UiCursorable)>,
 
     // focus_states : Res<UiFocusStates>,
     // focuseds : Res<UiFocuseds>,
@@ -554,18 +554,18 @@ pub fn update_press_events(
     let mut roots_pressable_entities: HashMap<Entity, Vec<Entity>> = HashMap::new(); //[root_entity]=pressable_entities
 
     //get root entities with their pressable descendants
-    for (pressable_entity,pressable) in pressable_query.iter() {
-        if !pressable.pressable {
-            continue;
-        }
+    for (cursorable_entity,_cursorable) in cursorable_query.iter() {
+        // if !pressable.pressable {
+        //     continue;
+        // }
 
-        let Ok(computed) = layout_computed_query.get(pressable_entity) else { continue; };
+        let Ok(computed) = layout_computed_query.get(cursorable_entity) else { continue; };
 
         if !computed.unlocked {
             continue;
         }
 
-        roots_pressable_entities.entry(computed.root_entity).or_default().push(pressable_entity);
+        roots_pressable_entities.entry(computed.root_entity).or_default().push(cursorable_entity);
     }
 
     //sort press_root_entities by computed.order
@@ -594,6 +594,7 @@ pub fn update_press_events(
         {
             continue;
         }
+
 
         //
         match ev.clone() {
@@ -633,7 +634,7 @@ pub fn update_press_events(
                     &mut output_event_writer,
 
                     layout_computed_query,
-                    pressable_query,
+                    cursorable_query,
                 );
             }
 
@@ -649,7 +650,7 @@ pub fn update_press_events(
                     button,
                     &roots_pressable_entities,
                     layout_computed_query,
-                    pressable_query,
+                    cursorable_query,
                     &mut device_presseds,
                     &mut output_event_writer,
                 );
@@ -662,7 +663,7 @@ pub fn update_press_events(
                     &roots_pressable_entities,
                     &device_cursors,
                     layout_computed_query,
-                    pressable_query,
+                    cursorable_query,
                     &mut output_event_writer,
                 );
 
@@ -724,7 +725,7 @@ pub fn update_press_events(
 
                 let entity=pressable_entities.iter().find(|&&entity|{
                     let computed = layout_computed_query.get(entity).unwrap();
-                    let pressable=pressable_query.get(entity).map(|(_,c)|c.scrollable).unwrap_or_default();
+                    let pressable=cursorable_query.get(entity).map(|(_,c)|c.scrollable).unwrap_or_default();
 
                     if !pressable {
                         return false;

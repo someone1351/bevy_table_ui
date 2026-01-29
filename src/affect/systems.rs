@@ -15,7 +15,7 @@ pub fn on_affects<'a>(
     let mut new_states: HashMap<Entity,HashSet<UiAffectState>>=Default::default(); //[entity][state]
     //
     for ev in interact_event_reader.read() {
-        println!("e {ev}");
+        //println!("e {ev}");
         let Ok((_,_, mut affect_computed))=affect_query.get_mut(ev.entity) else {continue;};
 
         let Some((state,device,is_end))=(match ev.event_type {

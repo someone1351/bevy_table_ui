@@ -264,7 +264,7 @@ pub enum UiInteractMessageType {
     CursorDragX{dist:f32,delta:f32,device:i32,button:i32,}, //scale:f32
     CursorDragY{dist:f32,delta:f32,device:i32,button:i32,}, //scale:f32
 
-    CursorDragBegin{device:i32,button:i32},
+    CursorDragBegin{device:i32,button:i32,offset:Vec2,inner_offset:Vec2,},
     CursorDragEnd{device:i32,button:i32},
     // CursorDrag{dist:f32,delta:f32,device:i32,button:i32,axis:i32,},
     CursorScroll{scroll:f32,device:i32,axis:i32,},

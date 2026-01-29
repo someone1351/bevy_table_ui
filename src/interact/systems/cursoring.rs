@@ -277,9 +277,16 @@ fn do_drag_press_begin(
         // buttons: todo!(),
         // offset: border_rect.left_top()
     });
+
+    //
+    let layout_computed=layout_computed_query.get(found_entity).unwrap();
+    let offset=cursor-layout_computed.border_rect().min;
+    let inner_offset=cursor-layout_computed.inner_rect().min;
+
+    //
     output_event_writer.write(UiInteractEvent{
         entity:found_entity,
-        event_type:UiInteractMessageType::CursorDragBegin {device, button } //scale:dragged_scale.y
+        event_type:UiInteractMessageType::CursorDragBegin {device, button, offset, inner_offset } //scale:dragged_scale.y
     });
 
     // device_drags.0.get_mut(&(root_entity,device)).map(|x|x.entry(button));

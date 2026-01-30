@@ -100,6 +100,8 @@ use bevy::{
 };
 
 
+use crate::layout::messages::UiLayoutComputedChanged;
+use crate::layout::resources::UiOldComputedLayouts;
 use crate::utils::{ui_rect_clamp, ui_rect_expand};
 
 use super::values::*;
@@ -132,6 +134,7 @@ pub fn ui_init_computeds(
 
     // edge_query: Query<&UiEdge,(With<Parent>,)>,
     // mut c:Local<usize>,
+
 ) {
 
     // println!("ui_init_computeds {}",*c);
@@ -2170,6 +2173,54 @@ pub fn ui_calc_computed_clamp(
     // println!("ui_calc_computeds Elapsed: {}", now.elapsed().as_secs_f64());
 }
 
+pub fn ui_changes(
+    mut old_layout_computed:ResMut<UiOldComputedLayouts>,
+    mut output_event_writer: MessageWriter<UiLayoutComputedChanged>,
+
+    computed_query: Query<&UiLayoutComputed>,
+    root_query: Query<(Entity,&UiRoot),With<UiLayoutComputed>>,
+    children_query: Query<&Children,With<UiLayoutComputed>>,
+) {
+
+    let mut stk= Vec::new(); //(entity,parent_of_root,)
+
+    stk.extend(root_query.iter()
+        .filter(|&(entity,_root)|computed_query.get(entity).map(|computed|computed.enabled).unwrap_or_default())
+        .map(|(entity,_root)|entity)
+    );
+
+    //
+    while let Some(entity) = stk.pop() {
+        //
+        if let Ok(children)=children_query.get(entity) {
+            stk.extend(children.iter().filter(|&child_entity|{
+                computed_query.get(child_entity).map(|child_computed|child_computed.enabled).unwrap_or_default() &&
+                !root_query.contains(child_entity)
+            }).rev());
+        }
+
+        //
+        let computed = computed_query.get(entity).unwrap();
+
+        //
+        old_layout_computed.0.retain(|&entity,_|computed_query.contains(entity));
+
+        //
+        let old_computed=old_layout_computed.0.entry(entity).or_default();
+
+        //
+        if old_computed!=computed {
+            output_event_writer.write(UiLayoutComputedChanged{
+                entity,
+                layout_computed:*old_computed,
+            });
+        }
+
+        //
+        *old_computed=*computed;
+    }
+
+}
 // pub fn validate_computeds(
 //     // uinode_query: Query<(Entity, &UiComputed)>,
 // ) {

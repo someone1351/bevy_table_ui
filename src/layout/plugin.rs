@@ -4,6 +4,9 @@ use bevy::app::PostUpdate;
 // use bevy::app::prelude::*;
 use bevy::ecs::prelude::*;
 
+use crate::layout::messages::UiLayoutComputedChanged;
+use crate::layout::resources::UiOldComputedLayouts;
+
 // use super::values::*;
 use super::components::*;
 use super::systems::*;
@@ -43,6 +46,8 @@ impl bevy::app::Plugin for UiLayoutPlugin {
             .register_type::<UiSize>()
             // .register_type::<UiInnerSize>()
             .register_type::<UiLayoutComputed>()
+            .init_resource::<UiOldComputedLayouts>()
+            .add_message::<UiLayoutComputedChanged>()
 
             .add_systems(
                 // bevy::app::Update,
@@ -54,12 +59,14 @@ impl bevy::app::Plugin for UiLayoutPlugin {
                     ui_calc_computeds3,
                     ui_calc_computed_pos,
                     ui_calc_computed_clamp,
+                    ui_changes,
                 ).chain().in_set(UiLayoutSystem)
                     // .after(bevy::text::remove_dropped_font_atlas_sets)
                     // .after(bevy::app::AnimationSystems)
                     // .after(bevy::camera::CameraUpdateSystems)
                     // .after(bevy::asset::AssetEventSystems)
                 )
+                // .add_systems(PostUpdate, (ui_changes,))
                 ;
 
     }

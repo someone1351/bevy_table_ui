@@ -172,6 +172,9 @@ impl UiRectVal {
             bottom:h,
         }
     }
+    pub fn from_val(v:UiVal) -> Self {
+        Self::new_size(v, v)
+    }
 }
 #[derive(Reflect,Copy, Clone, PartialEq, Debug, Default)]
 pub enum UiAspectType {

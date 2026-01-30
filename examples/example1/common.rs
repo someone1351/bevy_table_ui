@@ -352,14 +352,13 @@ pub fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<
     //     ]
     // );
 
-    // let width= create_affect_attrib(
-    //     |c:&mut UiSize,v|{c.width=v;},
-    //     UiVal::None,
-    //     [
-    //         (UixAffectState::Focus,UiVal::Px(100.0)),
-    //         (UixAffectState::Press(0),UiVal::Px(150.0))
-    //     ]
-    // );
+    let margin= create_affect_attrib(
+        |c:&mut UiEdge,v|{c.margin=UiRectVal::from_val(v);},
+        UiVal::None,
+        [
+            (UiAffectState::Focus,UiVal::Px(5.0)),
+        ]
+    );
 
     let text= create_affect_attrib(
         |c:&mut UiText,v|{c.0=v;},
@@ -381,7 +380,7 @@ pub fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<
             back_col,
             border_col,
             text,
-            // // width,
+            margin,
         ]),
         UiFocusable{
             enable: true,

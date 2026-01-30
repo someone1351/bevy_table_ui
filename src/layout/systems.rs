@@ -91,7 +91,7 @@ TODO
 
 use bevy::math::{Rect, Vec2};
 // use bevy::render::view::window;
-use bevy::utils::default;
+// use bevy::utils::default;
 use bevy::{
     // asset::prelude::*,
     ecs::prelude::*,
@@ -143,7 +143,10 @@ pub fn ui_init_computeds(
 
     //
     for mut computed in computed_query.iter_mut() {
-        *computed=Default::default();
+        *computed=UiLayoutComputed{
+            size:Vec2::NEG_ONE, //for debugging missed calculations
+            ..Default::default()
+        };
     }
 
     //
@@ -580,7 +583,7 @@ pub fn ui_calc_computeds2(
 
         let computed=if parent_of_root {
             let root=root_query.get(entity).unwrap().1;
-            UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(root.width,root.height),..default()}
+            UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(root.width,root.height),..Default::default()}
         } else {
             computed_query.get(entity).cloned().unwrap()
         };
@@ -1029,7 +1032,7 @@ pub fn ui_calc_computeds3(
         let (computed,root)=if parent_of_root {
             let root=root_query.get(entity).unwrap().1;
             (
-                UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(root.width,root.height),..default()},
+                UiLayoutComputed{unlocked:true,visible:true,enabled:true,size:Vec2::new(root.width,root.height),..Default::default()},
                 root,
             )
         } else {
@@ -1108,7 +1111,7 @@ pub fn ui_calc_computeds3(
                     //println!("Dfdsf6 {entity:?}");
                     let child_computed = computed_query.get(child_entity).cloned()
                         .unwrap_or_default() //just replce with unwrap? since children only includes ones with computeds
-                        ;
+                        ; //todo look
 
                     let child_float =
                         //entity.is_none() ||
@@ -1199,7 +1202,7 @@ pub fn ui_calc_computeds3(
                         //println!("Dfdsf5 {entity:?}");
                         let child_computed = computed_query.get(child_entity).cloned()
                             .unwrap_or_default() //todo replace with unwrap?
-                            ;
+                            ; //todo look
                         let child_float =
                             // entity.is_none() ||
                             float_query.get(child_entity).cloned().unwrap_or_default().float;
@@ -1802,7 +1805,7 @@ pub fn ui_calc_computed_pos(
                 for child_entity in children.clone() //.iter()
                 {
                     //println!("Dfdsf2 {entity:?}");
-                    let child_computed = computed_query.get(child_entity).cloned().unwrap_or_default(); //todo unwrap
+                    let child_computed = computed_query.get(child_entity).cloned().unwrap_or_default(); //todo unwrap //todo look
                     let child_float =
                         // entity.is_none() ||
                         float_query.get(child_entity).cloned().unwrap_or_default().float;

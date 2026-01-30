@@ -287,6 +287,44 @@ pub struct UiLayoutComputed {
 }
 
 impl UiLayoutComputed {
+    // pub fn init() -> Self {
+    //     Self {
+    //         size:Vec2::NEG_ONE,
+    //         ..Default::default()
+    //     }
+
+    // }
+
+    // fn zero() -> Self {
+    //     Self {
+    //         pos:Vec2::ZERO,
+    //         size:Vec2::ZERO,
+    //         custom_size:Vec2::ZERO,
+
+    //         clamped_rect:Rect::default(),
+    //         clamped_cell_rect:Rect::default(),
+
+    //         border_size:Rect::default(),
+    //         padding_size:Rect::default(),
+    //         margin_size:Rect::default(),
+    //         cell_size:Rect::default(),
+
+    //         gap_size:Vec2::ZERO,
+    //         scroll_pos:Vec2::ZERO,
+    //         scroll_size:Vec2::ZERO,
+    //         children_size:Vec2::ZERO,
+
+    //         depth: 0, order: 0,
+    //         row: 0, col: 0,
+    //         rows: 0, cols: 0,
+    //         visible: false,
+    //         enabled: false,
+    //         unlocked: false,
+    //         root_entity: Entity::PLACEHOLDER,
+    //         camera_entity: Entity::PLACEHOLDER,
+    //     }
+    // }
+
     pub fn inner_rect(&self) -> Rect {
         // Rect {
         //     left: self.pos.x,
@@ -341,7 +379,8 @@ impl Default for UiLayoutComputed {
         Self {
             // x: 0.0, y: 0.0, w: 0.0, h: 0.0,
             pos:Vec2::ZERO,
-            size:Vec2::NEG_ONE,
+            // size:Vec2::NEG_ONE,
+            size:Vec2::ZERO,
             custom_size:Vec2::ZERO,
 
             clamped_rect:Rect::default(),

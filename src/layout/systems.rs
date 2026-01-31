@@ -2233,15 +2233,28 @@ pub fn ui_changes(
         let old_computed=old_layout_computeds.0.entry(entity).or_default();
 
         //
-        if old_computed.ne(&computed.as_mut()) {
+        if old_computed.pos_ne(&computed.as_mut()) {
+            computed.pos_changed=true;
+        }
+
+        //
+        if old_computed.size_ne(&computed.as_mut()) {
+            computed.size_changed=true;
+        }
+
+        //
+        if old_computed.scroll_ne(&computed.as_mut()) {
+            computed.scroll_changed=true;
+        }
+
+        //
+        if old_computed.rest_ne(&computed.as_mut()) || computed.pos_changed || computed.size_changed || computed.scroll_changed {
+            computed.changed=true;
+        }
             // output_event_writer.write(UiLayoutComputedChanged{
             //     entity,
             //     layout_computed:*old_computed,
             // });
-
-            computed.changed=true;
-        }
-
         //
         *old_computed=*computed;
     }

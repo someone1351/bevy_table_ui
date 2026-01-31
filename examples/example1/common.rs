@@ -3,7 +3,7 @@
 
 use std::collections::HashSet;
 
-use bevy::{app::AppExit, asset::Handle, color::Color, ecs::prelude::*, input::{keyboard::{KeyCode, KeyboardInput}, mouse::{MouseButton, MouseButtonInput, MouseScrollUnit, MouseWheel}, ButtonState}, math::Vec2, text::{Font, Justify, LineBreak, TextBackgroundColor, TextColor, TextFont, TextLayout, }, window::Window};
+use bevy::{app::AppExit, asset::Handle, color::Color, ecs::prelude::*, input::{keyboard::{KeyCode, KeyboardInput}, mouse::{MouseButton, MouseButtonInput, MouseScrollUnit, MouseWheel}, ButtonState}, math::Vec2, text::{Font, Justify, LineBreak, TextBackgroundColor, TextColor, TextFont, TextLayout, TextSpan, }, window::Window};
 
 use bevy_table_ui::*;
 // {affect::{components::UixAffect, utils::create_affect_attrib, values::UixAffectState}, UiColor, UiCursorable, UiEdge, UiFocusable, UiInteractInputMessage, UiRectVal, UiRoot, UiSize, UiText, UiTextVAlign, UiVal};
@@ -436,7 +436,7 @@ pub fn create_ui_box(commands: &mut Commands, rng: &mut ThreadRng, font: Handle<
         // },
     ))
     .with_child((
-        // TextSpan(format!("{entity}")),
+        TextSpan(format!("{entity}")),
 
         TextFont{ font: font.clone(), font_size: 15.0, ..Default::default() },
         TextColor(Color::linear_rgb(0.0,0.0,1.0)),

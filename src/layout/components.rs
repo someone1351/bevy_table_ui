@@ -286,39 +286,51 @@ pub struct UiLayoutComputed {
     // pub camera_entity : Entity,
 
     pub changed:bool,
+    pub pos_changed:bool,
+    pub size_changed:bool,
+    pub scroll_changed:bool,
 }
 
-impl PartialEq for UiLayoutComputed {
-    fn eq(&self, other: &Self) -> bool {
-        // self.pos == other.pos
-        //     &&
-        self.size == other.size
-            // && self.custom_size == other.custom_size
-            && self.clamped_rect == other.clamped_rect
-            && self.clamped_cell_rect == other.clamped_cell_rect
-            && self.border_size == other.border_size
-            && self.padding_size == other.padding_size
-            && self.margin_size == other.margin_size
-            && self.cell_size == other.cell_size
-            // && self.gap_size == other.gap_size
-            // && self.scroll_pos == other.scroll_pos
-            // && self.scroll_size == other.scroll_size
-            // && self.children_size == other.children_size
-            // && self.depth == other.depth
-            // && self.order == other.order
-            // && self.row == other.row
-            // && self.col == other.col
-            // && self.rows == other.rows
-            // && self.cols == other.cols
-            // && self.visible == other.visible
-            // && self.enabled == other.enabled
-            // && self.unlocked == other.unlocked
-            // && self.root_entity == other.root_entity
-            // && self.changed == other.changed
-    }
-}
 
 impl UiLayoutComputed {
+
+    pub fn size_ne(&self,other:&Self) -> bool {
+        self.size != other.size
+            || self.clamped_rect != other.clamped_rect
+            || self.clamped_cell_rect != other.clamped_cell_rect
+            || self.border_size != other.border_size
+            || self.padding_size != other.padding_size
+            || self.margin_size != other.margin_size
+            || self.cell_size != other.cell_size
+    }
+    pub fn scroll_ne(&self,other:&Self) -> bool {
+        self.scroll_pos != other.scroll_pos
+            || self.scroll_size != other.scroll_size
+    }
+    pub fn pos_ne(&self,other:&Self) -> bool {
+        self.pos != other.pos
+    }
+
+    pub fn rest_ne(&self,other:&Self) -> bool {
+        self.row != other.row
+        || self.col != other.col
+        || self.rows != other.rows
+        || self.cols != other.cols
+
+        || self.visible != other.visible
+        || self.enabled != other.enabled
+        || self.unlocked != other.unlocked
+        || self.root_entity != other.root_entity
+
+
+        // && self.custom_size == other.custom_size //
+        // && self.gap_size == other.gap_size //
+        // && self.children_size == other.children_size
+        // && self.depth == other.depth
+        // && self.order == other.order
+
+    }
+
     // pub fn init() -> Self {
     //     Self {
     //         size:Vec2::NEG_ONE,
@@ -442,6 +454,9 @@ impl Default for UiLayoutComputed {
             // camera_entity: Entity::PLACEHOLDER,
 
             changed:false,
+            pos_changed: false,
+            size_changed: false,
+            scroll_changed: false,
         }
     }
 }

@@ -440,12 +440,21 @@ fn on_layout_computed_changes(
     //     println!("change2 {entity} ");
     // }
 
-    for (entity,layout_computed) in layout_computed_query.iter() {
-        if layout_computed.changed {
-        println!("change {entity} ");
+    let changeds : Vec<Entity> = layout_computed_query.iter()
+        .filter_map(|(entity,layout_computed)|layout_computed.size_changed.then_some(entity))
+        .collect();
 
-        }
+    if !changeds.is_empty() {
+        println!("changeds: {}", changeds.iter().map(|entity|format!("{entity}")).collect::<Vec<_>>().join(", "));
     }
+
+
+    // for (entity,layout_computed) in layout_computed_query.iter() {
+    //     if layout_computed.changed {
+    //     println!("change {entity} ");
+
+    //     }
+    // }
 }
 
 fn update_ui_roots(

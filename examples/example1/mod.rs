@@ -21,7 +21,7 @@ use bevy::DefaultPlugins;
 use bevy::prelude::{Msaa, PluginGroup };
 
 
-use bevy_table_ui::layout::messages::UiLayoutComputedChanged;
+// use bevy_table_ui::layout::messages::UiLayoutComputedChanged;
 use bevy_table_ui::*;
 use rand::rngs::ThreadRng;
 // use rand::Rng;
@@ -427,13 +427,25 @@ fn show_fps(
 // }
 
 fn on_layout_computed_changes(
-    mut reader:MessageReader<UiLayoutComputedChanged>,
+    // mut reader:MessageReader<UiLayoutComputedChanged>,
+    // layout_computed_changeds:Query<Entity,Changed<UiLayoutComputed>>,
+    layout_computed_query:Query<(Entity,&UiLayoutComputed)>,
 ) {
 
-    for ev in reader.read() {
-        println!("change {} ",ev.entity);
-    }
+    // for ev in reader.read() {
+    //     println!("change1 {} ",ev.entity);
+    // }
 
+    // for entity in layout_computed_changeds.iter() {
+    //     println!("change2 {entity} ");
+    // }
+
+    for (entity,layout_computed) in layout_computed_query.iter() {
+        if layout_computed.changed {
+        println!("change {entity} ");
+
+        }
+    }
 }
 
 fn update_ui_roots(

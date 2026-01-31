@@ -4,8 +4,8 @@ use bevy::app::PostUpdate;
 // use bevy::app::prelude::*;
 use bevy::ecs::prelude::*;
 
-use crate::layout::messages::UiLayoutComputedChanged;
-use crate::layout::resources::UiOldComputedLayouts;
+// use crate::layout::messages::UiLayoutComputedChanged;
+use super::resources::*;
 
 // use super::values::*;
 use super::components::*;
@@ -46,8 +46,9 @@ impl bevy::app::Plugin for UiLayoutPlugin {
             .register_type::<UiSize>()
             // .register_type::<UiInnerSize>()
             .register_type::<UiLayoutComputed>()
-            .init_resource::<UiOldComputedLayouts>()
-            .add_message::<UiLayoutComputedChanged>()
+            .init_resource::<UiOldLayoutComputeds>()
+            // .init_resource::<UiTempLayoutComputeds>()
+            // .add_message::<UiLayoutComputedChanged>()
 
             .add_systems(
                 // bevy::app::Update,

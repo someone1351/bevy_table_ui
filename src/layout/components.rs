@@ -253,7 +253,7 @@ impl Default for UiRoot {
 
 //have bool for calcd ?
 //todo swap ui_rect with rect
-#[derive(Reflect,Component, Debug, Copy, Clone,PartialEq, )]
+#[derive(Reflect,Component, Debug, Copy, Clone, )]
 
 pub struct UiLayoutComputed {
 
@@ -283,7 +283,39 @@ pub struct UiLayoutComputed {
     pub unlocked : bool,
 
     pub root_entity : Entity,
-    pub camera_entity : Entity,
+    // pub camera_entity : Entity,
+
+    pub changed:bool,
+}
+
+impl PartialEq for UiLayoutComputed {
+    fn eq(&self, other: &Self) -> bool {
+        // self.pos == other.pos
+        //     &&
+        self.size == other.size
+            // && self.custom_size == other.custom_size
+            && self.clamped_rect == other.clamped_rect
+            && self.clamped_cell_rect == other.clamped_cell_rect
+            && self.border_size == other.border_size
+            && self.padding_size == other.padding_size
+            && self.margin_size == other.margin_size
+            && self.cell_size == other.cell_size
+            // && self.gap_size == other.gap_size
+            // && self.scroll_pos == other.scroll_pos
+            // && self.scroll_size == other.scroll_size
+            // && self.children_size == other.children_size
+            // && self.depth == other.depth
+            // && self.order == other.order
+            // && self.row == other.row
+            // && self.col == other.col
+            // && self.rows == other.rows
+            // && self.cols == other.cols
+            // && self.visible == other.visible
+            // && self.enabled == other.enabled
+            // && self.unlocked == other.unlocked
+            // && self.root_entity == other.root_entity
+            // && self.changed == other.changed
+    }
 }
 
 impl UiLayoutComputed {
@@ -407,7 +439,9 @@ impl Default for UiLayoutComputed {
             enabled: false,
             unlocked: false,
             root_entity: Entity::PLACEHOLDER,
-            camera_entity: Entity::PLACEHOLDER,
+            // camera_entity: Entity::PLACEHOLDER,
+
+            changed:false,
         }
     }
 }

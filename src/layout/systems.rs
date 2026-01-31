@@ -100,10 +100,10 @@ use bevy::{
 };
 
 
-use crate::layout::messages::UiLayoutComputedChanged;
-use crate::layout::resources::UiOldComputedLayouts;
+// use crate::layout::messages::UiLayoutComputedChanged;
 use crate::utils::{ui_rect_clamp, ui_rect_expand};
 
+use super::resources::*;
 use super::values::*;
 use super::components::*;
 use super::utils::*;
@@ -111,6 +111,8 @@ use super::utils::*;
 pub fn ui_init_computeds(
     //windows: Query<&Window>,
     mut computed_query: Query<&mut UiLayoutComputed>,
+    // mut temp_layout_computeds : ResMut<UiTempLayoutComputeds>,
+    // entity_query: Query<Entity, With<UiLayoutComputed>>,
 
     // root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
     root_query: Query<(Entity,&UiRoot),With<UiLayoutComputed>>,
@@ -152,6 +154,15 @@ pub fn ui_init_computeds(
         };
     }
 
+    // temp_layout_computeds.0.clear();
+
+    // for entity in entity_query.iter() {
+    //     temp_layout_computeds.0.insert(entity, UiLayoutComputed{
+    //         size:Vec2::NEG_ONE, //for debugging missed calculations
+    //         ..Default::default()
+    //     });
+    // }
+
     //
     let mut roots = root_query.iter().collect::<Vec<_>>();
     roots.sort_by(|x,y|{
@@ -187,7 +198,10 @@ pub fn ui_init_computeds(
                     ..Default::default()
                 }))
             } else {
-                (parent,parent.and_then(|p|computed_query.get(p).ok()).cloned())
+                (parent,parent.and_then(|p|
+                    computed_query.get(p).ok()
+                    // temp_layout_computeds.0.get(&p)
+                ).cloned())
             };
 
             let Some(parent_computed)=parent_computed else {
@@ -201,6 +215,10 @@ pub fn ui_init_computeds(
             let Ok(mut computed) = computed_query.get_mut(entity) else {
                 continue;
             };
+
+            // let Some(computed) = temp_layout_computeds.0.get_mut(&entity) else {
+            //     continue;
+            // };
 
             //
             // computed.init();
@@ -363,6 +381,11 @@ pub fn ui_init_computeds(
 
 pub fn ui_calc_rows_cols(
     mut computed_query: Query<&mut UiLayoutComputed>,
+
+
+    // mut temp_layout_computeds : ResMut<UiTempLayoutComputeds>,
+    // entity_query: Query<Entity, With<UiLayoutComputed>>,
+
     // root_query: Query<Entity,(Without<ChildOf>,With<UiLayoutComputed>)>,
     root_query: Query<Entity,(With<UiRoot>,With<UiLayoutComputed>)>,
     children_query: Query<&Children,With<UiLayoutComputed>>,
@@ -2174,10 +2197,10 @@ pub fn ui_calc_computed_clamp(
 }
 
 pub fn ui_changes(
-    mut old_layout_computed:ResMut<UiOldComputedLayouts>,
-    mut output_event_writer: MessageWriter<UiLayoutComputedChanged>,
+    mut old_layout_computeds:ResMut<UiOldLayoutComputeds>,
+    // mut output_event_writer: MessageWriter<UiLayoutComputedChanged>,
 
-    computed_query: Query<&UiLayoutComputed>,
+    mut computed_query: Query<&mut UiLayoutComputed>,
     root_query: Query<(Entity,&UiRoot),With<UiLayoutComputed>>,
     children_query: Query<&Children,With<UiLayoutComputed>>,
 ) {
@@ -2200,20 +2223,23 @@ pub fn ui_changes(
         }
 
         //
-        let computed = computed_query.get(entity).unwrap();
+        old_layout_computeds.0.retain(|&entity,_|computed_query.contains(entity));
 
         //
-        old_layout_computed.0.retain(|&entity,_|computed_query.contains(entity));
+        let mut computed = computed_query.get_mut(entity).unwrap();
+
 
         //
-        let old_computed=old_layout_computed.0.entry(entity).or_default();
+        let old_computed=old_layout_computeds.0.entry(entity).or_default();
 
         //
-        if old_computed!=computed {
-            output_event_writer.write(UiLayoutComputedChanged{
-                entity,
-                layout_computed:*old_computed,
-            });
+        if old_computed.ne(&computed.as_mut()) {
+            // output_event_writer.write(UiLayoutComputedChanged{
+            //     entity,
+            //     layout_computed:*old_computed,
+            // });
+
+            computed.changed=true;
         }
 
         //

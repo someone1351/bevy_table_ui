@@ -103,7 +103,7 @@ pub fn update_text_bounds(
         hinting,
     ) in ui_query.iter_mut() {
         // println!("{entity}");
-        if ui_text_computed.err {
+        if ui_text_computed.err || !ui_layout_computed.enabled {
             continue;
         }
         //

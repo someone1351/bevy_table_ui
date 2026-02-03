@@ -1992,41 +1992,41 @@ pub fn ui_calc_computed_pos(
             if !parent_of_root
             {
                 // if let Ok(children)=children_query.get(entity)
+
+                // if let Ok(scroll) = scroll_query.get(entity)
+                let scroll=scroll_query.get(entity).cloned().unwrap_or_default();
                 {
-                    if let Ok(scroll) = scroll_query.get(entity)
+                    let hscroll_space = (computed.children_size.x-computed.size.x).max(0.0);
+                    let vscroll_space = (computed.children_size.y-computed.size.y).max(0.0);
+
+                    let scroll_x=match scroll.hscroll {
+                        UiVal::Scale(p)=>{hscroll_space*p.clamp(0.0,1.0)}
+                        UiVal::Px(p) if p>=0.0 =>{(p*root.scaling.abs()).clamp(0.0,hscroll_space)}
+                        UiVal::Px(p)=>{hscroll_space-(p*root.scaling.abs()).clamp(0.0,hscroll_space)}
+                        _=>{0.0}
+                    };
+
+                    let scroll_y=match scroll.vscroll {
+                        UiVal::Scale(p)=>{vscroll_space*p.clamp(0.0,1.0)}
+                        UiVal::Px(p) if p>=0.0 =>{(p*root.scaling.abs()).clamp(0.0,vscroll_space)}
+                        UiVal::Px(p) =>{vscroll_space-(p*root.scaling.abs()).clamp(0.0,vscroll_space)}
+                        _=>{0.0}
+                    };
+
                     {
-                        let hscroll_space = (computed.children_size.x-computed.size.x).max(0.0);
-                        let vscroll_space = (computed.children_size.y-computed.size.y).max(0.0);
+                        let mut computed2=computed_query.get_mut(entity).unwrap();
+                        computed2.scroll_pos.x=scroll_x;
+                        computed2.scroll_pos.y=scroll_y;
+                        computed2.scroll_size.x=hscroll_space;
+                        computed2.scroll_size.y=vscroll_space;
+                    }
 
-                        let scroll_x=match scroll.hscroll {
-                            UiVal::Scale(p)=>{hscroll_space*p.clamp(0.0,1.0)}
-                            UiVal::Px(p) if p>=0.0 =>{(p*root.scaling.abs()).clamp(0.0,hscroll_space)}
-                            UiVal::Px(p)=>{hscroll_space-(p*root.scaling.abs()).clamp(0.0,hscroll_space)}
-                            _=>{0.0}
-                        };
-
-                        let scroll_y=match scroll.vscroll {
-                            UiVal::Scale(p)=>{vscroll_space*p.clamp(0.0,1.0)}
-                            UiVal::Px(p) if p>=0.0 =>{(p*root.scaling.abs()).clamp(0.0,vscroll_space)}
-                            UiVal::Px(p) =>{vscroll_space-(p*root.scaling.abs()).clamp(0.0,vscroll_space)}
-                            _=>{0.0}
-                        };
-
-                        {
-                            let mut computed2=computed_query.get_mut(entity).unwrap();
-                            computed2.scroll_pos.x=scroll_x;
-                            computed2.scroll_pos.y=scroll_y;
-                            computed2.scroll_size.x=hscroll_space;
-                            computed2.scroll_size.y=vscroll_space;
-                        }
-
-                        for child_entity in children.clone() //.iter()
-                        {
-                            if let Ok(mut child_computed) = computed_query.get_mut(child_entity) { //todo use unwrap
-                                child_computed.pos.x-=scroll_x;
-                                // child_computed.y+=scroll_y; //ydir
-                                child_computed.pos.y-=scroll_y; //ydir2
-                            }
+                    for child_entity in children.clone() //.iter()
+                    {
+                        if let Ok(mut child_computed) = computed_query.get_mut(child_entity) { //todo use unwrap
+                            child_computed.pos.x-=scroll_x;
+                            // child_computed.y+=scroll_y; //ydir
+                            child_computed.pos.y-=scroll_y; //ydir2
                         }
                     }
                 }

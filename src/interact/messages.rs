@@ -248,26 +248,25 @@ pub enum UiInteractMessageType {
     CursorClick{device:i32,button:i32,
         // times:u32, //how many times within the frame, most times will be 0, as press/release happens over multiple frames
     },
-    FocusPressBegin{device:i32,button:i32},
-    FocusPressEnd{device:i32,button:i32},
-    FocusClick{device:i32,button:i32,},
-    // DragBegin,
-    // DragEnd,
-    // DragMove{ h_px:i32,v_px:i32, h_scale:f32,v_scale:f32, },
-
-    //DragCursorX
-    //DragCursorY
-    //DragScrollX
-    //DragScrollY
 
     //add drag_begin/drag_end
     CursorDragX{dist:f32,delta:f32,device:i32,button:i32,}, //scale:f32
     CursorDragY{dist:f32,delta:f32,device:i32,button:i32,}, //scale:f32
 
-    CursorDragBegin{device:i32,button:i32,offset:Vec2,inner_offset:Vec2,},
+    CursorDragBegin{device:i32,button:i32,outer_offset:Vec2,inner_offset:Vec2,},
     CursorDragEnd{device:i32,button:i32},
     // CursorDrag{dist:f32,delta:f32,device:i32,button:i32,axis:i32,},
     CursorScroll{scroll:f32,device:i32,axis:i32,},
+
+
+    FocusPressBegin{device:i32,button:i32},
+    FocusPressEnd{device:i32,button:i32},
+    FocusClick{device:i32,button:i32,},
+
+    //DragCursorX
+    //DragCursorY
+    //DragScrollX
+    //DragScrollY
 
     SelectBegin,
     SelectEnd,

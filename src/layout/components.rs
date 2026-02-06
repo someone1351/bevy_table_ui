@@ -264,10 +264,10 @@ pub struct UiLayoutComputed {
     pub clamped_rect : Rect,
     pub clamped_cell_rect : Rect,
 
-    pub border_size : Rect,
-    pub padding_size : Rect,
-    pub margin_size : Rect,
-    pub cell_size : Rect,
+    pub border_area_size : Rect,
+    pub padding_area_size : Rect,
+    pub margin_area_size : Rect,
+    pub cell_area_size : Rect,
 
     pub gap_size:Vec2,
     pub scroll_pos:Vec2,
@@ -298,10 +298,10 @@ impl UiLayoutComputed {
         self.size != other.size
             || self.clamped_rect != other.clamped_rect
             || self.clamped_cell_rect != other.clamped_cell_rect
-            || self.border_size != other.border_size
-            || self.padding_size != other.padding_size
-            || self.margin_size != other.margin_size
-            || self.cell_size != other.cell_size
+            || self.border_area_size != other.border_area_size
+            || self.padding_area_size != other.padding_area_size
+            || self.margin_area_size != other.margin_area_size
+            || self.cell_area_size != other.cell_area_size
     }
     pub fn scroll_ne(&self,other:&Self) -> bool {
         self.scroll_pos != other.scroll_pos
@@ -380,20 +380,25 @@ impl UiLayoutComputed {
     }
     pub fn padding_rect(&self) -> Rect {
         // self.inner_rect().expand_by(self.padding_size)
-        ui_rect_expand(self.inner_rect(),self.padding_size)
+        ui_rect_expand(self.inner_rect(),self.padding_area_size)
     }
     pub fn border_rect(&self) -> Rect {
         // self.padding_rect().expand_by(self.border_size)
-        ui_rect_expand(self.padding_rect(),self.border_size)
+        ui_rect_expand(self.padding_rect(),self.border_area_size)
     }
     pub fn margin_rect(&self) -> Rect {
         // self.border_rect().expand_by(self.margin_size)
-        ui_rect_expand(self.border_rect(),self.margin_size)
+        ui_rect_expand(self.border_rect(),self.margin_area_size)
     }
     pub fn cell_rect(&self) -> Rect {
         // self.margin_rect().expand_by(self.cell_size)
-        ui_rect_expand(self.margin_rect(),self.cell_size)
+        ui_rect_expand(self.margin_rect(),self.cell_area_size)
     }
+    pub fn outer_rect(&self) -> Rect {
+        self.margin_rect()
+    }
+
+
     pub fn clamped_padding_rect(&self) -> Rect {
         // self.padding_rect().clamp(self.clamped_cell_rect)
 
@@ -417,6 +422,19 @@ impl UiLayoutComputed {
         let b=self.clamped_cell_rect;
         ui_rect_clamp(a,b)
     }
+    pub fn clamped_outer_rect(&self) -> Rect {
+        self.clamped_margin_rect()
+    }
+    pub fn outer_size(&self) -> Vec2 {
+        self.margin_rect().size()
+    }
+    pub fn inner_size(&self) -> Vec2 {
+        self.size
+    }
+    // pub fn padding_size(&self) -> Vec2 {
+    //     self.padding_rect().size()
+    // }
+
 }
 impl Default for UiLayoutComputed {
     fn default() -> Self {
@@ -430,10 +448,10 @@ impl Default for UiLayoutComputed {
             clamped_rect:Rect::default(),
             clamped_cell_rect:Rect::default(),
 
-            border_size:Rect::default(),
-            padding_size:Rect::default(),
-            margin_size:Rect::default(),
-            cell_size:Rect::default(),
+            border_area_size:Rect::default(),
+            padding_area_size:Rect::default(),
+            margin_area_size:Rect::default(),
+            cell_area_size:Rect::default(),
 
             // gap_w:0.0,gap_h:0.0,
             // scroll_x:0.0,scroll_y:0.0,

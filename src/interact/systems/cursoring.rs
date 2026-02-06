@@ -180,7 +180,7 @@ fn do_hover(
             }
 
             //
-            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::CursorHoverBegin{device}});
+            ui_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::CursorHoverBegin{device, cursor }});
             cur_hover_entities.0.insert((root_entity,device), (entity,cursor));
         }
     }
@@ -286,7 +286,7 @@ fn do_drag_press_begin(
     //
     output_event_writer.write(UiInteractEvent{
         entity:found_entity,
-        event_type:UiInteractMessageType::CursorDragBegin {device, button, outer_offset, inner_offset } //scale:dragged_scale.y
+        event_type:UiInteractMessageType::CursorDragBegin {device, button, outer_offset, inner_offset, cursor } //scale:dragged_scale.y
     });
 
     // device_drags.0.get_mut(&(root_entity,device)).map(|x|x.entry(button));
@@ -419,7 +419,7 @@ fn do_press_move(
             *is_pressed=true;
 
             // if !pressable_always {
-            output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::CursorPressBegin{ device, button,first:false, }});
+            output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::CursorPressBegin{ device, button,first:false, cursor: cursor.unwrap() }});
             // }
         } else if !cursor_inside && *is_pressed {
             *is_pressed=false;
@@ -471,7 +471,7 @@ fn do_press_begin(
 
     //
     if let Some(entity)=pressable_entity {
-        output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::CursorPressBegin{ device, button,first:true, }});
+        output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::CursorPressBegin{ device, button,first:true, cursor: cursor.unwrap() }});
 
         device_presseds.0.entry(button).or_default().insert((root_entity,device),(entity,true));
 

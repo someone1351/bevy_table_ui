@@ -461,7 +461,7 @@ pub fn extract_uinodes2(
         //edges
         {
             let cols = [padding_color,border_color,margin_color,cell_color];
-            let sizes=[layout_computed.padding_area_size,layout_computed.border_area_size,layout_computed.margin_area_size,layout_computed.cell_area_size];
+            let sizes=[layout_computed.padding_edge,layout_computed.border_edge,layout_computed.margin_edge,layout_computed.cell_edge];
             let rects1 = [clamped_inner_rect,clamped_padding_rect,clamped_border_rect,clamped_margin_rect];
             let rects2 = [clamped_padding_rect,clamped_border_rect,clamped_margin_rect,clamped_cell_rect];
 

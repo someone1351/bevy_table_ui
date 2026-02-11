@@ -243,7 +243,12 @@ TODO
 pub enum UiInteractMessageType {
     CursorHoverBegin{device:i32,cursor:Vec2,}, //don't really need device? like press?
     CursorHoverEnd{device:i32,},
-    CursorPressBegin{device:i32,button:i32,first:bool,cursor:Vec2,}, //,is_cursor:bool //might need hashset of devices?
+    CursorPressBegin{
+        device:i32,button:i32,first:bool,
+
+        outer_offset:Vec2,inner_offset:Vec2,
+        cursor:Vec2,
+    }, //,is_cursor:bool //might need hashset of devices?
     CursorPressEnd{device:i32,button:i32,last:bool,},
     CursorClick{device:i32,button:i32,
         // times:u32, //how many times within the frame, most times will be 0, as press/release happens over multiple frames
@@ -253,7 +258,10 @@ pub enum UiInteractMessageType {
     CursorDragX{dist:f32,delta:f32,device:i32,button:i32,}, //scale:f32
     CursorDragY{dist:f32,delta:f32,device:i32,button:i32,}, //scale:f32
 
-    CursorDragBegin{device:i32,button:i32,outer_offset:Vec2,inner_offset:Vec2,cursor:Vec2,},
+    CursorDragBegin{
+        device:i32,button:i32,
+        outer_offset:Vec2,inner_offset:Vec2,cursor:Vec2,
+    },
     CursorDragEnd{device:i32,button:i32},
     // CursorDrag{dist:f32,delta:f32,device:i32,button:i32,axis:i32,},
     CursorScroll{scroll:f32,device:i32,axis:i32,},

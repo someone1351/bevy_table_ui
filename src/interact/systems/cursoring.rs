@@ -407,8 +407,10 @@ fn do_press_move(
         // let pressable_always=pressable_query.get(pressed_entity).map(|x|x.1.always).unwrap(); //can use unwrap otherwise won't be in device_presseds
 
         //
+        let layout_computed = layout_computed_query.get(pressed_entity).unwrap(); //can use unwrap otherwise won't be in device_presseds
+
+        //
         let cursor_inside= cursor.map(|cursor|{
-            let layout_computed = layout_computed_query.get(pressed_entity).unwrap(); //can use unwrap otherwise won't be in device_presseds
             let outer_rect=layout_computed.clamped_border_rect();//.clamped_padding_rect();
             let cursor_inside= !ui_rect_is_zero(outer_rect) && outer_rect.contains(cursor);
             cursor_inside
@@ -418,8 +420,19 @@ fn do_press_move(
         if cursor_inside && !(*is_pressed) {
             *is_pressed=true;
 
+            let cursor=cursor.unwrap();
+            let outer_offset=cursor-layout_computed.outer_rect().min;
+            let inner_offset=cursor-layout_computed.inner_rect().min;
+
             // if !pressable_always {
-            output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::CursorPressBegin{ device, button,first:false, cursor: cursor.unwrap() }});
+            output_event_writer.write(UiInteractEvent{entity: pressed_entity,event_type:UiInteractMessageType::CursorPressBegin{
+                device,
+                button,
+                first:false,
+                cursor,
+                outer_offset,
+                inner_offset,
+            }});
             // }
         } else if !cursor_inside && *is_pressed {
             *is_pressed=false;
@@ -453,7 +466,7 @@ fn do_press_begin(
     let pressable_entity=cursor.and_then(|cursor|{
         roots_pressable_entities.get(&root_entity).and_then(|pressable_entities|{
             pressable_entities.iter().find(|&&entity|{
-                let computed = layout_computed_query.get(entity).unwrap();
+                let layout_computed = layout_computed_query.get(entity).unwrap();
                 let pressable=pressable_query.get(entity).map(|(_,c)|{
                     c.pressable && (c.press_onlys.is_empty() || c.press_onlys.contains(&button))
                 }).unwrap_or_default();
@@ -462,7 +475,7 @@ fn do_press_begin(
                     return false;
                 }
 
-                let outer_rect=computed.clamped_border_rect();//.clamped_padding_rect();
+                let outer_rect=layout_computed.clamped_border_rect();//.clamped_padding_rect();
                 let cursor_inside= !ui_rect_is_zero(outer_rect) && outer_rect.contains(cursor);
                 cursor_inside
             })
@@ -471,7 +484,20 @@ fn do_press_begin(
 
     //
     if let Some(entity)=pressable_entity {
-        output_event_writer.write(UiInteractEvent{entity,event_type:UiInteractMessageType::CursorPressBegin{ device, button,first:true, cursor: cursor.unwrap() }});
+        let layout_computed = layout_computed_query.get(entity).unwrap();
+        let cursor=cursor.unwrap();
+        let outer_offset=cursor-layout_computed.outer_rect().min;
+        let inner_offset=cursor-layout_computed.inner_rect().min;
+
+        output_event_writer.write(UiInteractEvent{
+            entity,event_type:UiInteractMessageType::CursorPressBegin{
+                device,
+                button,
+                first:true,
+                cursor,
+                outer_offset,
+                inner_offset,
+        }});
 
         device_presseds.0.entry(button).or_default().insert((root_entity,device),(entity,true));
 
